@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>PostgreSQL 中的 Json —从使用到源码 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Json" title="Json">Json</a>
+                        
+                        <a class="tag" href="/tags/#PostgreSQL" title="PostgreSQL">PostgreSQL</a>
+                        
+                    </div>
+                    <h1>PostgreSQL 中的 Json —从使用到源码</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on March 14, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>都不好意思开头了，又是选的课要提交报告，自我约束写文章确实不行。。希望文章不差就好。上课选分析的模块，拼了老命选上了存储部分，以为可以深入底层，变成高手，找到好工作，迎娶白富美，一看代码才发现，和存储没有半毛钱关系，虽然如此，源码写的确实很好，也是受益不少。PostgreSQL从9.2开始支持Json类型，把它当成标准类型一种，渐渐地提供了12个SQL函数。这篇文章先简单介绍一下Json，然后对于12个函数每一个给出一个执行的例子，最后根据一条SQL语句，从源码角度分析如何执行的。源码那部分跟着代码看效果可能会好很多。</p>
+
+<h3 id="json-简介">Json 简介</h3>
+
+<p>JSON用于描述资料结构，有以下形式存在。</p>
+
+<ul>
+  <li>
+    <p>物件（object）：一个物件以「{」开始，并以「}」结束。一个物件包含一系列非排序的名称／值对，每个名称／值对之间使用「,」分割。</p>
+  </li>
+  <li>
+    <p>名称／值（collection）：名称和值之间使用「：」隔开，一般的形式是：{name:value}一个名称是一个字符串； 一个值可以是一个字符串，一个数值，一个物件，一个布尔值，一个有序列表，或者一个null值。</p>
+  </li>
+  <li>
+    <p>值的有序列表（Array）：一个或者多个值用「,」分割后，使用「[」，「]」括起来就形成了这样的列表，形如：[collection, collection]</p>
+  </li>
+  <li>
+    <p>字符串：以”“括起来的一串字符。</p>
+  </li>
+  <li>
+    <p>数值：一系列0-9的数字组合，可以为负数或者小数。还可以用「e」或者「E」表示为指数形式。</p>
+  </li>
+  <li>
+    <p>布尔值：表示为true或者false。在很多语言中它被解释为阵列。</p>
+  </li>
+</ul>
+
+<p>一个Json数据类型的例子：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{                               
+    "jobname":"linux_os_vmstat",  
+        "schedule":{                  
+            "type":{"interval":       
+                "5m"                  
+            },                        
+            "start":"now",            
+            "end":"None"              
+        },                            
+        "values":{                    
+            "event":["cpu_r","cpu_w"],
+            "data":["cpu_r"],         
+            "threshold":[1,1]         
+        },                            
+        "objects":{                   
+            "wintest1":"cpu"          
+        }                             
+}
+</code></pre></div></div>
+
+<h3 id="二-postgresql-中的json">二  PostgreSQL 中的Json</h3>
+
+<p>在PostgreSQL 9.2中，增加了Json数据类型和与Json类型相关的两个函数(row_to_json 和array_to_json)。我们可以在PG中像其它类型一样存取Json类型的数据，也可以在数据库中把数据转化为Json数据格式输出。PG中提供几种操作符操纵Json数据，并且在之后的几个版本中，增加了Json相关的函数。</p>
+
+<h4 id="21-操作符">2.1   操作符</h4>
+
+<table>
+<tbody>
+<tr>
+
+<td width="52">操作符
+</td>
+
+<td width="89">右操作数类型
+</td>
+
+<td width="184">描述
+</td>
+
+<td width="228">例子
+</td>
+</tr>
+<tr>
+
+<td width="52">-&gt;
+</td>
+
+<td width="89">int
+</td>
+
+<td width="184">得到Json数组的元素
+</td>
+
+<td width="228">'[1,2,3]'::json-&gt;2
+</td>
+</tr>
+<tr>
+
+<td width="52">-&gt;
+</td>
+
+<td width="89">text
+</td>
+
+<td width="184">得到Json对象的域值
+</td>
+
+<td width="228">'{"a":1,"b":2}'::json-&gt;'b'
+</td>
+</tr>
+<tr>
+
+<td width="52">-&gt;&gt;
+</td>
+
+<td width="89">int
+</td>
+
+<td width="184">得到Json数组的元素（text格式输出）
+</td>
+
+<td width="228">'[1,2,3]'::json-&gt;&gt;2
+</td>
+</tr>
+<tr>
+
+<td width="52">-&gt;&gt;
+</td>
+
+<td width="89">text
+</td>
+
+<td width="184">得到Json对象的域值（text格式输出）
+</td>
+
+<td width="228">'{"a":1,"b":2}'::json-&gt;&gt;'b'
+</td>
+</tr>
+<tr>
+
+<td width="52">#&gt;
+</td>
+
+<td width="89">array of text
+</td>
+
+<td width="184">得到指定位置的Json对象
+</td>
+
+<td width="228">'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;'{a,2}'
+</td>
+</tr>
+<tr>
+
+<td width="52">#&gt;&gt;
+</td>
+
+<td width="89">array of text
+</td>
+
+<td width="184">得到指定位置的Json对象（text格式输出）
+</td>
+
+<td width="228">'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;&gt;'{a,2}'
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>这是官方文档中的表格，表格中以text格式输出意思是只输出需要的值，而不关心类型。由第一节知道，Json除了Object和Array之外，合法的值有string，number，bool和null。拿string来说，合法的是加双引号，text类型就只有里面的值。在实际使用中输出结果与数据库编码有关，通常使用的是UTF-8类型和ASCII码。混合编码或者其他类型可能导致错误。具体使用在下节例子中会感受的到。</p>
+
+<h4 id="22-函数">2.2   函数</h4>
+
+<p>postgreSQL 9.3.6目前支持12个与Json相关的函数操作，可以将这些函数分为两类，一类不操纵Json类型数据，只是提供一个其他类型数据向Json转化的接口(如row_to_json)。另一类就是对Json操作的函数，快速获得其中某些特性(如 json_object_key)。下面就对每一个函数给出一个使用的例子。所有的操作都是基于两张表。一张表job表头（id : int  jobdesc : json），其中一行数据如Json简介一节中的示例，用到其它行数据会指明。另一张表films和数据如下：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>code  |   title   | did | date_prod  |  kind  |   len   
+-------+-----------+-----+------------+--------+----------
+ UA502 | Bananas   | 105 | 1971-07-13 | Comedy | 01:22:00
+ UA123 | Apples    | 110 | 1999-09-09 | Comedy | 01:44:00
+ CN111 | Onec More | 111 | 1909-08-11 | Active | 01:54:00
+</code></pre></div></div>
+
+<ol>
+  <li>array_to_json(anyarray [, pretty_bool]) 把数组转化成Json类型数据。第一个参数是一个数组，第二个bool类型的表示数组中的元素会不会分行显示。</li>
+</ol>
+
+<p>先用array_agg函数生成数组:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">array_to_json</span><span class="p">(</span><span class="n">array_agg</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+ 
+    <span class="err">{</span><span class="nv">"(UA502,Bananas)"</span><span class="p">,</span><span class="nv">"(UA123,Apples)"</span><span class="p">,</span><span class="nv">"(CN111,</span><span class="se">\"</span><span class="nv">Onec More</span><span class="se">\"</span><span class="nv">)"</span><span class="err">}</span>
+</code></pre></div></div>
+
+<p>然后再将数组转化为Json：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">array_to_json</span><span class="p">(</span><span class="n">array_agg</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+
+    <span class="p">[</span><span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA502"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Bananas"</span><span class="err">}</span><span class="p">,</span><span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA123"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Apples"</span><span class="err">}</span><span class="p">,</span><span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"CN111"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Onec More"</span><span class="err">}</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>第二个参数默认为false,如果为true:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">array_to_json</span><span class="p">(</span><span class="n">array_agg</span><span class="p">(</span><span class="n">t</span><span class="p">),</span><span class="k">true</span><span class="p">)</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+
+    <span class="p">[</span><span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA502"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Bananas"</span><span class="err">}</span><span class="p">,</span>
+    <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA123"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Apples"</span><span class="err">}</span><span class="p">,</span>
+    <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"CN111"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Onec More"</span><span class="err">}</span><span class="p">]</span>
+</code></pre></div></div>
+
+<ol>
+  <li>row_to_json(record [, pretty_bool]) 关于row_to_json的妙用可参看<a href="http://hashrocket.com/blog/posts/faster-json-generation-with-postgresql">这里</a></li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">select</span> <span class="n">row_to_json</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+
+    <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA502"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Bananas"</span><span class="err">}</span>
+     <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA123"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Apples"</span><span class="err">}</span>
+     <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"CN111"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Onec More"</span><span class="err">}</span>
+</code></pre></div></div>
+
+<ol>
+  <li>to_json(anyelement) 其它格式转化为Json</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">to_json</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+
+    <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA502"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Bananas"</span><span class="err">}</span>
+     <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"UA123"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Apples"</span><span class="err">}</span>
+     <span class="err">{</span><span class="nv">"code"</span><span class="p">:</span><span class="nv">"CN111"</span><span class="p">,</span><span class="nv">"title"</span><span class="p">:</span><span class="nv">"Onec More"</span><span class="err">}</span>
+</code></pre></div></div>
+
+<ol>
+  <li>json_array_length(json)</li>
+</ol>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    bank=# select json_array_length(array_to_json(array_agg(t),true)) from (select code,title from films) t;
+ 
+     3
+</code></pre></div></div>
+
+<ol>
+  <li>json_each(json) 把一个Json 最外层的Object拆成key-value的形式</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">json_each</span><span class="p">(</span><span class="n">to_json</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span> <span class="k">where</span> <span class="n">code</span> <span class="o">=</span> <span class="s1">'UA502'</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+    
+    <span class="p">(</span><span class="n">code</span><span class="p">,</span><span class="nv">"</span><span class="se">""</span><span class="nv">UA502</span><span class="se">""</span><span class="nv">"</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">title</span><span class="p">,</span><span class="nv">"</span><span class="se">""</span><span class="nv">Bananas</span><span class="se">""</span><span class="nv">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>以这种方式使用，value会多出两个双引号，但是像下面这种方式使用就不会，原因还不太明白。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">json_each</span><span class="p">(</span> <span class="p">(</span><span class="k">select</span> <span class="n">jobdesc</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'jobname'</span> <span class="o">=</span> <span class="s1">'linux_os_vmstat'</span><span class="p">)</span> <span class="p">);</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   key    |              value               
+----------+----------------------------------
+ jobname  | "linux_os_vmstat"
+ schedule | {                               
+          |       "type":{"interval":       
+          |           "5m"                  
+          |       },                        
+          |       "start":"now",            
+          |       "end":"None"              
+          |   }
+ values   | {                               
+          |       "event":["cpu_r","cpu_w"],
+          |       "data":["cpu_r"],         
+          |       "threshold":[1,1]         
+          |   }
+ objects  | {                              
+          |       "wintest1":"cpu"         
+          |   }
+</code></pre></div></div>
+
+<ol>
+  <li>json_each_text(from_json json) 只是输出格式为text</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">json_each_text</span><span class="p">(</span><span class="n">to_json</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">from</span> <span class="p">(</span><span class="k">select</span> <span class="n">code</span><span class="p">,</span><span class="n">title</span> <span class="k">from</span> <span class="n">films</span> <span class="k">where</span> <span class="n">code</span> <span class="o">=</span> <span class="s1">'UA502'</span><span class="p">)</span> <span class="n">t</span><span class="p">;</span>
+    
+    <span class="p">(</span><span class="n">code</span><span class="p">,</span><span class="n">UA502</span><span class="p">)</span>
+     <span class="p">(</span><span class="n">title</span><span class="p">,</span><span class="n">Bananas</span><span class="p">)</span>
+</code></pre></div></div>
+
+<ol>
+  <li>json_extract_path(from_json json, VARIADIC path_elems text[]) 根据第二个参数提供的路径确定Json中返回的对象。</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">json_extract_path</span><span class="p">(</span><span class="n">jobdesc</span><span class="p">,</span><span class="s1">'objects'</span><span class="p">,</span><span class="s1">'wintest1'</span><span class="p">)</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'jobname'</span> <span class="o">=</span> <span class="s1">'linux_os_vmstat'</span><span class="p">;</span>
+    
+    <span class="nv">"cpu"</span>
+</code></pre></div></div>
+
+<ol>
+  <li>json_extract_path_text(from_json json, VARIADIC path_elems text[])</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="n">json_extract_path_text</span><span class="p">(</span><span class="n">jobdesc</span><span class="p">,</span><span class="s1">'objects'</span><span class="p">,</span><span class="s1">'wintest1'</span><span class="p">)</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'jobname'</span> <span class="o">=</span> <span class="s1">'linux_os_vmstat'</span><span class="p">;</span>
+
+    <span class="n">cpu</span>
+</code></pre></div></div>
+
+<ol>
+  <li>json_object_keys(json) 获得最外层object的key</li>
+</ol>
+
+<pre><code class="language-sql```">    bank=# select json_object_keys(jobdesc) from job where jobdesc-&gt;&gt;'jobname' = 'linux_os_vmstat';
+
+    jobname
+     schedule
+     values
+     objects
+</code></pre>
+
+<ol>
+  <li>json_populate_record(base anyelement, from_json json, [, use_json_as_text bool=false] 这个函数较复杂，作用是按照第一个参数定义的数据类型，把第二个参数的Json数据按照这种类型转换输出，第三个参数表示输出为Json类型的话是不是text类型输出。而且这个函数不能处理嵌套的object数据。也就是说key下面value就必须是待转化的值了。一次只能处理一行数据，觉得这个函数在以后版本还有待完善。</li>
+</ol>
+
+<p>首先要定义下类型：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">create</span> <span class="k">type</span> <span class="n">JJ</span> <span class="k">as</span> <span class="p">(</span><span class="n">jobname</span> <span class="n">text</span><span class="p">,</span><span class="n">school</span> <span class="n">text</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>本次操作的数据为 {“jobname”:”cs”,”school”:”csu”}</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span><span class="o">*</span> <span class="k">from</span> <span class="n">json_populate_record</span><span class="p">(</span><span class="k">null</span><span class="p">::</span><span class="n">JJ</span><span class="p">,(</span><span class="k">select</span> <span class="n">jobdesc</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'jobname'</span> <span class="o">=</span> <span class="s1">'cs'</span><span class="p">));</span>
+
+    
+    <span class="n">jobname</span> <span class="o">|</span> <span class="n">school</span> 
+    <span class="c1">---------+--------</span>
+     <span class="n">cs</span>      <span class="o">|</span> <span class="n">csu</span>
+</code></pre></div></div>
+
+<p>11. json_populate_recordset(base anyelement, from_json json, [, use_json_as_text bool=false] 和上一个函数不同之处就在于一次可以处理多行数据。</p>
+
+<p>要处理的数据为：{“jobname”:”cs”,”school”:”csu”} 和 {“jobname”:100,”school”:”csu”}</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span><span class="o">*</span> <span class="k">from</span> <span class="n">json_populate_recordset</span><span class="p">(</span><span class="k">null</span><span class="p">::</span><span class="n">JJ</span><span class="p">,(</span><span class="k">select</span> <span class="n">json_agg</span><span class="p">(</span><span class="n">jobdesc</span><span class="p">)</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'school'</span> <span class="o">=</span> <span class="s1">'csu'</span><span class="p">));</span>
+    
+    <span class="n">jobname</span> <span class="o">|</span> <span class="n">school</span> 
+    <span class="c1">---------+--------</span>
+     <span class="n">cs</span>      <span class="o">|</span> <span class="n">csu</span>
+     <span class="mi">100</span>     <span class="o">|</span> <span class="n">csu</span>
+</code></pre></div></div>
+
+<p>12. json_array_elements(json) 把一个Json数组的每一个元素取出来。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">bank</span><span class="o">=#</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">json_array_elements</span><span class="p">(</span> <span class="p">(</span><span class="k">select</span> <span class="n">jobdesc</span><span class="o">-&gt;</span><span class="s1">'values'</span><span class="o">-&gt;</span><span class="s1">'event'</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'jobname'</span> <span class="o">=</span> <span class="s1">'linux_os_vmstat'</span><span class="p">)</span> <span class="p">);</span>
+
+    
+    <span class="nv">"cpu_r"</span>
+     <span class="nv">"cpu_w"</span>
+</code></pre></div></div>
+
+<h3 id="三-一条查询语句">三 一条查询语句</h3>
+
+<h4 id="1-先谈插入">1. 先谈插入</h4>
+
+<p>当Json作为一种标准的变长数据类型，进入到内存之后实际上是转化为变长的text类型。存到磁盘上和其他变长数据类型一样，当数据大于2k的时候就会出发toast机制，先对数据试着进行压缩，压缩之后还是大于2kb，就线外存储，放到另一张表里去。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">varlena</span>
+<span class="p">{</span>
+    <span class="kt">char</span>		<span class="n">vl_len_</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>		<span class="cm">/* Do not touch this field directly! */</span>
+    <span class="kt">char</span>		<span class="n">vl_dat</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>这就是变长的存储结构，第一个变量是数据的长度（其实也不是长度，而是长度经过运算处理的结果），第二个变量是数据，只用一个大小为1的char数组表示数据的起始位置。对于变长数据有一系列的宏操作。因此新加入的Json类型操作在内存中都是与text类型进行交互。源码的重点也在于如何解析字符串。</p>
+
+<h4 id="2执行一次查询">2.执行一次查询</h4>
+
+<p>用一个查询语句的执行过程，来分析在源码中是如何处理Json类型数据的。使用job表完成：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">jobdesc</span><span class="o">-&gt;</span><span class="s1">'jobname'</span> <span class="k">from</span> <span class="n">job</span> <span class="k">where</span> <span class="n">jobdesc</span><span class="o">-&gt;&gt;</span><span class="s1">'school'</span> <span class="o">=</span> <span class="s1">'csu'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>首先要在缓存中找到job表的元组数据，如果缓存没有就到文件块中取。然后扫描每一个元组数据，得到一个元组数据后就需要调用Json提供的接口对数据进行分析，判断是否有一个名为‘school’的object的域值为‘csu’。如果是则返回名为‘jobname’的object域值给调用端，不是的话就返回空的结果。Json接口只负责返回名为’school ’的object域值，判断域值是否满足条件也由调用端决定。</p>
+
+<p>取出的一个元组数据text类型，需要转化为Json词法分析上下文这种数据结构：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">typedef</span> <span class="n">struct</span> <span class="n">JsonLexContext</span>
+<span class="err">{</span>
+    <span class="n">char</span>	<span class="o">*</span> <span class="k">input</span><span class="p">;</span>		         <span class="o">//</span> <span class="err">输入的待解析的</span><span class="n">json</span><span class="err">字符串，</span>
+    <span class="n">int</span>	<span class="n">input_length</span><span class="p">;</span>	         <span class="o">//</span><span class="err">字符串的长度</span>
+    <span class="n">char</span>	<span class="o">*</span> <span class="n">token_start</span><span class="p">;</span>           <span class="o">//</span><span class="err">每次分析起始位置</span>      <span class="p">(</span><span class="err">蓝色</span><span class="p">)</span>
+    <span class="n">char</span>	<span class="o">*</span> <span class="n">token_terminator</span><span class="p">;</span> 	 <span class="o">//</span><span class="err">每次分析的结束位置</span>    <span class="p">(</span><span class="err">蓝色</span><span class="p">)</span>
+    <span class="n">char</span>	<span class="o">*</span> <span class="n">prev_token_terminator</span><span class="p">;</span> <span class="o">//</span><span class="err">上次分析的结束为止</span>    <span class="p">(</span><span class="err">蓝色</span><span class="p">)</span>
+    <span class="n">JsonTokenType</span> <span class="n">token_type</span><span class="p">;</span>	         <span class="o">//</span><span class="err">分析的字串类型</span>
+    <span class="n">int</span>	<span class="n">lex_level</span><span class="p">;</span> 		 <span class="o">//</span><span class="err">分析的“深度”</span>        <span class="p">(</span><span class="err">蓝色</span><span class="p">)</span>
+    <span class="n">int</span>	<span class="n">line_number</span><span class="p">;</span>      	 <span class="o">//</span><span class="err">当前分析到的行数</span>      <span class="p">(</span><span class="err">红色</span><span class="p">)</span>
+    <span class="n">char</span>	<span class="o">*</span> <span class="n">line_start</span><span class="p">;</span>		 <span class="o">//</span><span class="err">当前行的起始位置</span>      <span class="p">(</span><span class="err">红色</span><span class="p">)</span>
+    <span class="n">StringInfo</span>	<span class="n">strval</span><span class="p">;</span>		         <span class="o">//</span><span class="err">分析得到的结果</span>
+<span class="err">}</span> <span class="n">JsonLexContext</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这个结构就像游标一样，遍历一个Json类型数据，对其中每一个object进行解析，得到值再与where子句后面的条件比较，确定是否满足条件。具体是通过makeJsonLexContext这个函数完成由text到JsonLexContext的转化，input指向text转化而来数据的起始位置，表中蓝色为控制变量，在分析过程中不断变化，表示分析过程的状态。红色是为了出错时可以定位到具体的位置。strval为每一次分析得到的临时结果。</p>
+
+<p>除了初始化词法分析上下文，还要初始化最终的保存结果的结构，不同的操作可能对应不同的结构结构（如-&gt; 和 其它SQL函数调用），本例中使用GetState：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">typedef</span> <span class="n">struct</span> <span class="n">GetState</span>
+<span class="err">{</span>
+    <span class="n">JsonLexContext</span> <span class="o">*</span><span class="n">lex</span><span class="p">;</span>		<span class="o">//</span><span class="err">词法解析上下文</span>
+    <span class="n">JsonSearch</span>	<span class="n">search_type</span><span class="p">;</span>	<span class="o">//</span><span class="err">搜索类型：</span><span class="k">object</span> <span class="n">array</span> <span class="n">path</span>
+    <span class="n">int</span>	<span class="n">search_index</span><span class="p">;</span>	        <span class="o">//</span><span class="err">搜索索引</span>
+    <span class="n">int</span>	<span class="n">array_index</span><span class="p">;</span>		<span class="o">//</span><span class="err">数组索引</span>
+    <span class="n">char</span>	<span class="o">*</span><span class="n">search_term</span><span class="p">;</span>           <span class="o">//</span><span class="err">由</span><span class="k">SQL</span><span class="err">语句传入的搜索条件的值</span>
+    <span class="n">char</span>	<span class="o">*</span><span class="n">result_start</span><span class="p">;</span>          <span class="o">//</span><span class="err">结果起始位置指针（和</span><span class="n">lexcontext</span><span class="err">的</span>
+    <span class="o">//</span><span class="n">token_terminator</span><span class="err">一起得到</span><span class="n">tresult</span><span class="err">）</span>
+    <span class="n">text</span>	<span class="o">*</span><span class="n">tresult</span><span class="p">;</span>		<span class="o">//</span><span class="err">最终结果</span>
+    <span class="n">bool</span>	<span class="n">result_is_null</span><span class="p">;</span>	        <span class="o">//</span><span class="err">结果是否为空</span>
+    <span class="n">bool</span>	<span class="n">normalize_results</span><span class="p">;</span> 	<span class="o">//</span><span class="err">是否是</span><span class="n">text</span><span class="err">类型</span> <span class="err">（由解引操作符得到</span> <span class="err">如</span>  <span class="o">-&gt;</span>  <span class="err">和</span> <span class="o">-&gt;&gt;</span><span class="err">）</span>
+    <span class="n">bool</span>	<span class="n">next_scalar</span><span class="p">;</span> <span class="o">//</span><span class="err">函数</span><span class="n">get_scalar</span><span class="err">是否可以得到</span><span class="n">tresult</span><span class="err">结果（字符串</span> <span class="err">数值</span> <span class="err">布尔值）</span>
+    <span class="n">char</span>	<span class="n">path</span><span class="p">;</span>		        <span class="o">//</span><span class="err">路径</span>
+    <span class="n">int</span>	<span class="n">npath</span><span class="p">;</span>		        <span class="o">//</span><span class="err">路径数量</span>
+    <span class="n">char</span>	<span class="k">current_path</span><span class="p">;</span>	        <span class="o">//</span><span class="err">当前分析到的路径指针</span>
+    <span class="n">bool</span>	<span class="o">*</span><span class="n">pathok</span><span class="p">;</span> 		<span class="o">//</span><span class="err">用</span><span class="n">bool</span><span class="err">类型的数组判断走过的路径是否每一步都正确</span>
+    <span class="n">int</span>	<span class="o">*</span><span class="n">array_level_index</span><span class="p">;</span>	<span class="o">//</span><span class="err">数组分析深度的指针</span>
+    <span class="n">int</span>	<span class="o">*</span><span class="n">path_level_index</span><span class="p">;</span>	<span class="o">//</span><span class="err">路径分析深度的指针</span>
+<span class="err">}</span><span class="n">GetState</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>初始化后search_term的值为‘school’,用来进行最后的判断。需要解释下的就是path，请参考上一节函数示例7和8 。path记录的就是函数中的路径。</p>
+
+<p>解析需要判断是否符合条件，并将符合条件的值存近tresult中，这些工作由JsonSemAction完成：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">typedef</span> <span class="n">struct</span> <span class="n">JsonSemAction</span>
+<span class="err">{</span>
+    <span class="n">void</span>	   <span class="o">*</span><span class="n">semstate</span><span class="p">;</span>
+    <span class="n">json_struct_action</span> <span class="n">object_start</span><span class="p">;</span>
+    <span class="n">json_struct_action</span> <span class="n">object_end</span><span class="p">;</span>
+    <span class="n">json_struct_action</span> <span class="n">array_start</span><span class="p">;</span>
+    <span class="n">json_struct_action</span> <span class="n">array_end</span><span class="p">;</span>
+    <span class="n">json_ofield_action</span> <span class="n">object_field_start</span><span class="p">;</span>
+    <span class="n">json_ofield_action</span> <span class="n">object_field_end</span><span class="p">;</span>
+    <span class="n">json_aelem_action</span> <span class="n">array_element_start</span><span class="p">;</span>
+    <span class="n">json_aelem_action</span> <span class="n">array_element_end</span><span class="p">;</span>
+    <span class="n">json_scalar_action</span> <span class="n">scalar</span><span class="p">;</span>
+<span class="err">}</span> <span class="n">JsonSemAction</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>都是一些函数指针，不同类型的函数类型也不一样。semstate是GetState的指针，当然如果是其它类型的state就是其它类型state的指针。</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">{</span>                               
+    <span class="nv">"jobname"</span><span class="p">:</span><span class="nv">"linux_os_vmstat"</span><span class="p">,</span>   <span class="err">…</span> 
+<span class="err">}</span>
+</code></pre></div></div>
+
+<p>例: 假如拿到的第一行元组数据为简介中所示数据，调用json_lex函数吃掉第一个”{  ”符号，表明这是一个object，token_type初始化为JSON_TOKEN_OBJECT_START , 再调用parse_object函数，继续推进吃掉“ “ ”号，知道接下来是一个字符串，调用json_lex_string，把值jobname读到strval里面，同时token_type变为JSON_TOKEN_STRING。此时该分析一个object的值域，调用函数parse_object_field，在这个函数中，首先把存在strval里面的值拿出来，再吃掉“：”，之后根据JsonSemAction找到对应类型的处理函数，此处对应的是get_object_field_start，这是函数主要是判断本次解析是否符合条件（也就是strval中的值是否是’school ’）， 根据下一个符号的类型判断是否需要递归。因为一个object的值域可以是一个object，一个array或者一个简单的值，每一种有对应的函数。本例中下一个字符是““ ”，还是string，调用函数parse_scalar，推进JsonLexContext到字符串末尾。最后调用JsonSemAchtion中的get_object_field_end,在这里判断是否符合条件，如果符合就把值域写到tresult中。这也就是一个符合条件的返回结果。如果不符合就继续解析。</p>
+
+<p>当根据where子句的条件找到一个元组变量的时候，就使用select中的条件得到元组变量中对应的值域，解析方式都是相同的。当然不会找到一个就停止，要返回所有满足条件的值，就需要遍历所有的元组。</p>
+
+<h4 id="3-其它">3. 其它</h4>
+
+<p>总的来讲解析用JsonLexContext当作游标，不同类型的state当作结果集变量，JsonSemAction判断是否正确。但并不是所有的操作都是这样，当调用Json 支持的SQL函数的时候，不同的函数都有不同的处理方式，比如row_to_json，得到一行元组变量和它的类型给数据加上{}或者[]等，变成有效的Json格式数据就ok。</p>
+
+<h3 id="总结">总结：</h3>
+
+<p>开始看的时候觉得分析过程太细了，一个字符一个字符的判断，结构设计的也有点复杂。后来才发现整个代码结构很清晰，函数调用也很合理，源码的水平确实不一样！</p>
+
+<h3 id="参考">参考：</h3>
+
+<p><a href="http://www.ietf.org/rfc/rfc4627.txt">http://www.ietf.org/rfc/rfc4627.txt</a></p>
+
+<p><a href="http://www.postgresql.org/docs/9.3/static/functions-json.html#FUNCTIONS-JSON-OP-TABLE">http://www.postgresql.org/docs/9.3/static/functions-json.html#FUNCTIONS-JSON-OP-TABLE</a></p>
+
+<p><a href="http://hashrocket.com/blog/posts/faster-json-generation-with-postgresql">http://hashrocket.com/blog/posts/faster-json-generation-with-postgresql</a></p>
+
+<p><a href="http://www.linuxidc.com/Linux/2013-12/94354.htm">http://www.linuxidc.com/Linux/2013-12/94354.htm</a></p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/" data-toggle="tooltip" data-placement="top" title="C++面向对象特性实现剖析 Data Member篇">
+                        Previous<br>
+                        <span>C++面向对象特性实现剖析 Data Member篇</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/" data-toggle="tooltip" data-placement="top" title="Ten C++11 Features Every C++ Developer Should Use">
+                        Next<br>
+                        <span>Ten C++11 Features Every C++ Developer Should Use</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/database/2015/03/14/postgrsql-%e4%b8%ad%e7%9a%84-json-%e4%bb%8e%e4%bd%bf%e7%94%a8%e5%88%b0%e6%ba%90%e7%a0%81";
+    var disqus_url = "http://localhost:4000/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

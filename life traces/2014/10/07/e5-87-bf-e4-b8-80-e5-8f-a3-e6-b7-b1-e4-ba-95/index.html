@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>凿一口深井 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#保研" title="保研">保研</a>
+                        
+                        <a class="tag" href="/tags/#实习" title="实习">实习</a>
+                        
+                    </div>
+                    <h1>凿一口深井</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on October 7, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>又到了开学的季节，看着企鹅群里大学同学在感慨上班,早起，工资，环境。才觉得选择读研是不是怯懦的表现。就像《谁动了我的奶酪》里面，阐述的不愿改变现有熟悉生活环境的情结。我为什么选择读研？</p>
+
+<p>大一的时候，如果有人告诉我你将来会读研，我估计不会鸟他。当时我把锻炼身体当作最重要的事，一周几乎天天下午都去踢球，有时候一踢三四个小时，不得不感慨年轻真好。没有太多的考虑，直到在某新闻上看到华为公司的员工平均年薪20w。然后立刻去查叫华为的公司，500强，巨头，狼性文化…. 小时候经常有长辈用极其羡慕的语气告诉我某某邻居一个月能有900块的工资，一天30块在我心里已经很多了。可想而知平均20w对我的冲击有多大。华为从那时起，就是我毕业后的目标。</p>
+
+<p>大三结束后，按照要求要去找实习。为了腾讯二次来到武汉，最终还是失败告终。期间还接到天猫的电话面试，java方向几乎都在摇头say no。确实没有对一个方向有特别透彻的了解，才会被面的心情低落。期间包括我在内的很多同学都产生了读研的想法。因为深深的觉得知识的有限，想要多用几年时间来增强。这很像每次考完试都信誓旦旦要好好学习的感觉差不多…. 后来找实习还算顺利，拿到了汉得，亚信，群硕的offer。汉得qq面了好多次，不断让我根据他的要求改一个app，群硕卡的还是很严，因为当时还在火车上，给我追加了一次电话面，还在火车上英语自我介绍，呢个回头率…. 群硕的hr很赞，电话面试讲了两个多小时，分享了很多她自己的工作心得，所以后来拒绝群硕的时候，我还专门用英语给她发了一封道歉的邮件。</p>
+
+<p>华为来招实习生的时候算是比较晚了，听说也是近几年首次在长沙招。大一时候的小目标来了，必须要去试试。整个过程还算比较顺利，和前面几个公司有明显区别的是，这里的研究生更多了。虽然是本科的，和同去面试的研究生比，我不觉得有什么明显的劣势。反而对读研有了点失望，因为眼前的研究生们并没有让我感觉在某个领域确实有所研究。</p>
+
+<p>拿到华为的实习offer，这时工作的情绪大涨，实现了大一的目标。感觉就要年薪20w+，走向人生的巅峰。</p>
+
+<p>实习每个人都会分到一个导师，跟着导师也就决定了你的分组等等。由于给我预先分配的导师那一天没来，阴差阳错的换了一个大Boss，气场无比强大，以至于小组没有人坐在他旁边。正好缺个位置留给我… 然后就步入正轨，所在是CRM基线组，也就是实现一些通有的CRM功能，给其它定制产品线的去改，其它组都是给国外定制的版本，什么不丹..巴基斯坦之类。所以会碰到很多国际友人，英语还是要过关。</p>
+
+<p>第一周安排“玩”现有的系统，然后抛过来一大堆的文档资料，业务的资料居多。这里发现大公司一点劣势：华为的员工倡导分享自己总结的资料经验，这本是好事，但是由于每个人都有一些输出的文档，就导致资料满天飞而容易找不到重点。而且文档更新的速度远远跟不上系统的更新速度，比如写SQL，在文档中去查一个数据库表名，文档中有，但系统中查不到，问老大，才知道表名已经被改掉了。第二周安排了整整一周的培训课，主要是讲业务，每个人讲一小块，因为整体太大。这一周说实话，效率极差，除了讲编成规范和数据库的两节课有点收获以外，其它的课恐怕只有讲课的人自己能够懂。毕竟是员工，不是专业讲课的。之后步入正轨，看代码，看文档，偶尔会有简单的问题单来改。一般也都是导师的问题单，分写简单的给你。我的导师貌似是管理级别，没什么单，我也就落得清闲些。</p>
+
+<p>期间也有一些活动，比如所有的大boss和实习生的分享会，boss们都非常诚恳的分享他们在华为的故事，也会直接而不遮掩的回答问题。每天都会收到一份英语学习的邮件，每周二邮件都会附带一集老友记的音频。每周一会有英语角，去那里看过电影乔布斯，而且两个大屏幕连在一起，硬件很赞。偶尔会有技术交流会，和其它地区的，远程视频交流。有乒乓球桌，下午到晚上这段时间会被围的水泄不通，先到先得，很多boss来晚了只能在旁边看。最开心的是加入了他们的足球队，每周六晚上都会去踢夜场，然后蹭车回去。踢球认识了一个boss，住在铁道里面，实习结束之后，在学校里面踢球还经常能够碰到。</p>
+
+<p>中期靠前的时候，boss找我了解实习的情况，提问题。我说了培训效果不好，投影仪有些模糊；当时招聘分c++和java方向，来了之后只有java等。boss对于第二个问题，回答说CRM这里值钱的主要是业务，不关心这些技术方向。的确，但是作为实习生，希望在公司得到的更多是技术方面的锻炼。而不是淹没在无边的业务逻辑上。后来安排我们在现有的框架上完成一个学生管理系统，主要是学习框架。那两周过的很充实，每天都很晚才走，为了早点把东西做好，和同组的小伙伴们一起商量，研究。一周之后完成了要求的功能，导师检查，被虐的要死。使用上校验做的不够，一些极端的输入都无法处理，更惨的看代码，单词拼写错误被说的惨绝人寰，命名几处不够规范，代码没有通过静态检查。总共说了一小时，记了十三处修改的地方。接下来的一个星期就在修改这些问题。导师说，就算是这种小项目，既然写出来，也必须是精品。</p>
+
+<p>中期检查的时候，要展示实习以来的成果，答辩演示了做的系统，自己添加了一些功能，答辩结束导师说做的不错，也就算了拿到了工作的offer。同时也开学了，处在保研和工作的关口。</p>
+
+<p>问了很多读研的学长，问他们当时为什么选择读研，有没有后悔等等。他们都告诉我说，这要看自己的决定才行。我当时觉得这=没说啊，不过现在有学弟来问我这些问题，我想也只能这样回答。这关乎个人，读研给了三年时间去多读书，多思考，重要的是给了找自己方向的时间。工作可以独立，开始经营自己的生活，而不是选择。</p>
+
+<p>我当时问我自己，看着公司里工作一年，两年，三年的同事，我愿不愿意一年，两年，三年后，和他们过同样的生活，answer is no。整个系统庞大，框架成熟，所做的事就是用好框架，熟悉业务。在庞大的公司里，太容易被淹没，迷失方向。而且，我没有发现周围的同事是真正爱着他们所做的工作，工作的时候大多是为了工作。</p>
+
+<p>前几天在微博上看到一句话，“与其花很多时间去凿很多浅井，不如去凿一口深井”。因为深井才有可能出水，而且再去凿别的井，都能得心应手。所以选择了读研，选择去试着找一个所学的方向，试着凿深，我想以它为工作会感到开心。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/" data-toggle="tooltip" data-placement="top" title="BDB 事务隔离等级">
+                        Previous<br>
+                        <span>BDB 事务隔离等级</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/" data-toggle="tooltip" data-placement="top" title="单一职责原则">
+                        Next<br>
+                        <span>单一职责原则</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2014/10/07/%e5%87%bf%e4%b8%80%e5%8f%a3%e6%b7%b1%e4%ba%95";
+    var disqus_url = "http://localhost:4000/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

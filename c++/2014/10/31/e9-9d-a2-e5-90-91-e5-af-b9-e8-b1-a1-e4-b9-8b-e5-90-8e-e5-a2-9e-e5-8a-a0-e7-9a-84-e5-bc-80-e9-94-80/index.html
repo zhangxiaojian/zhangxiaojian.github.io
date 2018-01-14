@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>面向对象之后增加的开销 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#c++" title="c++">c++</a>
+                        
+                        <a class="tag" href="/tags/#面向对象" title="面向对象">面向对象</a>
+                        
+                    </div>
+                    <h1>面向对象之后增加的开销</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on October 31, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>这半个月作业爆表，很多作业无甚意思，不做不行，做了浪费时间。于是尽量将作业写的有点内容，不至于应付差事，也不至于浪费时间。本文就是作业之一，要求写程序对比面向对象语言在增加了面向对象的特性之后，在时间上和空间上有什么变化。正好借此整理Inside the C++ object  model中的一些内容。</p>
+
+<h2 id="前言">前言：</h2>
+
+<p>面向对象设计思想对于软件工程的意义非同一般，从结构化程序设计到面向对象，使得大型软件设计，开发，解耦，维护等等变得更加可操作。从语言层面上来讲，面向对象的设计方法仅仅是一个指导思想，并不一定要求拥有面向对象特性的语言才能实现。我想纯c的代码，也完全能够写出c++面向对象的效果。就是需要额外做很多工作。显然这些工作难度很大，并且是可重复利用的。因此不如加入到语言的特性之中，交给编译器去解决复杂的，重复的工作。但是计算机中总是存在着平衡，功能的增加就意味着性能的降低。c++编译器为了支持面向对象语言特性，会默默的为使用者“做很多事”。或多或少，都会增加一些时间或是空间上的开销。</p>
+
+<h3 id="part1空间开销">Part1:空间开销</h3>
+
+<p>举一个例子，假设我们现在需要写程序模拟数学中的点，线，面的坐标。点在坐标轴上只有一个值就可以确定，线和面分别由两个点和三个点确定。当然还需要一些对它们操作的函数，完成一些计算任务。先以结构化设计方法实现：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include&lt;iostream&gt;
+</span>
+<span class="k">struct</span> <span class="n">Point</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="n">Point2D</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">y</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="n">Point3D</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">y</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">z</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="c1">//some operating functions here.....</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point2D): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point2D</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point3D): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point3D</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上述程序执行结果：</p>
+
+<p><a href="/img/uploads/2014/10/inside1.png"><img src="/img/uploads/2014/10/inside1.png" alt="inside1" /></a></p>
+
+<p>在结构化程序设计中，函数和数据是分离开的，因此函数不会影响struct大的空间大小。在此暂时省略。从上面的程序中可以发现，三个结构中重复的定义了x,y。而且线本来就是由连个点组成的。面向对象的设计方式就可以解决上述冗余的定义实现重用。不如先画一个类图：</p>
+
+<p><a href="/img/uploads/2014/10/inside2.png"><img src="/img/uploads/2014/10/inside2.png" alt="inside2" /></a></p>
+
+<p>其中point中y,z和mult函数都是virtual，为了留给子类去实现，因为virtual函数对类的空间大小是有影响的，所以这里直接加上方法。代码实现如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include&lt;iostream&gt;
+</span>
+<span class="k">class</span> <span class="nc">Point</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="k">virtual</span> <span class="o">~</span><span class="n">Point</span><span class="p">(){}</span>
+        <span class="k">virtual</span> <span class="n">Point</span><span class="o">&amp;</span> <span class="n">mult</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="kt">float</span> <span class="n">x</span><span class="p">()</span> <span class="k">const</span><span class="p">{</span> <span class="k">return</span> <span class="n">_x</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">virtual</span> <span class="kt">float</span> <span class="n">y</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">virtual</span> <span class="kt">float</span> <span class="n">z</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">protected</span><span class="o">:</span>
+        <span class="kt">float</span> <span class="n">_x</span><span class="p">;</span>
+        <span class="n">Point</span><span class="p">(</span> <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="p">)</span><span class="o">:</span><span class="n">_x</span><span class="p">(</span><span class="n">x</span><span class="p">){}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">Point2D</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Point</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Point2D</span><span class="p">(</span> <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="p">)</span><span class="o">:</span><span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">_y</span><span class="p">(</span><span class="n">y</span><span class="p">){}</span>
+        <span class="o">~</span><span class="n">Point2D</span><span class="p">(){}</span>
+        <span class="n">Point2D</span><span class="o">&amp;</span> <span class="n">mult</span><span class="p">(</span><span class="kt">float</span><span class="p">){</span> <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;}</span>
+        <span class="kt">float</span> <span class="n">y</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_y</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">protected</span><span class="o">:</span>
+        <span class="kt">float</span> <span class="n">_y</span><span class="p">;</span>
+<span class="p">};</span> 
+
+<span class="k">class</span> <span class="nc">Point3D</span><span class="o">:</span><span class="k">public</span> <span class="n">Point2D</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Point3D</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span><span class="kt">float</span> <span class="n">z</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">:</span><span class="n">Point2D</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span><span class="n">_z</span><span class="p">(</span><span class="n">z</span><span class="p">){}</span>
+        <span class="o">~</span><span class="n">Point3D</span><span class="p">(){}</span>
+        <span class="n">Point3D</span><span class="o">&amp;</span> <span class="n">mult</span><span class="p">(</span><span class="kt">float</span><span class="p">){</span> <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;}</span>
+        <span class="kt">float</span> <span class="n">z</span><span class="p">(){</span><span class="k">return</span> <span class="n">_z</span><span class="p">;}</span>
+    <span class="k">protected</span><span class="o">:</span>
+        <span class="kt">float</span> <span class="n">_z</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point2D): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point2D</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"sizeof(Point3D): "</span><span class="o">&lt;&lt;</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Point3D</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上述程序执行结果：</p>
+
+<p><a href="/img/uploads/2014/10/inside3.png"><img src="/img/uploads/2014/10/inside3.png" alt="inside3" /></a></p>
+
+<p>显然，内含相同大小数据成员的struct和class确拥有不同大小的空间。需要说明的是，class空间较大并不是因为函数声明在类中，对象的函数也是定义在”别处”,使用的时候去寻址然后调用。实际上class类空间大于struct，是因为class为了支持多态性，产生了一个名叫虚函数指针的东西。它位于类空间的头部或尾部（根据编译器而定）。因此，增加了一个指针类型大小的空间，在32位机器上是4字节。</p>
+
+<p>如果以为这就是增加多态性质后增加的空间大小，那就太年轻了。class中的虚函数指针指向一个在编译期间产生的表空间，名叫虚函数表。表中存的是虚函数的函数指针地址。如下图在vs2010中显示的Point2D树状结构图：</p>
+
+<p><a href="/img/uploads/2014/10/inside4.png"><img src="/img/uploads/2014/10/inside4.png" alt="inside4" /></a></p>
+
+<p>其中_vfptr就是虚函数指针，而下面的数组就是它指向的虚函数表。对应Poiont2D中四个虚函数的地址。所以增加多态性质之后，相对于结构化程序，额外的存储空间还要加上</p>
+
+<p><strong>                      虚函数个数 * sizeof（int*）+1</strong></p>
+
+<p>其中+1，是虚函数表额外存放的typeinfo信息。在vs2010中存在虚函数表的末尾。</p>
+
+<p>C++而言，支持多重继承，那么情况就更要复杂一些，空间开销也要比单继承更大。但原理也都差不多类似。并且许多纯面向对象的语言，都摒弃了多继承的特性。这里就不做深究了。</p>
+
+<h3 id="part2时间开销">Part2：时间开销</h3>
+
+<p>时间开销则复杂的多，涉及的方面很广。例如类中data member是用编译期间产生的offset来访问，当涉及到多重继承还要增加多余的代码来根据offset移动this指针；当函数是virtual，根据Part1中的结构，需要先访问虚函数表，再定位到类型相关的函数；不同于结构化函数传参式的方式，面向对象的函数通过this指针来确定可以访问的member data，等等。</p>
+
+<p>这里对比单一继承的虚函数与结构化调用的开销，首先是结构化的代码，在Part1代码基础上添加一个方法：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">calculate</span><span class="p">(</span><span class="n">Point3D</span><span class="o">*</span> <span class="n">pd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">temp</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100000000</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">x</span> <span class="o">*</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">y</span> <span class="o">*</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">z</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//在mian函数中添加调用</span>
+
+<span class="n">Point3D</span> <span class="n">pd</span><span class="p">;</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span> <span class="mf">1.01</span><span class="p">;</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="mf">2.02</span><span class="p">;</span>
+<span class="n">pd</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span> <span class="mf">3.03</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="n">clock</span><span class="p">();</span>
+<span class="n">calculate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pd</span><span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"%.3lf</span><span class="err">
+</span><span class="s">        n"</span><span class="p">,</span><span class="kt">double</span><span class="p">(</span><span class="n">clock</span><span class="p">()</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="n">CLOCKS_PER_SEC</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>最终耗时：0.220 s</p>
+
+<p>接下来是面向对象的方法，面向对象的核心在于运行时期根据实际的类型，调用对应的函数。为了公平起见，还是将calculate当作普通函数，与上述相同。代码稍作修改如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">calculate</span><span class="p">(</span><span class="n">Point3D</span><span class="o">*</span> <span class="n">pd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">temp</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100000000</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">x</span><span class="p">()</span> <span class="o">*</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">y</span><span class="p">()</span> <span class="o">*</span> <span class="n">pd</span><span class="o">-&gt;</span><span class="n">z</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//在mian函数中添加调用</span>
+<span class="n">Point3D</span> <span class="o">*</span><span class="n">pd</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point3D</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">2.02</span><span class="p">,</span><span class="mf">3.03</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="n">clock</span><span class="p">();</span>
+
+<span class="n">calculate</span><span class="p">(</span><span class="n">pd</span><span class="p">);</span>
+
+<span class="n">printf</span><span class="p">(</span><span class="s">"%.3lf</span><span class="err">
+</span><span class="s">        n"</span><span class="p">,</span><span class="kt">double</span><span class="p">(</span><span class="n">clock</span><span class="p">()</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="n">CLOCKS_PER_SEC</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>最终耗时：7.617 s</p>
+
+<p>两者相差将近36倍之多。</p>
+
+<h3 id="总结">总结：</h3>
+
+<p>说明了面向对象特性会在时间，空间上有所增加，上述例子选取的主要是单继承下增加了多态性之后的开销。多继承在各个方面的开销都会更大。其余很多方面的开销也许不如增加虚函数之后明显，但也确实存在。相反，面向对象在软件设计方面带来的好处在大型软件开发中很明显，软件模式，设计模式等等的出现，都是基于面向对象模型提出的软件设计方法。因此，随着硬件越来越强大，开销相对于大型软件开发，维护来说，也许是可以忍受的。</p>
+
+<p>本来是要求写成实验报告的形式，什么实验目的，实验步骤，bulalala。。。还是写成了博客的形式，让老师凑合着看吧。已经尽力了~</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/" data-toggle="tooltip" data-placement="top" title="单一职责原则">
+                        Previous<br>
+                        <span>单一职责原则</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/database/2014/10/31/e8-af-a5-e4-b8-8d-e8-af-a5-e7-94-a8-e5-a4-96-e9-94-ae-ef-bc-9f/" data-toggle="tooltip" data-placement="top" title="该不该用外键？">
+                        Next<br>
+                        <span>该不该用外键？</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/c++/2014/10/31/%e9%9d%a2%e5%90%91%e5%af%b9%e8%b1%a1%e4%b9%8b%e5%90%8e%e5%a2%9e%e5%8a%a0%e7%9a%84%e5%bc%80%e9%94%80";
+    var disqus_url = "http://localhost:4000/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

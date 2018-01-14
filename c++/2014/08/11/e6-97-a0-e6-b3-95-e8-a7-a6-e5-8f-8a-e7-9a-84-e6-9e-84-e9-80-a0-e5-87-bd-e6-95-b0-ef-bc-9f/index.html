@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>无法触及的构造函数？ - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#effective c++" title="effective c++">effective c++</a>
+                        
+                        <a class="tag" href="/tags/#构造函数" title="构造函数">构造函数</a>
+                        
+                    </div>
+                    <h1>无法触及的构造函数？</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on August 11, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p><strong>Pre：</strong></p>
+
+<p>在More Effective C++条款8中，介绍new operator的时候，说new operator是由两部分组成的，一部分是operator new，用来根据对象大小申请空间；另一部分是对象的构造函数，用来初始化对象。代码描述如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//申请空间，用来存放string对象</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">memory</span> <span class="o">=</span> <span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">string</span><span class="p">));</span>
+<span class="n">call</span> <span class="n">string</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">"Memory Management"</span><span class="p">)</span> <span class="n">on</span> <span class="n">memory</span><span class="p">;</span>
+<span class="n">string</span> <span class="o">*</span><span class="n">ps</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">string</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">memory</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>意思简单明了，接着它又这么描述：</p>
+
+<p><em>注意上述第二个步骤“调用一个construct”，身为程序员的你没有权利这么做。然而你的编译器百无禁忌，可以为所欲为。这就是为什么你想做出一个head-based object，<strong>一定</strong>得使用new operator的原因：你无法直接调用“对象初始化所必需的的construct”（尤其是它可能得为重要成分vtbl设定初值）</em></p>
+
+<p>仔细想想，调用构造函数的时候都给了它一个构造好放置对象的“标记”，比如：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">string</span> <span class="n">s</span><span class="p">(</span><span class="s">"Hello Luffy!"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>编译器在栈空间构造的string对象由局部变量s标记，是编译器把构造函数构造好的对象和局部变量联系在了一起。如果在堆上分配一个string对象，那就像上面所说的，需要使用new operator来把构造函数构造好的对象和申请的空间联系在一起。如果我们直接调用构造函数呢？</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">string</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">"Hello Luffy!"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>因为构造函数是没有任何返回值的，所以仅仅是构造了一个对象，并没有办法使用。就好像构造函数对程序员来说是无法触及的，它永远隐藏在编译器之下。</p>
+
+<p><strong>Mid：</strong></p>
+
+<p>对于c++语言，如果要我想一个广告语，那一定是 never say never,来看看这个程序:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Data</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Data</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span><span class="n">Data</span><span class="o">*</span> <span class="o">&amp;</span><span class="n">p</span><span class="p">)</span><span class="o">:</span><span class="n">data</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="p">{</span> 
+        <span class="n">p</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span> 
+    <span class="p">}</span>
+        <span class="o">~</span><span class="n">Data</span><span class="p">(){</span> <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"call deconstruct"</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">void</span> <span class="n">printData</span><span class="p">()</span>
+        <span class="p">{</span> 
+            <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"data: "</span><span class="o">&lt;&lt;</span><span class="n">data</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> 
+        <span class="p">}</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="kt">int</span> <span class="n">data</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Data</span><span class="o">*</span> <span class="n">rawMemory</span><span class="p">;</span>
+
+    <span class="n">Data</span><span class="o">::</span><span class="n">Data</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">rawMemory</span><span class="p">);</span>
+
+    <span class="n">rawMemory</span><span class="o">-&gt;</span><span class="n">printData</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>目的是在构造函数中，将this指针指向外部的指针，这样就将构造的对象和外部的“标记”联系在了一起，我们可以使用了，来看看结果是否如愿：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;</span> <span class="n">call</span> <span class="n">deconstruct</span>
+<span class="o">&gt;&gt;</span> <span class="n">data</span><span class="o">:</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>看来结果不错，正确的输出了值，但是在输出值之前调用了析构函数。语义很正确，构造函数构造的临时对象没有找到可以联系在一起的外部变量，匆匆构造然后析构了事。那我们怎么还可以输出正确的值呢？</p>
+
+<p>因为这里的析构函数其实是一个空壳，Data类即没有拥有析构函数的父类，又没有拥有析构函数的数据成员。因此它不会合成一个析构函数，如果用户自己定义了，就像Data类一样，那么也只是像一个普通函数一样去执行，编译器不会对它进行任何的扩充处理。</p>
+
+<p>如果数据成员不是int，而是拥有析构函数的对象，比如string，将上述程序的构造函数和main中调用的参数略作修改，再执行发现结果成了这样：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;</span> <span class="n">call</span> <span class="n">deconstruct</span>
+<span class="o">&gt;&gt;</span> <span class="n">data</span><span class="o">:</span>
+</code></pre></div></div>
+
+<p>没有数据了，因为在析构函数中调用了string的析构函数，它把数据析构掉了！不过这里能不能输出正确的值，完全取决于成员变量析构函数的行为，如果没有在析构函数中把值改变，那么就能够得到我们预期的行为。</p>
+
+<p><strong>High:</strong></p>
+
+<p>Pre部分灰色斜体括号中强调尤其是有vtbl的时候。那么我们就试试有vtbl的情况，定义一个有虚函数的基类：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Original</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Original</span><span class="p">()</span><span class="o">:</span><span class="n">orig</span><span class="p">(</span><span class="mi">10</span><span class="p">){}</span>
+        <span class="k">virtual</span> <span class="kt">void</span> <span class="n">printData</span><span class="p">(){</span> <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"data from original : "</span><span class="o">&lt;&lt;</span><span class="n">orig</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> <span class="p">}</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="kt">int</span> <span class="n">orig</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>同时修改Data的定义让它继承Original：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Data</span><span class="o">:</span><span class="k">public</span> <span class="n">Original</span>
+</code></pre></div></div>
+
+<p>其余部分不变。来看看结果：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;</span> <span class="n">call</span> <span class="n">deconstruct</span>
+<span class="o">&gt;&gt;</span> <span class="n">data</span><span class="o">:</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>看来有vtbl也没有影响到程序的行为，这又是析构函数的特性帮的忙，因为class Data这时虽然有vtbl指针，但是父类没有定义析构函数，编译器不会为Data的析构函数做多余的任何事，即使在class Original中将data member改为有析构函数的string类型，Original有了一个编译器为它合成的析构函数，情况依然没有任何改变！因为对于class Data来说，它还是看不到父类的析构函数。</p>
+
+<p>那么就为Original定义一个析构函数：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">~</span><span class="n">Original</span><span class="p">(){</span> 
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"~Original.."</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>没什么特别的，但是再看看结果：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="o">&gt;&gt;</span> <span class="n">call</span> <span class="n">deconstruct</span>
+    <span class="o">&gt;&gt;</span> <span class="o">~</span><span class="n">Original</span><span class="p">..</span>
+    <span class="o">&gt;&gt;</span> <span class="n">data</span> <span class="n">from</span> <span class="n">original</span> <span class="o">:</span> <span class="mi">10</span>
+</code></pre></div></div>
+
+<p>不一样了！这时子类检测到了父类的析构函数，编译器在调用Data析构函数的时候，默默的将虚函数指针改变，指向父类的vtbl，调用到的是父类的虚函数。当然，能正确访问到父类数据成员，也得益于数据成员本身并没有被自己的析构函数析构掉，这点和前面所述相同。</p>
+
+<p><strong>End:</strong></p>
+
+<p>其实构造函数看似无法触及，但是只要我们“别有用心”的绕过析构函数这一关，就可以直接用它，而不用借助编译器默默的帮助。即使是在堆上分配，也只需要多做一些工作：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">Data</span> <span class="o">*</span><span class="n">dataMemory</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Data</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">operator</span> <span class="k">new</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Data</span><span class="p">)));</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="n">dataMemory</span><span class="p">,</span><span class="n">rawMemory</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Data</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>这种用法能够达到我们想要的效果，但是也受到析构函数的限制，结论是，编译器做的更好。乖乖的使用 new operaor吧。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/" data-toggle="tooltip" data-placement="top" title="Berkeley DB 的桶操作">
+                        Previous<br>
+                        <span>Berkeley DB 的桶操作</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/" data-toggle="tooltip" data-placement="top" title="BDB 事务隔离等级">
+                        Next<br>
+                        <span>BDB 事务隔离等级</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/c++/2014/08/11/%e6%97%a0%e6%b3%95%e8%a7%a6%e5%8f%8a%e7%9a%84%e6%9e%84%e9%80%a0%e5%87%bd%e6%95%b0%ef%bc%9f";
+    var disqus_url = "http://localhost:4000/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>Berkeley DB 锁子系统的配置 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Berkeley DB" title="Berkeley DB">Berkeley DB</a>
+                        
+                        <a class="tag" href="/tags/#Database" title="Database">Database</a>
+                        
+                    </div>
+                    <h1>Berkeley DB 锁子系统的配置</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on March 31, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>最近小伙伴在分布式数据库（DPINM）环境下做实验，数据集比较大，分到集群中每台机器上，会报lock不够用的错。Berkeley DB在初始化的时候，就会初始化锁子系统，为锁结构分配内存空间，一旦启动，是不可以动态分配的，如果不够用，就会报错。后来调节了参数，加大了Locks,  Lockers, Locked Object 的最大数量，重启之后被惊呆了，锁子系统映射到文件系统的共享内存空间竟然有60多G，磁盘立马就不够用了（挂载目录只有100G….）。以前看到过配置锁子系统的参数该如何算，总结起来就是能大就大，毕竟不够用重启很麻烦，但万万没想到占这么大的空间，所以还是仔细看看怎么配置比较合理的好。</p>
+
+<h2 id="概念介绍"> 概念介绍</h2>
+
+<p>首先要知道BDB中的Locker, Lock, Lock Object 是什么含义：</p>
+
+<ul>
+  <li>
+    <p>Locker： 持有锁的对象。如果在支持事务的情况下，就表示事务句柄（DbTxn），如果在不支持事务的情况下，就表示游标或者DB 句柄。</p>
+  </li>
+  <li>
+    <p>Lock：表示锁的数据结构，在数据库中，锁就代表了被锁的对象。因为一般获取一个互斥对象之前要获取锁，如果不能获得，就表示对象被锁住了。</p>
+  </li>
+  <li>
+    <p>Locked Object：真正想要锁住的对象，一般指的是数据库页，在数据库配置成Queue 类型的时候表示一条记录（k-v）。</p>
+  </li>
+</ul>
+
+<h2 id="估算方法">估算方法</h2>
+
+<p>不支持事务的配置相对简单，这里介绍支持事务的 Berkeley DB Transactional Data Store。最推荐的算法是实践，让系统在负载比较极端的情况下运行，然后使用db_stat 命令去查看锁子系统的统计信息，来决定配置的数量，然后把这些数量double，基本上就够用了。但是极端这个情况不好说，所以也提供了自己估算的方法：</p>
+
+<h4 id="1-估算locker">1 估算Locker</h4>
+
+<ul>
+  <li>
+    <p>如果使用了事务特性，Locker 的数量可以估算为系统最大同时打开的非事务游标数，打开的数据库句柄数，还有此时活动的事务数和子事务数之和。对于子事务数的估算应该到子事务的提交，而不是父事务的提交。</p>
+  </li>
+  <li>
+    <p>如果没有使用事务特性，可以估算为系统最大同时打开的非事务游标数，打开的数据库句柄中非游标操作的数量（数据库句柄可以直接存取数据，也可以使用游标存取，如果不打开游标就计算数据库句柄数，否则计算游标数）。</p>
+  </li>
+</ul>
+
+<h4 id="2-估算lock-object">2 估算Lock Object</h4>
+
+<ul>
+  <li>
+    <p>每次访问 non-Queue 数据库的时候，每一个数据页（默认8k）需要一个Lock Object</p>
+  </li>
+  <li>
+    <p>对于Queue 数据库，每一条记录（k-v）都需要一个Lock Object。在删除记录的时候不断使用 DB_NEXT 或者 DB_PREV 获得下一条，上一条记录时，不需要额外进行计算。</p>
+  </li>
+  <li>
+    <p>对于 Btree 或 Recno 类型的数据库，在更新操作导致树分裂，需要分裂阶段额外的Lock Object。</p>
+  </li>
+  <li>
+    <p>对于Hash 和 Queue 数据库，每一次访问都需要在 metadata page（元数据页）上加锁，但不会一直持续到事务结束。</p>
+  </li>
+  <li>
+    <p>如果事务执行了更新操作，导致需要alloc 一个新页，那么需要在 metadata page 上加锁，直到事务结束。</p>
+  </li>
+</ul>
+
+<p>需要注意的是，在事务的生命周期内，总是不断的积累申请到的Lock，但是需要的Lock Object 数量就是这个事务周期内所有操作所需要的数量，也就是说如果对一个数据页（或者Queue的记录），即使多次访问，也只需要一个Lock Object。举个例子：一个事务总共需要访问10调记录，那么就需要10个Lock Object，如果有同时有10个并发的访问线程，就需要配置系统拥有100个Lock Object（因为每个线程都有一个事务）。关于Lock Object 数量多配置一点没关系，因为它的结构占用空间比较小。</p>
+
+<h4 id="3-估算-lock">3 估算 Lock</h4>
+
+<p>Lock的数量不太容易估算，可以使用公式：</p>
+
+<p><strong>Lock = 2 * (Locker) * (Lock Object) * 2</strong></p>
+
+<p>最后乘的2表示对每个object的读写两种加锁模式。这是比较坏的情况下估算出来的值。一般用不到这么多。</p>
+
+<h3 id="4-锁表分区"> 4 锁表分区</h3>
+
+<p>对锁表进行分区可以充分利用多核CPU，调用函数 DB_ENV-&gt;set_lk_partitions() 完成。每一个分区都可以独立的被一个线程访问，更多的分区意味着更高的并发。默认是在环境启动的时候配置成 cpu 数量的十倍。对于单cpu系统，单个分区反而会比多个分区更有效率。分区之后，最好将Object 和 Lock 分配到各个分区中，便于并发获取。如果其中一个分区用完了Lock 或 Lock Object 资源，会从其它分区中请求，但是频繁的请求会降低效率。</p>
+
+<p>参考：</p>
+
+<p><a href="http://docs.oracle.com/cd/E17076_04/html/programmer_reference/lock_max.html">http://docs.oracle.com/cd/E17076_04/html/programmer_reference/lock_max.html</a></p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/" data-toggle="tooltip" data-placement="top" title="Berkeley DB 事务支持的应用架构">
+                        Previous<br>
+                        <span>Berkeley DB 事务支持的应用架构</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/2016/09/13/my_25_years/" data-toggle="tooltip" data-placement="top" title="我的25年">
+                        Next<br>
+                        <span>我的25年</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-%e9%94%81%e5%ad%90%e7%b3%bb%e7%bb%9f%e7%9a%84%e9%85%8d%e7%bd%ae";
+    var disqus_url = "http://localhost:4000/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

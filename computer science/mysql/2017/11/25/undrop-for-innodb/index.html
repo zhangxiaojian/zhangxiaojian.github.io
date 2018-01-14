@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>undrop-for-innodb - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/mysql/2017/11/25/undrop-for-innodb/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>undrop-for-innodb</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on November 25, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="简介">简介</h2>
+<p>undrop-for-innodb 是针对 innodb 的一套数据恢复工具，可以从文件级别恢复诸如：DROP/TRUNCATE table, 删除表中某些记录，innodb 文件被删除，文件系统损坏，磁盘 corruption 等几种情况。本文简单介绍下使用方法和原理浅析。</p>
+
+<h2 id="准备">准备</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/twindb/undrop-for-innodb.git 
+make
+</code></pre></div></div>
+<p>需要联合 MySQL 的安装路径编译工具 sys_parser,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc `$basedir/bin/mysql_config --cflags` `$basedir/bin/mysql_config --libs` -o sys_parser sys_parser.c
+</code></pre></div></div>
+<p>需要的工具都已经完备:
+<img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/9e03cc7bd345bc8842ab88173ce931a6.jpg" alt="420d94d6-79de-49b3-ad6c-c2648307d1dc.png" /></p>
+
+<ul>
+  <li>重要的工具： <code class="highlighter-rouge">c_parser &amp;&amp; stream_parser &amp;&amp; sys_parser</code></li>
+  <li>其中 <code class="highlighter-rouge">test.sh &amp;&amp; recover_dictionary.sh &amp;&amp; fetch_data.sh</code> 是测试的脚本，可以看下里面的逻辑理解工具的用法。</li>
+  <li>三个目录</li>
+  <li>dictionary 里面是模拟 innodb 系统表结构写的 CREATE TABLE 语句，innodb 的系统表对用户不可见，可以在 informatioin_schema 表中找到一些值，但实际上系统表是保存在 ibdata 固定的页上的。</li>
+  <li>sakila 是一些 SQL 语句，用来测试用。</li>
+  <li>include 是从 innodb 拿出来的一些用到的头文件和源文件。</li>
+</ul>
+
+<h2 id="drop-table">DROP TABLE</h2>
+
+<h3 id="表结构恢复">表结构恢复</h3>
+<p>一般情况下表结构是存储在 frm 文件中，drop table 会删除 frm 文件，还好我们可以从 innodb 系统表里读取一些信息恢复表结构。innodb 系统表有</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SYS_COLUMNS | SYS_FIELDS | SYS_INDEXES | SYS_TABLES 
+</code></pre></div></div>
+<p>关于系统表结构的具体介绍可以参考 <a href="https://twindb.com/innodb-dictionary/">系统表</a> , 这几个表对于恢复非常重要，下面以一个恢复表结构的例子来说明。</p>
+
+<p>使用目录 sakila/actor.sql 中的例子：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">`actor`</span> <span class="p">(</span>
+  <span class="nv">`actor_id`</span> <span class="n">smallint</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="n">unsigned</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="nv">`first_name`</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`last_name`</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`last_update`</span> <span class="k">timestamp</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="k">CURRENT_TIMESTAMP</span> <span class="k">ON</span> <span class="k">UPDATE</span> <span class="k">CURRENT_TIMESTAMP</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="nv">`actor_id`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="nv">`idx_actor_last_name`</span> <span class="p">(</span><span class="nv">`last_name`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span> <span class="n">AUTO_INCREMENT</span><span class="o">=</span><span class="mi">201</span> <span class="k">DEFAULT</span> <span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8</span><span class="p">;</span>
+
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zhang'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zhan'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zha'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zh'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'z'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="n">checksum</span> <span class="k">table</span> <span class="n">actor</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">-----------+------------+</span>
+<span class="o">|</span> <span class="k">Table</span>     <span class="o">|</span> <span class="n">Checksum</span>   <span class="o">|</span>
+<span class="o">+</span><span class="c1">-----------+------------+</span>
+<span class="o">|</span> <span class="n">per</span><span class="p">.</span><span class="n">actor</span> <span class="o">|</span> <span class="mi">2184463059</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">-----------+------------+</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">actor</span>
+</code></pre></div></div>
+<p>需要从系统表中恢复，而系统表是保存在 $datadir/ibdata1 文件中的，使用工具 <code class="highlighter-rouge">stream_parser</code> 解析文件内容。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$.</span>/stream_parser <span class="nt">-f</span> /home/zj118228/rds_5616/data/ibdata1
+</code></pre></div></div>
+<p>执行完毕后会在当前目录下生成文件夹 <code class="highlighter-rouge">pages-ibdata1</code> , 目录下按照每个页为一个文件，分为索引页和数据较大的 BLOB 页，我们访问系统表的话，是存在索引页中的。使用另外一个重要的工具 <code class="highlighter-rouge">c_parser</code> 来解析页的内容。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$.</span>/c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000001.page <span class="nt">-t</span> dictionary/SYS_TABLES.sql  | <span class="nb">grep</span> <span class="s1">'sakila/actor'</span>
+000000005927 24000001C809C6 SYS_TABLES <span class="s2">"sakila/actor"</span> 52 4 1 0 80 <span class="s2">""</span> 38
+</code></pre></div></div>
+<p>参数解析：</p>
+
+<ul>
+  <li>4 表示文件格式是 REDUNDANT，系统表的格式默认值。另外可以取值 5 表示 COMPACT 格式，6 表示 MySQL 5.6 格式。</li>
+  <li>D 表示只恢复被删除的记录。</li>
+  <li>f 后面跟着文件。</li>
+  <li>t 后面跟着 CREATE TABLE 语句，需要根据表的格式来解析文件。</li>
+</ul>
+
+<p>得到的结果 ‘SYS_TABLES’ 字段后面的就是系统表 SYS_TABLE 中对应存的记录。 同样的恢复其它三个系统表：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/<span class="k">*</span> <span class="nt">---</span> SYS_INDEXES <span class="s1">'grep 52'</span> 是对应 SYS_TABLE 的 TALE ID <span class="nt">---</span> <span class="k">*</span>/ 
+<span class="nv">$.</span>/c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000003.page <span class="nt">-t</span> dictionary/SYS_INDEXES.sql  | <span class="nb">grep</span> <span class="s1">'52'</span>
+000000005927 24000001C807FF SYS_INDEXES 52 57 <span class="s2">"PRIMARY"</span> 1 3 38 4294967295
+000000005927 24000001C80871 SYS_INDEXES 52 58 <span class="s2">"idx</span><span class="se">\_</span><span class="s2">actor</span><span class="se">\_</span><span class="s2">last</span><span class="se">\_</span><span class="s2">name"</span> 1 0 38 4294967295
+
+/<span class="k">*</span> <span class="nt">---</span> SYS_COLUMNS <span class="nt">---</span> <span class="k">*</span>/
+./c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000002.page <span class="nt">-t</span> dictionary/SYS_COLUMNS.sql | <span class="nb">grep </span>52
+000000005927 24000001C808F2 SYS_COLUMNS 52 0 <span class="s2">"actor</span><span class="se">\_</span><span class="s2">id"</span> 6 1794 2 0
+000000005927 24000001C80927 SYS_COLUMNS 52 1 <span class="s2">"first</span><span class="se">\_</span><span class="s2">name"</span> 12 2162959 135 0
+000000005927 24000001C8095C SYS_COLUMNS 52 2 <span class="s2">"last</span><span class="se">\_</span><span class="s2">name"</span> 12 2162959 135 0
+000000005927 24000001C80991 SYS_COLUMNS 52 3 <span class="s2">"last</span><span class="se">\_</span><span class="s2">update"</span> 3 525575 4 0
+
+/<span class="k">*</span> <span class="nt">---</span> SYS_FIELD  <span class="s1">'grep 57\|58'</span> 对应 SYS_INDEXES 的 ID 列 <span class="nt">---</span> <span class="k">*</span>/
+<span class="nv">$.</span>/c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000004.page <span class="nt">-t</span> dictionary/SYS_FIELDS.sql | <span class="nb">grep</span> <span class="s1">'57\|58'</span>
+000000005927 24000001C807CA SYS_FIELDS 57 0 <span class="s2">"actor</span><span class="se">\_</span><span class="s2">id"</span>
+000000005927 24000001C8083C SYS_FIELDS 58 0 <span class="s2">"last</span><span class="se">\_</span><span class="s2">name"</span>
+</code></pre></div></div>
+<p>我们恢复表结构的数据都在这四张系统表中了，SYS_COLUMNS 后面几列的表示 MySQL 内部对于数据类型的编号。</p>
+
+<p>接下来是恢复阶段</p>
+<ol>
+  <li>使用目录 dictionary 下的四个文件创建四张表（这里数据库名为 recover ）。</li>
+  <li>把上面恢复出来的数据分别导入到对应的表中(注意相同的行去重)。</li>
+  <li>使用工具 sys_parser 恢复 CREATE TABLE 语句。</li>
+</ol>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">$</span><span class="p">.</span><span class="o">/</span><span class="n">sys_parser</span> <span class="o">-</span><span class="n">h</span> <span class="mi">127</span><span class="p">.</span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="p">.</span><span class="mi">1</span> <span class="o">-</span><span class="n">u</span> <span class="n">root</span> <span class="o">-</span><span class="n">P</span> <span class="mi">56160</span> <span class="o">-</span><span class="n">d</span> <span class="n">recover</span> <span class="n">sakila</span><span class="o">/</span><span class="n">actor</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">`actor`</span><span class="p">(</span>
+ <span class="nv">`actor_id`</span> <span class="n">SMALLINT</span> <span class="n">UNSIGNED</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+ <span class="nv">`first_name`</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="n">CHARACTER</span> <span class="k">SET</span> <span class="s1">'utf8'</span> <span class="k">COLLATE</span> <span class="s1">'utf8_general_ci'</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+ <span class="nv">`last_name`</span> <span class="n">VARCHAR</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="n">CHARACTER</span> <span class="k">SET</span> <span class="s1">'utf8'</span> <span class="k">COLLATE</span> <span class="s1">'utf8_general_ci'</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+ <span class="nv">`last_update`</span> <span class="k">TIMESTAMP</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+ <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="nv">`actor_id`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+</code></pre></div></div>
+<p>对比发现，恢复出来的 CREATE TABLE 语句相比原来创建的语句信息量有点缺少，因为 innodb 系统表里面存的数据相比 frm 文件是不足的，比如 AUTO_INCREMENT, DECIMAL 类型的精度信息都会缺失，也不会恢复二级索引，外建等。可以看成是表存储结构的恢复。如果有 frm 文件就可以完完整整的恢复了，这篇文章介绍了恢复方法：<a href="https://twindb.com/how-to-recover-table-structure-from-frm-files-online/">Get Create Table From frm</a></p>
+
+<h3 id="表数据恢复">表数据恢复</h3>
+
+<h4 id="innodb_file_per_table-off">innodb_file_per_table off</h4>
+<p>这种情况表中的数据是保存在 ibdata 文件中的，虽然表的数据在数据库中被删除了，但是如果没有被重写，数据还在保存在文件中的，执行下列步骤来恢复：</p>
+<ol>
+  <li>使用 stream_parser 分析 ibdata 文件，分别得到每个页的文件。</li>
+</ol>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$.</span>/stream_parser <span class="nt">-f</span> /home/zj118228/rds_5616/data/ibdata1
+</code></pre></div></div>
+<ol>
+  <li>如表结构分析小节中所示，使用 <code class="highlighter-rouge">c_parser</code> 分析系统表 SYS_TABLES 和 SYS_INDEXES ，根据表名得到 TABLE ID， 根据 TABLE ID 得到 INDEX ID。（INDEX ID 就是上述例子的第 5 列，值为 57 和 58）</li>
+  <li>根据得到的 INDEX ID，到目录 pages-ibdata1 下去找对应的页号，这就是对应的索引表数据所在的数据页。</li>
+  <li>使用 c_parser 读取第 3 步得到的页文件，得到数据。</li>
+</ol>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$.</span>/c_parser <span class="nt">-6f</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000065.page <span class="nt">-t</span> actor.sql
+<span class="nt">--</span> Page <span class="nb">id</span>: 579, Format: COMPACT, Records list: Valid, Expected records: <span class="o">(</span>5 5<span class="o">)</span>
+000000005D95 E5000001960110 actor 201 <span class="s2">"zhang"</span> <span class="s2">"jian"</span> <span class="s2">"2017-11-04 12:30:07"</span>
+000000005D96 E6000001970110 actor 202 <span class="s2">"zhan"</span> <span class="s2">"jian"</span> <span class="s2">"2017-11-04 12:30:07"</span>
+000000005D98 E80000019A0110 actor 203 <span class="s2">"zha"</span> <span class="s2">"jian"</span> <span class="s2">"2017-11-04 12:30:07"</span>
+000000005D99 E90000019B0110 actor 204 <span class="s2">"zh"</span> <span class="s2">"jian"</span> <span class="s2">"2017-11-04 12:30:07"</span>
+000000005DA9 F1000002480110 actor 205 <span class="s2">"z"</span> <span class="s2">"jian"</span> <span class="s2">"2017-11-04 12:30:08"</span>
+</code></pre></div></div>
+<p>数据看起来没什么问题，表结构和数据都有了，导进去即可,看一下 checksum 也相同。</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mysql&gt; checksum table actor;
++-----------+------------+
+| Table     | Checksum   |
++-----------+------------+
+| per.actor | 2184463059 |
++-----------+------------+
+1 row in set (0.00 sec)
+</code></pre></div></div>
+
+<h4 id="innodb_file_per_table-on">innodb_file_per_table on</h4>
+<p>这种情况下表是保存在各自的 ibd 文件中的，当 drop table 之后 ，ibd 文件会被删除，此时最好能够设置磁盘整体只读，避免有其它进程重写文件块。整体的恢复步骤和上一个小节（innodb_file_per_table off） 相同，只是无法从 pages-ibdata1 目录下面找到对应的 page 号。
+假设已经完成了前两步，拿到了 INDEX ID。</p>
+
+<p><code class="highlighter-rouge">stream_parser</code> 这个工具不但可以读文件，还可以读磁盘，会根据 innodb 数据格式把数据页读出来。为了恢复 68 号数据页，我们执行下面几个步骤：
+1.找到被删除的 ibd 文件的挂载磁盘 ／dev/sda5：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$df 
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda2             52327276  47003636   2702200  95% /
+tmpfs                 99225896   9741300  89484596  10% /dev/shm
+/dev/sda1               258576     55291    190229  23% /boot
+/dev/sda5            1350345636 1142208356 208137280  85% /home
+/dev/sdb1            3278622264 2277365092 1001257172  70% /disk1
+</code></pre></div></div>
+<p>2.根据 INDEX ID ， 磁盘大小执行 <code class="highlighter-rouge">stream_parser</code>，-t 表示磁盘的大小。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$.</span>/stream_parser <span class="nt">-f</span> /dev/sda5 <span class="nt">-s</span> 1G <span class="nt">-t</span> 1142G
+</code></pre></div></div>
+<p>3.在目录 pages—sda5 下找到 68 号页，像上一个小节第 4 步一样恢复数据即可。
+4.<划重点> 测试了三次，有两次是恢复不出来的，因为文件很可能被其它进程重写，这取决于文件系统调度还有整体服务器的负载。
+5.如果挂载的磁盘上还有其它 mysqld 的数据目录，那么很可能一个 page 文件会很大，监测到其它 ibd 文件的数据，同一个页号的综合在一起，这样辨别出我们需要的数据就比较麻烦。</划重点></p>
+
+<h2 id="文件页脏写">文件页脏写</h2>
+<p>MySQL 每次从磁盘读取数据的时候都会进行 checksum 校验，如果校验失败，整个进程就会重启或者退出，校验失败很可能是文件页被脏写了。使用恢复工具直接读取文件很可能可以把未被脏写的行或者页读取出来，损失降到最低。</p>
+
+<h3 id="模拟脏写">模拟脏写</h3>
+<p>同样使用目录 sakila/actor.sql 中的例子，innodb_per_file_table = on：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">`actor`</span> <span class="p">(</span>
+  <span class="nv">`actor_id`</span> <span class="n">smallint</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="n">unsigned</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="nv">`first_name`</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`last_name`</span> <span class="n">varchar</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`last_update`</span> <span class="k">timestamp</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">DEFAULT</span> <span class="k">CURRENT_TIMESTAMP</span> <span class="k">ON</span> <span class="k">UPDATE</span> <span class="k">CURRENT_TIMESTAMP</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="nv">`actor_id`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="nv">`idx_actor_last_name`</span> <span class="p">(</span><span class="nv">`last_name`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span> <span class="n">AUTO_INCREMENT</span><span class="o">=</span><span class="mi">201</span> <span class="k">DEFAULT</span> <span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8</span><span class="p">;</span>
+
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zhang'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zhan'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zha'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'zh'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">actor</span><span class="p">(</span><span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="s1">'z'</span><span class="p">,</span> <span class="s1">'jian'</span><span class="p">);</span>
+</code></pre></div></div>
+<p>模拟脏写，打开 actor.ibd 文件, 使用 ‘#’ 覆盖其中一行数据，
+<img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/089813e87cf48f3d435d22a418aaf184.png" alt="00fdb870-b7df-4122-b7d9-1622bc354737.png" /></p>
+
+<p>从系统表空间确定 INDEX ID （参考 表结构恢复 小节）</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$.</span>/stream_parser <span class="nt">-f</span> /home/zj118228/rds_5616/data/ibdata1
+<span class="nv">$.</span>/stream_parser <span class="nt">-f</span> ~/rds_5616/data/per/actor.ibd
+<span class="nv">$.</span>/c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000001.page <span class="nt">-t</span> dictionary/SYS_TABLES.sql
+<span class="nv">$.</span>/c_parser <span class="nt">-4Df</span> pages-ibdata1/FIL_PAGE_INDEX/0000000000000003.page <span class="nt">-t</span> dictionary/SYS_INDEXES.sql
+</code></pre></div></div>
+<p>INDEX ID 为 76，读取数据：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$./c_parser -6f pages-actor.ibd/FIL_PAGE_INDEX/0000000000000076.page -t sakila/actor.sql
+</code></pre></div></div>
+<p><img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/be67d98d3e0745dd8991975d30c75e7e.png" alt="d27b1b03-ac82-4d60-9717-1c58d9587e64.png" /> 
+看到有一行数据被 # 号覆盖，然后丢失了一行。</p>
+
+<p>脏写之后数据库是起不来的，因为 ibd 文件已经损坏了，但此时我们已经拿到了恢复之后的数据，需要把恢复之后的数据导入到数据库里。导入之前删除 actor.ibd 文件，然后启动数据库后执行 <code class="highlighter-rouge">drop table actor</code>, 然后再重新创建表，导入数据即可。如果不小心把 frm 文件也删掉了，是没法 drop table 的，可以在其它数据库里建一个同名，结构相同的表生成 frm 文件，然后拷贝到被删除的目录下，然后再执行 drop table。参考：<a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-troubleshooting-datadict.html">Troubleshooting</a></p>
+
+<h3 id="原理浅析">原理浅析</h3>
+
+<h4 id="c_parser">c_parser</h4>
+<p>恢复工具 <code class="highlighter-rouge">c_parser</code> 其实是按照 innodb 存储数据的格式来分析哪些是我们需要的数据本身，所以页上的数据可以分为两类：1. 用户数据 2. 元数据。而元数据的功能其实并不相同，有些损坏无伤大雅，有些损坏却可能导致整个页无法恢复。这里有几篇介绍<a href="https://dev.mysql.com/doc/internals/en/innodb-record-structure.html">Innodb 行记录格式1</a> and <a href="http://blog.csdn.net/Linux_ever/article/details/64124868">Innodb 行记录格式2</a> ，上一个小节中行记录格式是 Compact，来分析一下为什么会丢了一行数据。</p>
+
+<p>这是完好的数据页，上面是脏写是把第 12 行数据全部覆盖了，根据 Compact 类型的格式，12 行末尾的 04 03 表示下一行变长数据类型（‘zha’ ‘jian’）的长度倒序，被覆盖之后当然无法解析，于是就丢了一行。那么为什么没有影响后续的行数据呢？第 13 行第 2 列的数据 21 表示下行数据的偏移，幸运的没有被覆盖。如果这个字节被覆盖，那么整个格式就乱了，无法解析。
+<img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/dfe3e6b6bb0a194fec08f4b296464f72.png" alt="4abe1824-db59-46a4-a610-a24a3cd9bfd0.png" /></p>
+
+<p>试了其它几种情况：</p>
+
+<ul>
+  <li>第六行第五列 004C 表示 page 的号，破坏之后 stream 出来的页号会变，所以从 Innodb 系统表得到的主键索引页号就不对了。</li>
+  <li><code class="highlighter-rouge">infimum</code> 和 <code class="highlighter-rouge">supremum</code> 破坏之后 stream 无法检测出页，所以根本产生不了可恢复的数据。</li>
+</ul>
+
+<h4 id="stream_parser">stream_parser</h4>
+<p><code class="highlighter-rouge">c_parser</code> 是分析页面中用户的行数据，从参数中传入 <code class="highlighter-rouge">CREATE TABLE</code> 语句，根据定义的数据格式逐行解析，得到最终恢复的数据。而 <code class="highlighter-rouge">stream_parser</code> 是分析 ibd／ibdata 文件（或者挂载的磁盘），得到每一个数据页的。根据数据页的元数据，如果满足下列条件，就被认为是一个合法的 Innodb Index 数据页：</p>
+
+<ul>
+  <li>页面最开始前四个字节（checksum）不为 0</li>
+  <li>页面 5-8 字节（页面在 tablespace 中的偏移）不为零，且小于 (ib_size / UNIV_PAGE_SIZE) 最大偏移量，ibd 文件大小除以 Innodb 页大小。</li>
+  <li>在固定偏移处找到 <code class="highlighter-rouge">infimum</code> 和 <code class="highlighter-rouge">supremum</code></li>
+</ul>
+
+<p>参考 <code class="highlighter-rouge">stream_parser.c</code> 中的函数 <code class="highlighter-rouge">valid_innodb_page</code>, 关于 Blob page 判定条件略有不同，详细参考 <code class="highlighter-rouge">valid_blob_page</code>，这里以 Index page 为例。</p>
+
+<p>得到一个合法的页后就以 UNIV_PAGE_SIZE 为大小写入到以 index_id 命名的文件中（也就是 <code class="highlighter-rouge">c_parser</code> 读入的页号判断标准）。</p>
+
+<h4 id="页数据格式">页数据格式</h4>
+<p>这里引用下<a href="http://hedengcheng.com/?p=118">登博</a>画的大图：
+<img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/b1ffab644960e13617606f2cc35d124c.png" alt="undefined" /></p>
+
+<p>根据图中数据格式，如果页面前 8 字节被重写为 0 ，<code class="highlighter-rouge">infimum</code> 和 <code class="highlighter-rouge">supremum</code> 被写坏，<code class="highlighter-rouge">stream_parser</code> 无法检测出有效页。如果图中 Page_no 被写坏，那么我们从 Innodb 数据字典中获得的需要解析的文件页号恐怕就不对了，也不知道从那里去恢复。</p>
+
+<p>所以这种恢复方式是寄托在重要页元数据和行元数据没有被脏写的前提下的，上述分析过后，重要的元数据所占比例较小，如果每个字节被脏写的概率相同，那么数据的可恢复性还是比较可观的。</p>
+
+<p>最后，对于文件系统损坏或者磁盘 corruption，最重要的把数据拷贝出来，而不是去恢复文件系统或者磁盘，因为上述工具的恢复是基于数据的，参考<a href="https://twindb.com/take-image-from-corrupted-hard-drive/">这篇文章</a>，第一时间使用 dd 命令制作磁盘镜像，再走上述的恢复流程即可。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/computer%20science/database/mysql/2017/11/20/665/" data-toggle="tooltip" data-placement="top" title="MySQL 信号处理机制">
+                        Previous<br>
+                        <span>MySQL 信号处理机制</span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/mysql/2017/11/25/undrop-for-innodb";
+    var disqus_url = "http://localhost:4000/computer%20science/mysql/2017/11/25/undrop-for-innodb/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

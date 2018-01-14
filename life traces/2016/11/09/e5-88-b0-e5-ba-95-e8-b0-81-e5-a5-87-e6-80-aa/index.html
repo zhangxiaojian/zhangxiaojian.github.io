@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>到底谁奇怪 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2016/11/09/e5-88-b0-e5-ba-95-e8-b0-81-e5-a5-87-e6-80-aa/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>到底谁奇怪</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on November 9, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h3 id="奇怪的大叔">奇怪的大叔</h3>
+
+<p>我是黄山本地人，今年四十多岁了，上有老下有小的，我书读的不多，年轻的时候还可以靠出点力，现在真是有力都没地方使，黄山这几年主要是发展旅游业，其它行业不太景气，前几年我们一帮伙计发现了商机，因为黄山汽车站和火车站离景区还是有一段距离的，没有直达的公交车，的士根本就不够用！现在的游客都是比较有钱才出来逛的，宁可多花点钱，也不想耽误太多时间在路上。于是我们一帮人开始用自己的私家车拉客，不说旺季了，即使是淡季，游客也是络绎不绝的，大伙对收入都比较满意。可是我没有私家车啊，眼看着他们找到了一条致富之路，却只有眼红的份。家里没有太多积蓄，女儿正在外地读书，想当年我们这帮人一起打工的时候，我可是他们的老大，凡事都听我指挥，现在真有一种虎落平阳的感觉。</p>
+
+<p>不过没多久我就找到了一个突破口，这帮小子为了争客人竟然反目，还打起来了，然后警察局，旅游管理局什么的都知道了我们的黑车，他们警告我们再出现这种事就不让我们拉游客了。我心里清楚，我们送更多的游客，提供方便的交通，最终收益的是他们，不会轻易不让我们干的。但是我们不能再自己人和自己人过不去了，为了解决内部矛盾，我们一块成立了黄山地区的专车联盟，各自有各自的区域，司机负责开车，“中介”负责把游客从车站带到车里，按比例拿一部分回扣。我没有私家车，但是可以做中介啊！再怎么说以前混的也不错，汽车西站这个点基本被我承包了，为了避免抢客，我们定下了行规，是谁先抢到游客就是谁的，别人绝对不能动。</p>
+
+<p>喜迎G20，为了让杭州的市民在G20期间别呆在杭州，黄山景区那几天对杭州市民免费开放。大几百的门票肯定会吸引不少游客，但是羊毛出在羊身上，景区内的管不了，不过我们这几天的价格也比平时高了好几倍！汽车西站真是一块福地，客流量比其它地方都大，看来选择坐汽车的多于坐火车的，不对，应该是没抢到票！一共有五天的开放时间，前三天主要是流入，从车站到景区车费不过30，我们拿20%的回扣，其实一单也没有多少。重头都在最后两天嘞！火车票早就已经售光，汽车票也没有了，只剩下黑大巴车，从黄山直接开到杭州。正常90的票价，现在至少要150，因为大巴坐不满他们跑一趟损失太大，我们的回扣也可以拿到30%，真是丰收的时候啊。</p>
+
+<p>今天是返程的高峰，人流量特别大，我早早就来了，一单接一单真是不亦乐乎，这片都是我们的人，价钱没得商量，反正不坐就回不去，出来逛的都不在乎这几十块钱。中午的时候，我盯上了四个年轻人，两男两女，看着就是要返程的样子，他们先是到车站旁边的饭馆吃饭，我就跟着他们，一坐下我就出击了。</p>
+
+<p>“是要去杭州吗？”</p>
+
+<p>“是啊” 其中一个瘦瘦高高的男生说。</p>
+
+<p>“走啊，我们有车马上就走，今天车站没车了，人有多，我们刚好有几个座位，我给你们留着啊“ 其实车多的很，给他们点压力，快点送上车，准备下一个目标。</p>
+
+<p>”我们先不急，中午都还没吃饭，先吃饭再说“</p>
+
+<p>”那你们赶紧吃啊，座位给你们留好了，吃完就走。 你们是点菜还是盖饭？“ 我擦，赶紧的，千万别点菜，这要等到什么时候。</p>
+
+<p>”点菜“</p>
+
+<p>”好，那你们快去点，座位留好了，放心，快吃啊。“ 赶快吃！！</p>
+
+<p>中午这会好像突然人一下少了，应该都是在吃午饭，我就在这等着这一单吧，四个人，也有小200块。过了20分钟，我看他们吃的差不多了，就过去喊他们走。另一个男生表示要先去车站里看一下，确认下有没有票。没关系啊，早就没有了，随便看。在车站口等他们的时候，我看见有其中一个女生走在后面，有一个不认识的人在旁边搭讪，不是我们组织的人。他们从车站出来发现确实没有票，走在后面的女生和他们一块商量了一下，说是要再看看！我这火一下就上来了，等了这么长时间，肯定是刚才不认识的那个人说了什么。规矩就是规矩，是谁抢到的游客就是谁的，别人绝对不能动。</p>
+
+<p>他们出站往刚才过来的方向走，我就在后面跟着，看谁敢和我抢。走几步就发现刚才那个人走到他们旁边，”120一个人，现在就走“。妈的，这一片都是150，给老子玩这套。我在后面指着他大骂一声”你哪里的，懂不懂规矩，找事是吧“。那个人一看我跟过来，我料他也不敢惹我，这可是老子的地盘。果然，他就怂了，丢下四个年轻人走一边去了。我的人就是我的人，谁也抢不走！</p>
+
+<p>我走到他们跟前，说”快走吧，刚才吃饭时候都说好了，座位都给你们留着，这些人便宜一点，不一定能给你们拉到杭州“ 看来需要威逼一下了。</p>
+
+<p>”大叔，刚说了我们要再看一下，这边便宜一点，你别跟着我们。“</p>
+
+<p>”我怎么跟着你们了，刚才都说好了，现在都是这个价钱“ 我他妈真生气了，等了半个小时。嗓门也是大起来了。</p>
+
+<p>”我们再看看行吧，我们想坐哪个车是自由“</p>
+
+<p>四个年轻人就往边上走，我这会火气真的上来了，我就要跟着他们，看这个车站哪个敢和我抢人。走几步就有几个我们的人和他们搭讪，还没等他们回答，我就大喝一声，看我脾气也就乖乖走开了了。我今天在这，就必须从我这上车，走到哪我就跟到哪。</p>
+
+<p>他们一看没办法，就顺着路往更远的地方走，看来是想甩开我，没门！差不多出了车站的范围，他们看我还跟着，我就上前去再说”这片都是我们的人，我们有我们行规，别人不能再拉你们。大不了给你们120，赶紧走“ 心想着别耗着了，少赚点没事，下午单子还多，别浪费了时间。</p>
+
+<p>”大叔，这现在不是钱不钱的问题，你别跟着我们，我们想坐什么车就坐什么车，你这样跟着我们是什么意思，今天我们不走了“。</p>
+
+<p>”我怎么不跟着你们呢，我就看看谁敢拉你们走“  这是我定的行规。</p>
+
+<p>”再说一遍，别跟着我们。“</p>
+
+<p>他们说完就往另一个方向走，我就不信他们今天不走了。不过眼看下午客流量大起来了，得想想办法。我就喊了另一个我们的伙计，刚开着车送完客人回来，我让他过去假装另一个中介，再去问问这几个年轻人。我就在旁边等着，过一会伙计回来说他们还是不走，我真的是怒了，再次走到他们跟前理论</p>
+
+<p>”我们有我们的规矩，今天没人敢拉你们“</p>
+
+<p>”我们也有自己的自由，想坐谁的车就坐谁的车，你再跟着我们，就报警了“</p>
+
+<p>报警？我啥都没干，这是我们的规矩啊。我打算走了，不能再浪费时间 。</p>
+
+<p>”我告诉你们几个年轻人啊，你们不要这么奇怪！“</p>
+
+<h3 id="奇怪的年轻人">奇怪的年轻人</h3>
+
+<p>我是一名计算机专业的研究生，暑假来杭州实习，两个月过的非常开心，能呆在理想的公司理想的部门，还有业界有名的大神带，不仅能学到东西，还有比学校高不知道多少倍的工资，不过学校已经开学，过不了多久就要撤了。</p>
+
+<p>喜迎G20，整个杭州放5天假，我们也不例外。得知放假消息，就有小伙伴计划出去玩，黄山景区不要门票，凑够一行四人，愉快决定。车票紧张，只买到了去的，返程票还没买到。坐大巴从杭州到黄山西站，晚上吃点当地特色，买点登山用的拐杖等，其中有一个臭鳜鱼，不像臭豆腐，那是真的臭，强烈不建议……  第二天中午开始登山，因为听卖拐杖的阿姨说，早上排队的人太多，就算早上去，也会排队到中午的。缆车上去，开始爬，背着帐篷和行李，感觉不要太酸爽。不过看见了美丽的日出和日落，非常值的。下山之后去了宏村，和之前去过的周庄，凤凰，乌镇等等真有点不一样，这里有很多学画画的学生就在旁边写生，还有其它院校的研究生过来考察，准备写毕业论文（别人这么早就开始准备了，我小论文还没发，还在玩！内心收到了谴责…..）此处应该放图，舒缓受谴责的心情。</p>
+
+<p><a href="/img/uploads/2016/11/h1.jpg"><img src="/img/uploads/2016/11/h1.jpg" alt="h1" /></a></p>
+
+<p><a href="/img/uploads/2016/11/h2.jpg"><img src="/img/uploads/2016/11/h2.jpg" alt="h2" /></a></p>
+
+<p><a href="/img/uploads/2016/11/h3.jpg"><img src="/img/uploads/2016/11/h3.jpg" alt="h3" /></a></p>
+
+<p><a href="/img/uploads/2016/11/h4.jpg"><img src="/img/uploads/2016/11/h4.jpg" alt="h4" /></a></p>
+
+<p><a href="/img/uploads/2016/11/h6.jpg"><img src="/img/uploads/2016/11/h6.jpg" alt="h6" /></a></p>
+
+<p><a href="/img/uploads/2016/11/h7.jpg"><img src="/img/uploads/2016/11/h7.jpg" alt="h7" /></a></p>
+
+<p>逛完宏村就打算返程了，找了一个黑车从景区到汽车西站，路上的司机大叔看我们还没有买到票，就一路上要帮我们找拼车，200一个人，七座车直接到杭州。我们比较犹豫，因为不知道汽车站是什么行情，而且中午饭还没吃，考虑了一下还是拒绝了大叔，打算先去汽车站把中午饭搞定，然后用滴滴看看能不能约到顺风车。到了汽车西站找了来的时候光顾过的饭馆，刚刚坐下就有一个看着五大三粗的中年大叔过来。</p>
+
+<p>“是要去杭州吗？”</p>
+
+<p>“是啊” 先看看这边什么行情再说。</p>
+
+<p>“走啊，我们有车马上就走，今天车站没车了，人有多，我们刚好有几个座位，我给你们留着啊“</p>
+
+<p>”我们先不急，中午都还没吃饭，先吃饭再说“ 我们还要再看看，说不定车站还有车，顺风车好像也联系到了，正在等师傅的回应。</p>
+
+<p>”那你们赶紧吃啊，座位给你们留好了，吃完就走。 你们是点菜还是盖饭？“</p>
+
+<p>”点菜“  这大叔真是… 一看就像让我们吃了盖饭赶紧走，就要点菜吃，不用管我们了。。。</p>
+
+<p>”好，那你们快去点，座位留好了，放心，快吃啊。“</p>
+
+<p>大叔走了，我们也没有再留意他，毕竟这种人在所有车站都有。不紧不慢的吃完旅游最后一餐，滴滴师傅没有回应，打算一会先去车站里面看看有没有退票的，没有的话就在车站看一下，找个靠谱的黑车回去。</p>
+
+<p>刚刚起身，那个五大三粗的大叔就过来了，招呼我们往车站方向走。我们表示要先去车站看一下，大叔就跟着我们在车站门口等着。xx同学爬完山已经走不动了，就落在了后面，我们出来之后她说刚才有个人说他有回杭州的顺丰车，刚好可以坐四个人，每人120，对比起来这个要划算的多，而且是私家车的话不用等，说不定可以拉到杭州里面，刚才的黑车大巴好像只能到老余杭，对比起来确实实惠的多。大叔马上就凑过来了，说要我们快上车，座位已经留好。我们就告诉他别急，我们再看一下。大叔看着就有点不太高兴，我们没在意，就往刚才来的方向走。有一个30岁左右的小伙向我们走过来。</p>
+
+<p>“120一个人，现在就走”。</p>
+
+<p>我们刚准备详细问问拉到哪下，刚才的大叔就在后面大喊一声 “你哪里的，懂不懂规矩，找事是吧”。那个架势，好像分分钟就要打起来了，小伙看着不像本地人，也不想惹事，就示意抱歉然后走开了。大叔又走过来说：</p>
+
+<p>“快走吧，刚才吃饭时候都说好了，座位都给你们留着，这些人便宜一点，不一定能给你们拉到杭州“</p>
+
+<p>”大叔，刚说了我们要再看一下，这边便宜一点，你别跟着我们。“ 我们火气也上来了，想坐谁的车是我们的自由，大叔老跟着我们什么意思！两个女生看到这么个粗野的大叔也有点怕，更是不可能坐他的车走了，一看就不像好人。</p>
+
+<p>”我怎么跟着你们了，刚才都说好了，现在都是这个价钱“</p>
+
+<p>”我们再看看行吧，我们想坐哪个车是自由“ 这大叔真是地头蛇，刚才哪里就说好了，绝对不是什么好人，不能上他的车。</p>
+
+<p>我们就往车站更远的地方走，心想先甩掉他，然后再看看其他的中介，价钱无所谓，起码人看着要讲理吧。没走几步就有一个人过来搭讪，问我们是不是去杭州，还没回答，又是那个粗野的大叔在后面大喝一声，他们好像认识，那个人就识趣的离开了。卧槽，这大叔是这一片的恶霸吧，好像没有人敢惹他的样子。我们确实有点怕这个大叔了，在这人生地不熟的，遇到这么个地头蛇，真不知道他接下来能干出什么事！大叔又上来说：</p>
+
+<p>”这片都是我们的人，我们有我们行规，别人不能再拉你们。大不了给你们120，赶紧走“</p>
+
+<p>”大叔，这现在不是钱不钱的问题，你别跟着我们，我们想坐什么车就坐什么车，你这样跟着我们是什么意思，今天我们不走了“。我真是火气上来了，管你什么地头蛇，遇到这种人，你越是好好说话，他越是觉着你好欺负。</p>
+
+<p>”我怎么不跟着你们呢，我就看看谁敢拉你们走“</p>
+
+<p>”再说一遍，别跟着我们。“ 我的嗓门也大起来了。</p>
+
+<p>我们想着这大叔一直跟着我们不是办法，就往车站旁边的一条路走，打算先找一个咖啡店或者茶秀坐一会，反正他一直在也没有人敢拉我们走。边走边回头看，真怕大叔再跟来，拐了个弯看不到他了，放心了一点。这时候有个开着车的年轻人又过来搭讪，问我们走不走。我们不傻啊，这一片都是一伙的人，就算有人想偷偷把我们拉走，万一让那个大叔看见，再互相打起来怎么办，于是拒绝了。大叔立刻从拐角就出来了！</p>
+
+<p>”我们有我们的规矩，今天没人敢拉你们“</p>
+
+<p>”我们也有自己的自由，想坐谁的车就坐谁的车，你再跟着我们，就报警了“ 到了这种程度，我都已经做好了肉搏的准备，虽然瘦很多，不过毕竟年轻，打起来胜负难说。</p>
+
+<p>”我告诉你们几个年轻人啊，你们不要这么奇怪！”  说完大叔就上了刚才来搭讪的年轻人的车。卧槽，原来是陷阱，想想就觉得后怕，要是上了车，说不定被拉到哪里去了！</p>
+
+<p>眼看大叔走了，松了一口气，打算放弃西站这个点，坐公交去了不远的火车站，心想这没有火车应该也有类似这里的黑车，赶紧离开这个是非之地才好。刚到火车站就有人问我们走不走，经历了刚才的胁迫，只想赶紧上车，不要再看到那个大叔。过来两辆小摩托，拉我们去大巴的位置。走着走着我们就感觉不对劲，这不是往刚才西站的方向吗！！遇到刚才的大叔怎么办！！越走心越虚，不过下车已经来不及了，还好在到达西站前到了大巴车，虚惊一场。</p>
+
+<p>坐下之后我们算是放心了，大家都在说，“我们坐哪个车难道不是我们的自由吗，大叔还说我们奇怪，他才真是奇怪！”</p>
+
+<h3 id="后记">后记</h3>
+
+<p>文章第一部分人物背景纯属虚构，第二部分亲身经历。其实在整个过程中我并没有觉得大叔怀有恶意，从小身边有很多这样的人，他们可能文化程度不高，做事有些偏激，但是并不是坏人，只是容易冲动。可能在他眼里我们确实是怪人，就像我们无法理解他的行为一样。脑补了另一个角色，只是想表达善恶，好坏有时候都过于主观，保护好自己，坚持自己的观念是没有错，不过尽量不以恶意揣测别人即可。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/2016/09/13/my_25_years/" data-toggle="tooltip" data-placement="top" title="我的25年">
+                        Previous<br>
+                        <span>我的25年</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" data-toggle="tooltip" data-placement="top" title="MySQL内存分配机制">
+                        Next<br>
+                        <span>MySQL内存分配机制</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2016/11/09/%e5%88%b0%e5%ba%95%e8%b0%81%e5%a5%87%e6%80%aa";
+    var disqus_url = "http://localhost:4000/life%20traces/2016/11/09/e5-88-b0-e5-ba-95-e8-b0-81-e5-a5-87-e6-80-aa/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

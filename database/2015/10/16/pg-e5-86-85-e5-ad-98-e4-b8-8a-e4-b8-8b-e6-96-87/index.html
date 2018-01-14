@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>PG 内存上下文 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Database" title="Database">Database</a>
+                        
+                        <a class="tag" href="/tags/#PostgreSQL" title="PostgreSQL">PostgreSQL</a>
+                        
+                        <a class="tag" href="/tags/#面向对象" title="面向对象">面向对象</a>
+                        
+                    </div>
+                    <h1>PG 内存上下文</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on October 16, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>本文首先大体讲一个内存上下文是干什么的，结构是怎么样的。然后具体介绍PG中现有的一套分配策略，并不详细分析源码的每一处（可以参考PG内核分析这本书），而是说说其中思路流程，如何调节参数进行优化。最后介绍如何使用C++重写其中的源码，让内存上下文不仅仅是PG中的一个特性，而是可以作为一个内存分配的库，供其它程序使用。并附上重写后的源码供大家参考。</p>
+
+<h2 id="大体概述"><strong>大体概述</strong></h2>
+
+<p>PostgreSQL 从7.1开始支持内存上下文，因为数据库在查询过程中需要不断申请内存空间，但是只有当查询结束后才能够释放内存，这执行之间，就有可能发生内存泄漏问题。内存对于数据库而言极其重要，为了避免内存泄漏，引入了内存上下文机制，所有的内存分配回收工作都在一个特定的内存上下文中进行，这样，即使有申请的内存忘了回收，也一定是在内存上下文中，可由它统一交还给操作系统。如图所示，内存上下文使用malloc, free向OS申请空间，通过某种分配管理策略向PG提供申请和释放内存的接口。OS申请来的内存都在MemoryContext中，那么PG在使用中未释放的空间也可以由MemoryContext来释放。大概就是这么一回事。</p>
+
+<p><a href="/img/uploads/2015/10/pg1.png"><img src="/img/uploads/2015/10/pg1.png" alt="pg1" /></a></p>
+
+<p>既然可以在一个内存上下文中完成内存分配与回收，自然就会想到不同的情况使用不同的内存上下文，比如查询用一个，错误处理用一个等等，这样释放起来就不会相互影响。为了方便管理，所有的不同的内存上下文互相连接起来形成一颗树，树的根节点是全局变量TopMemoryContext，在初始化内存上下文中定义。有了它就可以很方便的管理每一个内存上下文。如图：</p>
+
+<p><a href="/img/uploads/2015/10/pg2.png"><img src="/img/uploads/2015/10/pg2.png" alt="pg2" /></a></p>
+
+<p>每一个节点都只知道它的parent节点和firstchild节点，而同级的兄弟节点之间互相连接。</p>
+
+<h2 id="分配策略"><strong>分配策略</strong></h2>
+
+<p>PG到目前为止只实现了一种内存分配策略——AllocSetContext，因此所有的内存上下文虽然名字不同，其实本质上都是AllocSetContext对象结构。因为数据库中使用内存方式情形复杂，有时需要尽可能多的保留已经申请的内存，避免下次使用再申请。有时又为了减少系统负载，需要释放一些内存。所以，<strong>理想的情况是可以根据不同情形有不同的内存分配策略</strong>。PG是纯C的代码，如果了解C++或是面向对象的特性，看完内存上下文这块的代码就知道，使用纯C的代码也完全能够写出继承，多态的味道。看一下源码：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">MemoryContextData</span>
+<span class="p">{</span>
+    <span class="n">NodeTag</span>		<span class="n">type</span><span class="p">;</span>			<span class="cm">/* identifies exact kind of context */</span>
+    <span class="n">MemoryContextMethods</span> <span class="o">*</span><span class="n">methods</span><span class="p">;</span>		<span class="cm">/* virtual function table */</span>
+    <span class="n">MemoryContext</span> <span class="n">parent</span><span class="p">;</span>		<span class="cm">/* NULL if no parent (toplevel context) */</span>
+    <span class="n">MemoryContext</span> <span class="n">firstchild</span><span class="p">;</span>	<span class="cm">/* head of linked list of children */</span>
+    <span class="n">MemoryContext</span> <span class="n">nextchild</span><span class="p">;</span>	<span class="cm">/* next child of same parent */</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">name</span><span class="p">;</span>			<span class="cm">/* context name (just for debugging) */</span>
+    <span class="kt">bool</span>		<span class="n">isReset</span><span class="p">;</span>		<span class="cm">/* T = no space alloced since last reset */</span>
+<span class="p">}</span> <span class="n">MemoryContextData</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>MemoryContextData是所有内存上下文实现类的父类，前两个参数type表示实际指向的内存上下文类型，这个功能在c++中可以使用typeid来完成。而method是虚函数表，MemoryContextMethod类型包含了内存上下文能够向外提供的函数，在初始化内存上下文对象的时候，指向具体实现类的函数，这样，对外使用的接口不变，而因为指向了不同的实现类函数，可以获得不同的内存分配策略。看一下MemoryContextMethod类里面到底有什么：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">MemoryContextMethods</span>
+<span class="p">{</span>
+    <span class="kt">void</span>	   <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">alloc</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Size</span> <span class="n">size</span><span class="p">);</span>
+    <span class="cm">/* call this free_p in case someone #define's free() */</span>
+    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">free_p</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">pointer</span><span class="p">);</span>
+    <span class="kt">void</span>	   <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">realloc</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">pointer</span><span class="p">,</span> <span class="n">Size</span> <span class="n">size</span><span class="p">);</span>
+    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">init</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">);</span>
+    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">reset</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">);</span>
+    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">delete_context</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">);</span>
+    <span class="n">Size</span>		<span class="p">(</span><span class="o">*</span><span class="n">get_chunk_space</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">pointer</span><span class="p">);</span>
+    <span class="kt">bool</span>		<span class="p">(</span><span class="o">*</span><span class="n">is_empty</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">);</span>
+    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">stats</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">,</span> <span class="kt">int</span> <span class="n">level</span><span class="p">);</span>
+<span class="cp">#ifdef MEMORY_CONTEXT_CHECKING
+</span>    <span class="kt">void</span>		<span class="p">(</span><span class="o">*</span><span class="n">check</span><span class="p">)</span> <span class="p">(</span><span class="n">MemoryContext</span> <span class="n">context</span><span class="p">);</span>
+<span class="cp">#endif
+</span><span class="p">}</span> <span class="n">MemoryContextMethods</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>不出所料，有分配，释放，重置等等。其中所有函数的第一个参数都相同，因为需要知道这些操作是在哪一个内存上下文中的，如果使用c++，那么就可以省去这个参数，由隐含的this指针代替。（其中，get_chunk_space函数我觉得放在这不合适，这本是一个抽象的函数接口，所有实现类都要实现这些接口，PG目前的AllocSetContext有chunk的概念，但不能保证以后实现的分配策略就会有chunk）</p>
+
+<p>与c++中实现虚函数表的方式类似，MemoryContextData结构是放在实现类结构体中第一个位置，方便指针的转型操作。看一下AllocSetContext是以什么策略分配内存的吧：</p>
+
+<p><a href="/img/uploads/2015/10/pg3.png"><img src="/img/uploads/2015/10/pg3.png" alt="pg3" /></a></p>
+
+<p>如图，AllocSetData中的header是父类该有的东西，已经介绍过了。在这种策略下，有两个重要的概念，Block和Chunk。Block是从OS分配的一段连续的内存空间，而Chunk是内存上下文返回给用户的一段内存空间。它们分别由AllocBlockData和AllocChunkData结构来描述。AllocSet的第二个数据成员blocks,是AllocBlockData类型的指针，指向一个Block链表，这个链表就是内存上下文中所有向OS申请的内存。</p>
+
+<p>AllocBlockData中第一个参数aset表示这个block属于哪个内存上下文，freeptr和endptr指向一个Block中尚未分配的内存起点和终点。AllocBlockData结构本身所占用的空间也在Block中，图中深蓝色区域。用户申请内存时，从Block中未分配内存拿出一块，也就是一个Chunk，同样，如图中蓝色区域表示AllocChunkData结构本身占用空间，剩下空间是返回给用户的内存区域，其中size成员表示chunk的大小。</p>
+
+<p>为了消除外部碎片，Block和Chunk的大小都必须是2的n次方。PG中定义的一个最小的chunk是2^3 byte，最大是2^13 byte。所以假设用户申请一个5byte的空间，实际上会给8 byte，内部碎片无法避免。</p>
+
+<p>当一个chunk使用完毕需要回收，由于chunk在Block中，无法归还（当然也不想归还）给OS，就需要收集起来以便再分配。AllocSetData的第三个参数freelist数据用来管理空闲的chunk。freelist数组大小11，用来管理11种不同大小的空闲chunk，从8byte到 8kb。相同大小的chunk链接成一个链表，有合适大小的内存申请操作就去对应的freelist找一个空闲的chunk分配出去即可，这样既不会有浪费，也不用频繁的向OS申请内存。其中一个小细节，AllocBlockData和AllocChunkData 都有一个数据成员aset指向对应的内存上下文，但AllocChunkData中的类型却是void*，因为空闲的chunk属于哪个内存上下文是没有意义的，正好用来当作链表的指针。</p>
+
+<p><strong>AllocSetData中还有几个非常重要的参数</strong>：</p>
+
+<p>initBlockSize: 初始化时首个Block的大小，至少会有1kb。</p>
+
+<p>maxBlockSize: 最大的Block大小，因为每次新申请一个Block，它的大小都会是上一个的两倍，maxBlockSize就是为了限制新申请的Block最大的增长上限。</p>
+
+<p>nextBlockSize: 下一个Block的大小，初始的时候和initBlockSize相同，当不断进行分配，每次都会增大一倍。</p>
+
+<p>allocChunkLimit: 一个重要的临界值，如果申请的空间大于这个值，就分配一个独立的Block，而不是一个chunk，并且回收的时候也会直接把这个Block还给OS。</p>
+
+<p>keeper: 指向第一个Block，当内存上下文重置的时候，keeper指向的block会保留下来不还给OS，就避免了每次重置后使用都要立刻malloc内存。</p>
+
+<p><strong>分配和回收的流程：</strong></p>
+
+<p>在AllocSetData的blocks链表中，只有第一个Block是活动块，申请chunk的时候也只能从这个Block中申请。当用户申请内存，首先会判断申请的内存大小是否超过allocChunkLimit，如果超过，就按照申请的大小malloc一个大小适当的独立Block，并且把这个Block链接到活动块之后的位置。如果小于allocChunkLimit，表示此次申请可以被当作一个chunk处理，就去freelist里面查找对应大小的空闲块，如果找到就从空闲链表里拿出去，返回给用户用。如果没找到就要去活动块里面申请一个新的chunk。那么活动块剩余的未分配内存不一定够用，如果不够就要重新申请一个Block来用，并且把新的Block放在第一个位置作为活动块。但此时之前的活动块虽然空间有限，但仍有未分配的内存，为了不浪费，就分配尽可能大的chunk，链接到freelist链表里。</p>
+
+<p>回收的时候，同样需要判断回收的空间是否超过allocChunkLimit, 如果超过，表示这是一个独立的Block，就把它free，归还给OS。如果没有超过，就回收chunk到freelist里面即可。</p>
+
+<h2 id="评价与优化"><strong>评价与优化：</strong></h2>
+
+<p>其实如何占有内存，如何归还内存本就是艺术。在AllocSetContext中，并不贪婪，尽可能把一次申请较大的内存块及时用完归还，而是把较小的块保留在内存上下文中，减少系统占用内存的同时，增加频繁对小内存块申请的效率。是一个不错的折中。PG是关系型数据库，可能在一次查询或者写入过程中比较频繁的是对小内存块的申请，这样确实可以增加效率，而且管理方便。但是如果将此种分配策略放到NoSql数据库或其它需要申请较大内存块的场景下，也许就会低效。</p>
+
+<p>allocChunkLimit是一个重要的参数，如果大部分的申请都小于它，占用内存多，但分配速度快。相反，假如大部分申请都大于它，就和直接使用mallo/free是一样的，比较低效。allocChunkLimit最大不会超过freelist数组中最大能表示的chunk大小，freelist能表示的大小取决于宏ALLOCSET_NUM_FREELIST。同时程序设定allocChunkLimit不能超过maxBlockSize的ALLOC_CHUNK_FRACTION分之一。这样当maxBlockSize比较小的时候，能够保证一个Block可以缓冲至少ALLOC_CHUNK_FRACTION的chunk。</p>
+
+<p>关于优化，主要是要控制上述几个关键的参数，如果系统内存充足，那么尽量把allocChunkLimt调大，尽可能的缓冲chunk，同时对应的要改变freelist大小和maxBlockSize的大小。这还要根据具体的应用场景，使申请空间的大小都落在freelist能够表示的范围内。</p>
+
+<h2 id="重写"><strong>重写：</strong></h2>
+
+<p>还记得本科OS实验，就在想两片连着的内存都回收了就应该融合成一个大内存块。研一上课的时候接触内存上下文机制，就好奇两个chunk能不能和在一块。答案是不能。初学只以为是PG自己的一种内存分配机制，后来读Architecture of a Database System这篇文章，提到内存上下文可以自由切换分配策略，觉得很好，可能不止可以只为PG所用。今年实验室的分布式数据库项目中，节点之间传输的数据内存不能很快回收，遇到了内存泄漏问题，而且想为它实现一种类似环形的内存分配策略，就想到了内存上下文，方便管理，而且可以一套接口不同策略。于是就用C++把它重写了一下，作为一个独立的组件或是库，可以应用到其它需要分配内存的地方。为了能够更方便的优化，还增加了更多的统计信息，比如一共分配了多少次，其中有多少是独立Block分配的，有多少是Chunk分配的等等，这样对内存的使用就有一个比较清楚的了解。重写之后的类图如下：</p>
+
+<p><a href="/img/uploads/2015/10/pg4.png"><img src="/img/uploads/2015/10/pg4.png" alt="pg4" /></a></p>
+
+<p>其实一看就是一个策略模式，函数都是虚函数，用子类的实现覆盖。同时在初始化中保留了全局变量TopMemoryContex作为根节点，毕竟其它内存上下文的本身占用的空间都要从这里分配。没有实现类似palloc,pfree这样的库函数，而是在一个对象中分配，显得直观。使用方式如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MemoryContextData</span><span class="o">::</span><span class="n">memoryContextInit</span><span class="p">();</span>
+
+<span class="n">MemoryContextData</span><span class="o">*</span> <span class="n">myContext</span> <span class="o">=</span> 
+<span class="n">AllocSetContext</span><span class="o">::</span><span class="n">allocSetContextCreate</span><span class="p">(</span><span class="n">TopMemoryContext</span><span class="p">,</span> <span class="s">"myContext"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="mi">8000</span><span class="p">);</span>
+
+<span class="n">MemoryContextData</span><span class="o">*</span> <span class="n">errorContext</span> <span class="o">=</span> 
+<span class="n">AllocSetContext</span><span class="o">::</span><span class="n">allocSetContextCreate</span><span class="p">(</span><span class="n">TopMemoryContext</span><span class="p">,</span> <span class="s">"errorContext"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">8092</span><span class="p">);</span>
+
+<span class="n">MemoryContextData</span><span class="o">*</span> <span class="n">normalErrorContext</span> <span class="o">=</span>
+<span class="n">AllocSetContext</span><span class="o">::</span><span class="n">allocSetContextCreate</span><span class="p">(</span><span class="n">errorContext</span><span class="p">,</span> <span class="s">"normalErrorContext"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">4096</span><span class="p">);</span>
+
+<span class="c1">//分配空间</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">memory</span> <span class="o">=</span> <span class="n">myContext</span><span class="o">-&gt;</span><span class="n">jalloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">);</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="n">errorContext</span><span class="o">-&gt;</span><span class="n">jalloc</span><span class="p">(</span><span class="mi">2098</span><span class="p">);</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">normalerror</span> <span class="o">=</span> <span class="n">normalErrorContext</span><span class="o">-&gt;</span><span class="n">jalloc</span><span class="p">(</span><span class="mi">1025</span><span class="p">);</span>
+
+<span class="c1">//释放空间</span>
+<span class="n">errorContext</span><span class="o">-&gt;</span><span class="n">jfree</span><span class="p">(</span><span class="n">error</span><span class="p">);</span>
+<span class="n">errorContext</span><span class="o">-&gt;</span><span class="n">jstats</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="c1">//输出统计信息</span>
+<span class="n">TopMemoryContext</span><span class="o">-&gt;</span><span class="n">memoryContextStats</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>输出统计信息会从根节点开始，输出每一个子节点的统计状态信息：</p>
+
+<p><a href="/img/uploads/2015/10/pg6.png"><img src="/img/uploads/2015/10/pg6.png" alt="pg6" /></a></p>
+
+<p>如果需要更加详细的统计信息就需要打开AllocSetContext.h的宏定义：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** 是否需要在统计函数中输出分析记录的数据 **/</span>
+<span class="cp">#define ALLOCSETCONTEXT_ANALY
+</span></code></pre></div></div>
+
+<p>打开之后输出errorContext的统计信息：</p>
+
+<p><a href="/img/uploads/2015/10/pg5.png"><img src="/img/uploads/2015/10/pg5.png" alt="pg5" /></a></p>
+
+<p>从统计信息中就可以发现，一共经历了多少次内存分配，多少次回收，这些分配和回收都是哪种类型的，目前的参数是多少，内存上下文中使用了多少空间，还有多少空间。有了这些数据，就可以按需调整参数，达到优化的目的。重写之后的源码已经上传github，点<strong><em><a href="https://github.com/zhangxiaojian/memoryContext">这里</a></em></strong>。欢迎使用，修改，添加~</p>
+
+<p>15/11/8 补充：</p>
+
+<p>之前的统计信息还是不够直观，更改之后如下：</p>
+
+<p><a href="/img/uploads/2015/10/pg7.png"><img src="/img/uploads/2015/10/pg7.png" alt="pg7" /></a></p>
+
+<p>增加了更多更细致的统计，表头不同大小表示FreeList中Chunk的大小，最大的值即为allocChunkLimit的值，下面的统计数据表示在相应大小Chunk上的操作。包括：分配内存的次数，浪费的空间，每次分配平均浪费空间，释放内存次数，命中率。其中命中率表示分配次数在Block中以Chunk进行分配，而不是分配一个独立的Block。接下来一行是内存上下文当前的状态数据。上下两个表格中模拟了10000次的相同的内存分配请求。下面表格命中率较低，耗时9s多，上面命中率较高，耗时4s多。但上面平均每次分配会浪费345B，下面平均每次只会浪费5B。有了这些数据，就能够很好的在空间和时间上做一个折中选择。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/" data-toggle="tooltip" data-placement="top" title="一套笔试题">
+                        Previous<br>
+                        <span>一套笔试题</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/c++/reprinted%20articles/2015/10/25/e4-bb-8efread-e5-92-8cmmap-e8-b0-88-e8-af-bb-e6-96-87-e4-bb-b6-e7-9a-84-e6-80-a7-e8-83-bd/" data-toggle="tooltip" data-placement="top" title="从fread和mmap 谈读文件的性能">
+                        Next<br>
+                        <span>从fread和mmap 谈读文件的性能</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/database/2015/10/16/pg-%e5%86%85%e5%ad%98%e4%b8%8a%e4%b8%8b%e6%96%87";
+    var disqus_url = "http://localhost:4000/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

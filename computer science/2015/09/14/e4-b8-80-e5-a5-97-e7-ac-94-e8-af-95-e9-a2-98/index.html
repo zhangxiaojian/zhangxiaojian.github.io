@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>一套笔试题 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#笔试题" title="笔试题">笔试题</a>
+                        
+                    </div>
+                    <h1>一套笔试题</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on September 14, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>前一阵想着能不能挣点外块改善生活，就应聘当某在线教育的解题员，这是阿里几年前的一套笔试题，也是让我试着做的题。看了下，网上应该没有解答这么详细的，毕竟也花了一些功夫。至于应聘，觉得此公司有点混乱，就罢了。另外貌似也失去了改善生活的动力。不过好东西，还是要放出来~</p>
+
+<p>1.有一个虚拟存储系统，若进程在内存中占3页（开始时内存为空），若采用先进先出（FIFO）页面淘汰算法，当执行如下访问页号序列后1，2，3，4，5,1，2，5，1，2，3，4，5，会发生多少缺页？</p>
+
+<p>A、7              B、8                            C、9                          <strong>D</strong><strong>、</strong><strong>10</strong></p>
+
+<p><strong> </strong><strong>解析：</strong><strong>进程在内存中有3页，如果访问的页号不在内存中，就发生了一次缺页。缺页后换出内存中最先被加载进来的页，同时将要访问的页加载进内存（FIFO）。按照题中顺序（注意开始内存为空）：表格下方是每次请求表格上方页时内存中的页队列。</strong></p>
+
+<p><a href="/img/uploads/2015/09/t1.png"><img src="/img/uploads/2015/09/t1.png" alt="t1" /></a></p>
+
+<p>2.设有一个顺序栈S，元素s1、s2、s3、s4、s5、s6依次进栈，如果6个元素的出栈顺序为s2、s3、s4、s6、s5、s1，则顺序栈的容量至少应为多少？<strong> </strong></p>
+
+<ul>
+  <li>A、2                     <strong>**B</strong><strong>**、</strong><strong>3</strong><strong>  </strong>                          C、4                           D、5</li>
+</ul>
+
+<p><strong>解析：</strong><strong>栈的特点是后进先出。</strong></p>
+
+<p><strong>第一个出栈的是s2，那么s1肯定在栈中,s2出栈后s3和s4分别进栈，出栈。接着s5，s6</strong></p>
+
+<p><strong>进栈。此时栈空间为3。最后s6,s5,s1依次出栈。如图所示:</strong></p>
+
+<p><a href="/img/uploads/2015/09/t2.png"><img src="/img/uploads/2015/09/t2.png" alt="" /></a></p>
+
+<p>3.下列关于文件索引结构的叙述中，哪一个是错误的？</p>
+
+<p>A、采用索引结构，逻辑上连续的文件存放在连续的物理块中
+B、系统为每个文件建立一张索引表
+C、索引结构的优点是访问速度快，文件长度可以动态变化
+D、索引结构的缺点是存储开销大</p>
+
+<p><strong>解析：索引结构将一个逻辑文件的信息存放在外存的若干物理块中，这些物理块可以不连续。系统为每个文件建立一个索引表，索引表存放文件信息所在的逻辑块号和与之对应的物理块号。优点是可以进行随机访问，文件增删比较方便。但是索引表增大了存储开销。</strong></p>
+
+<p>4【0、2、1、4、3、9、5、8、6、7】是以数组形式存储的最小堆，删除堆顶元素0后的结果是（）</p>
+
+<p>A、【2、1、4、3、9、5、8、6、7】
+B、【1、2、5、4、3、9、8、6、7】
+C、【2、3、1、4、7、9、5、8、6】
+D、【1、2、5、4、3、9、7、8、6】</p>
+
+<p><strong>解析</strong>：<strong>最小堆是一颗二叉树，根节点的值始终小于它的左右孩子节点。使用数组表示的最小堆如左图所示：</strong></p>
+
+<p><a href="/img/uploads/2015/09/t3.png"><img src="/img/uploads/2015/09/t3.png" alt="t3" /></a></p>
+
+<p><strong>选取堆中最后一个叶子节点7作为堆顶元素，自上而下进行调整：7大于左右孩子节点，而右孩子节点1小于左孩子节点2，将1和7交换位置。此时右子树堆被破坏，采用相同的方式自定向下调整，交换7和5的位置即可。答案如右图所示。</strong></p>
+
+<p>5.某页式存储管理系统中，地址寄存器长度为24位，其中页号占14位，则主存的分块大小是（）字节。</p>
+
+<p>A、10       <strong>B</strong><strong>、</strong>2^10       C、2^14                     D、2^24</p>
+
+<p><strong>解析</strong>：<strong>页式存储首先根据虚拟地址找到页表，再通过页表链接到实际的内存块。如图所示：虚拟地址一共24bit，页号14bit 用来寻找对应的页表条目，页表条目中存的是内存块的物理地址。10bit的寻址空间表示页偏移，也就是一个内存块的大小。</strong></p>
+
+<p><a href="/img/uploads/2015/09/t4.png"><img src="/img/uploads/2015/09/t4.png" alt="t4" /></a></p>
+
+<p>6.在一个长为33厘米的光滑凹轨上，在第3厘米、第6厘米、第19厘米、第22厘米、第26厘米处各有一个钢珠，凹轨很细，不能同时通过两个钢珠，开始时，钢珠运动方向是任意的。两个钢珠相撞后，以相同速度反向运动。假设所有钢珠初始速度为每秒运动1厘米，那么所有钢珠离开凹轨的最长可能时间是（）</p>
+
+<p>A、30      B、26                        C、38                      D、33</p>
+
+<p><strong>解析：要时间最长就要求钢珠碰撞次数尽量多，而且尽量靠近凹轨的中部，中部是15.15cm处，那么初始化运动方向就是这样（这里把凹轨抽象成一条直线）：</strong></p>
+
+<p><a href="/img/uploads/2015/09/t5.png"><img src="/img/uploads/2015/09/t5.png" alt="t5" /></a></p>
+
+<p><strong>这里需要注意一个细节，AB的距离和CD的距离相等。</strong></p>
+
+<ul>
+  <li>
+    <p><strong>BC</strong><strong>第一次相撞，耗时</strong><strong>5s</strong><strong>，相撞位置12.5cm处。</strong></p>
+  </li>
+  <li>
+    <p><strong>此时BC反向，耗时</strong><strong>5s</strong><strong>，分别同时与AD相撞，此时相撞后A出轨，不必考虑。AB在12.5-1.5 = 11cm处相撞。CD在12.5+1.5 = 14cm处相撞。</strong></p>
+  </li>
+  <li>
+    <p><strong>BC</strong><strong>此时距离3cm，DE距离4cm。BC耗时</strong><strong>5s</strong><strong>第二次相撞，位置依然是12.5cm处。B相撞后出轨。此时DE距离相撞还有</strong><strong>0.5s</strong><strong>，C与D同向右运动0.5s，DE相撞时C在12.5+0.5 = 13cm处。DE相撞在13+3 = 16cm处。E出轨。</strong></p>
+  </li>
+  <li>
+    <p><strong>最终剩下C和D，C在13cm处，D在16cm处。它们耗时</strong><strong>5s</strong><strong>在14.5cm处相撞。14.5 &lt; 15.15。最后出轨的是D，从右边出轨，耗时33-14.5 = **</strong>18.5s**</p>
+  </li>
+  <li>
+    <p><strong>5 + 1.5 + 1.5 + 0.5 + 1.5 + 18.5 = 30s</strong></p>
+  </li>
+</ul>
+
+<p><strong>7.<em>std::vector::iterator重载了下面哪些运算符？
+**A</em></strong><em>、</em><strong><em>++**        B、»                      **C</em></strong><em>、</em><strong>**</strong><strong>（前置）</strong>                   <strong>D</strong><strong>、</strong><strong>==</strong></p>
+
+<p><strong>解析：i</strong><strong>terator</strong><strong>的行为像普通指针一样，可以自增++，*解引用，==比较。但却不能»进行移位操作。</strong></p>
+
+<p>8.下列运算符，在C++语言中不能重载的是（）</p>
+
+<p>A、*           B、？：     <strong>C</strong><strong>、</strong>：：                           D、delete</p>
+
+<p><strong>解析</strong>：<strong>c++</strong><strong>中不能重载的操作符有包括 ::   .*   .   ?:   四种。</strong></p>
+
+<p>9.在排序方法中，元素比较次数与元素的初始排列无关的是（）</p>
+
+<p>A、Shell 排序 B、归并排序 C、直接插入排序                D、选择</p>
+
+<p><strong>解析：直接插入排序和Shell排序首先淘汰，直接插入排序在基本有序的时候时间复杂度O（n）,每个元素进来只需要一次比较即可。Shell排序是直接插入排序的改进，在直接插入排序之前，先经过几次比较交换使元素初始排列基本有序，再执行插入排序。归并排序在子序列两两合并的时候仍然需要比较，如果两个序列本身就有序，那么只需要一次比较，如果无序，比较次数就不止一次。选择排序，每次从n-i+1个记录中选取最小的记录放在第i个位置，每选择一次都要便利比较剩下的n-i+1个记录，因此比较次数与序列长度有关，与初始化位置无关。</strong></p>
+
+<p>10.给定如下代码： int x[4]={0}; int y[4]={1}; 数组x和y的值为（）</p>
+
+<p>A、{0，0，0，0}，{1，1，1，1}
+B、{0，0，0，0}，{1，0，0，0}
+C、{0，不确定}，{1，不确定}
+D、与编译器相关</p>
+
+<p><strong>解析：当数组使用 {} 进行初始化时，首先使用变量的默认初始化方式初始化数组中每个元素，然后再使用{}中的值进行赋值操作。int 默认初始化为0。</strong></p>
+
+<p>11.给出以下定义，下列哪些操作是合法的？</p>
+
+<p>const char <em>p1 = “hello”;
+char</em> const p2 = “world”;
+A、p1++                      <strong>B</strong><strong>、</strong><strong>p1[2]=’w</strong>’; C、p2[2]=’l’;                    D、<strong>p2++</strong></p>
+
+<p><strong>解析:</strong> <strong>const char* **</strong>表示char类型的指针，且指针的值const，不能被修改。char* const 表示char类型的指针，且指针所指内容是const，内容值不可被修改。A和D修改的是指针，B和C修改的是指针指向的内容。**</p>
+
+<p>12.假设在n进制下，下面的等式成立，n值是（） 567*456=150216</p>
+
+<p>A、9                B、10                 <strong>C</strong><strong>、</strong><strong>12  </strong><strong> </strong>                  <strong>D</strong><strong>、</strong><strong>18</strong></p>
+
+<p>解析：<strong>直接进行乘法计算，首先根据结果个位为6，淘汰10进制。18进制计算如下：</strong></p>
+
+<p><a href="/img/uploads/2015/09/t6.png"><img src="/img/uploads/2015/09/t6.png" alt="t6" /></a></p>
+
+<p>13.关于struct和class，下列说法正确的是（）</p>
+
+<p><strong>A</strong><strong>、</strong>struct的成员默认是public，class的成员默认是private
+B、struct不能继承，class可以继承
+C、struct可以有无参构造函数
+D、struct的成员变量只能是public</p>
+
+<p><strong>解析：struct</strong><strong>是c语言关键字，c++引入class后，为了兼容c语言，仍保留struct关键字，它们唯一的区别就是struct默认是public，class模式是private。</strong></p>
+
+<p>14.定义一个函数指针，指向的函数有两个int形参并且返回一个函数指针，返回的指针指向一个有一个int形参且返回int的函数？</p>
+
+<p><strong>A</strong><strong>、</strong><strong>int (<em>(</em>F)(int, int))(int)</strong>
+B、int (<em>F)(int, int)
+C、int (</em>(<em>F)(int, int))
+D、</em>(*F)(int, int)(int)</p>
+
+<p><strong>解析：为了方便理解，首先假设返回的是一个int值，那么应该是这样：int (<em>F)(int,int) 。现在需要返回的是一个函数指针，类型为 int (</em>F)(int)。合并起来，int (<em>(</em>F))(int,int)(int)。</strong></p>
+
+<p><strong>比较绕，一般的指针类型 都是Type* value，这种形式，函数指针不同之处是把形参放在了value的后面，Type* value(arg1,arg2…)。</strong></p>
+
+<p><strong>选项B C D都有不同程度的信息丢失，B返回值为int。C返回值少了形参。D 返回值少了返回的函数指针的返回类型。</strong></p>
+
+<p>15.声明一个指向含有10个元素的数组的指针，其中每个元素是一个函数指针，该函数的返回值是int，参数是int*，正确的是（）</p>
+
+<p>A<strong>、（</strong><strong>int <em>p[10]</em></strong><em>）（</em><strong><em>int</em></strong>）;
+B、int [10]<em>p（int *）;
+C、int (</em>(<em>p)[10])(int *);
+D、int ((int *)[10])</em>p;
+E、以上选项都不正确</p>
+
+<p><strong>解析</strong>：<strong>函数指针类型int (<em>F)(int</em>) , 数组中含有的数据类型是函数指针，数组的声明方式是 Type p[10]。使用函数指针替换Type，注意形参在后面。(int* p[10]) (int*)。</strong></p>
+
+<p><strong>B</strong><strong>声明了一个函数指针，返回类型是int类型大小为10的数组指针。C 声明的数组返回的函数指针类型为 int* (<em>F)(int</em>)，函数的返回类型是int*，不是int。D 是错误的，编译不能通过。</strong></p>
+
+<p>16.一个栈的输入序列为….n，若输出序列的第一个元素是n，输出第i（1&lt;=i&lt;=n）个元素是（）</p>
+
+<p>A、不确定
+<strong>B</strong><strong>、</strong><strong>n-i+1</strong>
+C、i
+D、n-i</p>
+
+<p><strong>解析：栈的特点是后进先出，第一个出栈的是n,那么出栈顺序只能是n ,n-1 ,n-2 … 1。输出第i个元素的值与i的和为 n+1 。所以第i个元素值为 n-i+1。</strong></p>
+
+<p>17.下列代码编译时会产生错误的是（）</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;iostream&gt;
+</span><span class="k">using</span><span class="err"> </span><span class="k">namespace</span><span class="err"> </span><span class="n">std</span><span class="p">;</span>
+<span class="k">struct</span><span class="err"> </span><span class="n">Foo</span>
+<span class="p">{</span>
+    <span class="n">Foo</span><span class="p">()</span><span class="err"> </span><span class="p">{</span><span class="err">  </span><span class="p">}</span>
+    <span class="n">Foo</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="err"> </span><span class="p">{</span><span class="err">  </span><span class="p">}</span>
+    <span class="kt">void</span><span class="err"> </span><span class="n">fun</span><span class="p">()</span><span class="err">   </span><span class="p">{</span><span class="err">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="kt">int</span><span class="err"> </span><span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Foo</span><span class="err"> </span><span class="n">a</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span><span class="err">    </span><span class="c1">//语句1</span>
+        <span class="n">fun</span><span class="p">();</span><span class="err">      </span><span class="c1">//语句2</span>
+        <span class="n">Foo</span><span class="err"> </span><span class="n">b</span><span class="p">();</span><span class="err">      </span><span class="c1">//语句3</span>
+        <span class="n">fun</span><span class="p">();</span><span class="err">      </span><span class="c1">//语句4</span>
+        <span class="k">return</span><span class="err"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>A  语句1             B、语句2           C、语句3  <strong>           </strong>D<strong>**</strong>、语句<strong>**4</strong></p>
+
+<p><strong>解析</strong>：<strong>编译器在理解语句3的时候会把它当作返回值类型为Foo的函数声明，b是函数指针，并不是类对象。因此语句4会报错。</strong></p>
+
+<ol>
+  <li>在32位机器上，下列代码中</li>
+</ol>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#pragma pack(2)
+</span><span class="k">class</span><span class="err"> </span><span class="nc">A</span>
+<span class="p">{</span>
+    <span class="kt">int</span><span class="err"> </span><span class="n">i</span><span class="p">;</span>
+    <span class="k">union</span><span class="err"> </span><span class="n">U</span>
+    <span class="p">{</span>
+        <span class="kt">char</span><span class="err"> </span><span class="n">buff</span><span class="p">[</span><span class="mi">13</span><span class="p">];</span>
+        <span class="kt">int</span><span class="err"> </span><span class="n">i</span><span class="p">;</span>
+    <span class="p">}</span><span class="n">u</span><span class="p">;</span>
+    <span class="kt">void</span><span class="err"> </span><span class="n">foo</span><span class="p">()</span><span class="err"> </span><span class="p">{</span><span class="err">    </span><span class="p">}</span>
+    <span class="k">typedef</span><span class="err"> </span><span class="kt">char</span><span class="o">*</span><span class="err"> </span><span class="p">(</span><span class="o">*</span><span class="n">f</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+    <span class="k">enum</span><span class="p">{</span><span class="n">red</span><span class="p">,</span><span class="err"> </span><span class="n">green</span><span class="p">,</span><span class="err"> </span><span class="n">blue</span><span class="p">}</span><span class="err"> </span><span class="n">color</span><span class="p">;</span>
+<span class="p">}</span><span class="n">a</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>sizeof(a)的值是（）</p>
+
+<p>A、20       B、21       C、22        D、24<strong> </strong>          E、非以上选项</p>
+
+<p><strong>解析</strong>：<strong>对齐规则是：</strong></p>
+
+<p><strong>1</strong><strong>、<a href="http://baike.baidu.com/view/709620.htm">数据成员</a>对齐规则：结构(struct)(或联合(union))的数据成员，第一个数据成员放在offset为0的地方，以后每个数据成员的对齐按照#pragma pack指定的数值和这个数据成员自身长度中，比较小的那个进行。</strong></p>
+
+<p><strong>2</strong><strong>、结构(或联合)的整体对齐规则：在数据成员完成各自对齐之后，结构(或联合)本身也要进行对齐，对齐将按照#pragma pack指定的数值和结构(或联合)最大数据成员长度中，比较小的那个进行。</strong></p>
+
+<p><strong>本题中#pragma pack = 2。</strong></p>
+
+<p><strong>第一步根据数据成员对齐：</strong></p>
+
+<p><strong>int i;  **</strong>起始offset=0，min（#pragma pack,sizeof(int)）=2。满足0%2 = 0 。i存放在offset 0~3的地方。**</p>
+
+<p><strong>union</strong><strong>的大小由其中最大的成员表示；min（#pragma pack,sizeof(union)）=2。此时offset = 4，满足 4%2 = 0。Union存放在offset 4~16的地方。</strong></p>
+
+<p><strong>成员函数和类型并不会影响类空间大小。</strong></p>
+
+<p><strong>enum</strong><strong>枚举类型不论其中枚举数量的多少，大小始终为sizeof（int）,32位机就是4。min(#prama pack,sizof(enum)) = 2，此时的offset=17，显然17%2 != 0。因此空一位，enum从offset=18的地方存，存在offset 18~21。此时总体大小22.</strong></p>
+
+<p><strong>第二步整个struct对齐：</strong></p>
+
+<p><strong>struct</strong><strong>最大元素大小13，min(#prama pack, max{strcut} ) = 2。整体大小22%2=0。满足条件。</strong></p>
+
+<p><strong>得出最后大小sizeof(a)=22</strong></p>
+
+<p>19 .下面描述中，错误的是（）</p>
+
+<p>A、基类定义的public成员在公有继承的派生类中可见，也能在类外被访问
+<strong>B</strong><strong>、基类定义的</strong><strong>public</strong><strong>和</strong><strong>protected</strong><strong>成员在私有继承的派生类中可见，在类外可以被访问</strong>
+<strong>C</strong><strong>、基类定义的</strong><strong>public</strong><strong>和</strong><strong>protected</strong><strong>成员在保护继承的派生类中不可见</strong>
+<strong>D</strong><strong>、基类定义的</strong><strong>protected</strong><strong>成员在</strong><strong>protected</strong><strong>继承的派生类中可见，也能在类外被访问</strong></p>
+
+<p><strong>解析：public</strong><strong>成员类内外都可见，protected成员类外不可见，子类可见，private成员只有类本身可见。当继承基类时，使用public继承，基类成员的访问权限不变。使用protected继承，基类的public继承后在子类访问权限变为protected。使用private继承，基类所有访问权限在子类中都视为private。</strong></p>
+
+<ol>
+  <li>当很频繁地对序列中部进行插入和删除操作时，应该选择使用的容器是（）</li>
+</ol>
+
+<p>A、vector    <strong>B</strong><strong>、</strong><strong>list</strong>     C、deque      D、stack</p>
+
+<p><strong>解析</strong>：vector 和deque<strong>都支持随机访问，访问每个元素的时间都是常数。因为它们的数据在内存中是连续存放或分段连续存放，像数组一样，知道首地址和偏移就可以定位数据位置。但是在中部插入删除需要大批移动内存中的数据，比如在0-100个数据中插入50，那么就意味着51-100位置的数据统一向后移动。开销很大。Stack严格意义上并不是容器，而是容器适配器，一般用deque实现。List不支持随机访问，内部是双向环状链表，在中间位置插入删除只需修改链表的前后指针即可。</strong></p>
+
+<ol>
+  <li>判断一个单向链表中是否存在环的最佳方法是（）</li>
+</ol>
+
+<p>A、两重遍历   <strong>B</strong><strong>、快慢指针</strong> C、路径记录       D、哈希表辅助</p>
+
+<p>解析：<strong>两重遍历，路径记录，哈希表辅助本质上都是记录走过的链表位置，第一需要额外的存储空间，空间复杂度O（n）。第二需要搜索，每次访问一个元素就需要在存储区搜索一次该元素是否存在。哈希表可以降低搜索的时间复杂度，但空间复杂度始终存在。使用快慢指针不需要额外的空间，快慢指针如果相遇，就说明有环。</strong></p>
+
+<p>22、给你1、2、3 这三个数字 可以使用C的各种运算符 你能表示的最大的整数是（）</p>
+
+<p>A、2<em>3</em>sizeof(1)             B、3«(2«sizeof(1))                    C、sizeof(3)«(sizeof(2)«(sizeof(1)))                    D、(unsigned long)(2-3)*1</p>
+
+<p>-1的二进制形式就是全1表示</p>
+
+<p><strong>解析</strong>：<strong>A **</strong>：2<em>3</em>4 = 24 **</p>
+
+<p><strong>      B  : 2 « 4 = 2^4 = 16     3 « 16 = 3 * 2^16</strong></p>
+
+<p><strong>      C  : 4 « 4 « 4 = 4* 2^4 * 2^4 = 2^10</strong></p>
+
+<p><strong>      D  : sizeof(long)</strong><strong>在32位机器上是4字节，-1的十六进制表示为FFFFFFFF，转换成unsigned大小为: 2^32 – 1。</strong></p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/" data-toggle="tooltip" data-placement="top" title="MPI 中的点对点通信">
+                        Previous<br>
+                        <span>MPI 中的点对点通信</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/" data-toggle="tooltip" data-placement="top" title="PG 内存上下文">
+                        Next<br>
+                        <span>PG 内存上下文</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/2015/09/14/%e4%b8%80%e5%a5%97%e7%ac%94%e8%af%95%e9%a2%98";
+    var disqus_url = "http://localhost:4000/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>Tags - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/tags/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Page Header -->
+<header class="intro-header" style="background-image: url('/img/tag-bg.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading" id="tag-heading">
+                    <h1>Tags</h1>
+                    <span class="subheading">keep hungry keep foolish</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="container">
+	<div class="row">
+		<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <!-- 标签云 -->
+			<div id='tag_cloud' class="tags">
+				
+				<a href="#c++" title="c++" rel="6">c++</a>
+				
+				<a href="#template" title="template" rel="1">template</a>
+				
+				<a href="#影评" title="影评" rel="1">影评</a>
+				
+				<a href="#旅行" title="旅行" rel="1">旅行</a>
+				
+				<a href="#effective c++" title="effective c++" rel="2">effective c++</a>
+				
+				<a href="#多态" title="多态" rel="1">多态</a>
+				
+				<a href="#Berkeley DB" title="Berkeley DB" rel="6">Berkeley DB</a>
+				
+				<a href="#Database" title="Database" rel="7">Database</a>
+				
+				<a href="#构造函数" title="构造函数" rel="1">构造函数</a>
+				
+				<a href="#事务" title="事务" rel="1">事务</a>
+				
+				<a href="#保研" title="保研" rel="1">保研</a>
+				
+				<a href="#实习" title="实习" rel="1">实习</a>
+				
+				<a href="#设计原则" title="设计原则" rel="2">设计原则</a>
+				
+				<a href="#面向对象" title="面向对象" rel="4">面向对象</a>
+				
+				<a href="#外键" title="外键" rel="1">外键</a>
+				
+				<a href="#PostgreSQL" title="PostgreSQL" rel="4">PostgreSQL</a>
+				
+				<a href="#Json" title="Json" rel="1">Json</a>
+				
+				<a href="#c++ 11" title="c++ 11" rel="1">c++ 11</a>
+				
+				<a href="#平凡的世界" title="平凡的世界" rel="1">平凡的世界</a>
+				
+				<a href="#备份" title="备份" rel="1">备份</a>
+				
+				<a href="#MPI" title="MPI" rel="1">MPI</a>
+				
+				<a href="#并行" title="并行" rel="1">并行</a>
+				
+				<a href="#笔试题" title="笔试题" rel="1">笔试题</a>
+				
+				<a href="#Thinking" title="Thinking" rel="1">Thinking</a>
+				
+				<a href="#年终总结" title="年终总结" rel="1">年终总结</a>
+				
+				<a href="#mysql" title="mysql" rel="1">mysql</a>
+				
+			</div>
+
+            <!--<blockquote class="tag-comments">
+                标签命名规范：
+                    <li>行业观察、职位、公司优先使用中文</li>
+                    <li>外国产品、术语优先使用英文</li>
+            </blockquote>-->
+
+            <!-- 标签列表 -->
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="c++">
+                    <span class="tag-text">c++</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-10-25">2015-10-25</time>
+				  <a href="/c++/reprinted%20articles/2015/10/25/e4-bb-8efread-e5-92-8cmmap-e8-b0-88-e8-af-bb-e6-96-87-e4-bb-b6-e7-9a-84-e6-80-a7-e8-83-bd/" title="从fread和mmap 谈读文件的性能">从fread和mmap 谈读文件的性能</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/reprinted%20articles/2015/10/25/e4-bb-8efread-e5-92-8cmmap-e8-b0-88-e8-af-bb-e6-96-87-e4-bb-b6-e7-9a-84-e6-80-a7-e8-83-bd/">
+				        <h2 class="post-title">
+                            从fread和mmap 谈读文件的性能
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-10-25</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-01-21">2015-01-21</time>
+				  <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/" title="C++面向对象特性实现剖析 Data Member篇">C++面向对象特性实现剖析 Data Member篇</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/">
+				        <h2 class="post-title">
+                            C++面向对象特性实现剖析 Data Member篇
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-01-21</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-31">2014-10-31</time>
+				  <a href="/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/" title="面向对象之后增加的开销">面向对象之后增加的开销</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/">
+				        <h2 class="post-title">
+                            面向对象之后增加的开销
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-31</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-07-12">2014-07-12</time>
+				  <a href="/c++/2014/07/12/e6-9c-80-e5-a5-bd-e4-bd-bf-e7-94-a8c-e8-bd-ac-e5-9e-8b-e6-93-8d-e4-bd-9c-e7-ac-a6/" title="最好使用c++转型操作符">最好使用c++转型操作符</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/07/12/e6-9c-80-e5-a5-bd-e4-bd-bf-e7-94-a8c-e8-bd-ac-e5-9e-8b-e6-93-8d-e4-bd-9c-e7-ac-a6/">
+				        <h2 class="post-title">
+                            最好使用c++转型操作符
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-07-12</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-03-09">2014-03-09</time>
+				  <a href="/c++/2014/03/09/c-string-e8-af-a6-e8-a7-a3/" title="c++ string 详解">c++ string 详解</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/03/09/c-string-e8-af-a6-e8-a7-a3/">
+				        <h2 class="post-title">
+                            c++ string 详解
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-03-09</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-02-28">2014-02-28</time>
+				  <a href="/c++/2014/02/28/name-resolution-within-a-template/" title="Name Resolution within a Template">Name Resolution within a Template</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/02/28/name-resolution-within-a-template/">
+				        <h2 class="post-title">
+                            Name Resolution within a Template
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-02-28</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="template">
+                    <span class="tag-text">template</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-02-28">2014-02-28</time>
+				  <a href="/c++/2014/02/28/name-resolution-within-a-template/" title="Name Resolution within a Template">Name Resolution within a Template</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/02/28/name-resolution-within-a-template/">
+				        <h2 class="post-title">
+                            Name Resolution within a Template
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-02-28</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="影评">
+                    <span class="tag-text">影评</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-03-16">2014-03-16</time>
+				  <a href="/life%20traces/2014/03/16/e4-b8-80-e5-91-a8-e8-a7-82-e5-bd-b1/" title="一周观影">一周观影</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2014/03/16/e4-b8-80-e5-91-a8-e8-a7-82-e5-bd-b1/">
+				        <h2 class="post-title">
+                            一周观影
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-03-16</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="旅行">
+                    <span class="tag-text">旅行</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-04-28">2014-04-28</time>
+				  <a href="/life%20traces/2014/04/28/e6-97-85-e8-a1-8c/" title="旅行">旅行</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2014/04/28/e6-97-85-e8-a1-8c/">
+				        <h2 class="post-title">
+                            旅行
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-04-28</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="effective c++">
+                    <span class="tag-text">effective c++</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-11">2014-08-11</time>
+				  <a href="/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/" title="无法触及的构造函数？">无法触及的构造函数？</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/">
+				        <h2 class="post-title">
+                            无法触及的构造函数？
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-11</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-07-19">2014-07-19</time>
+				  <a href="/c++/2014/07/19/e4-b8-8d-e8-a6-81-e6-8c-87-e6-9c-9b-e6-95-b0-e7-bb-84-e7-9a-84-e5-a4-9a-e6-80-81-e6-80-a7/" title="不要指望数组的多态性">不要指望数组的多态性</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/07/19/e4-b8-8d-e8-a6-81-e6-8c-87-e6-9c-9b-e6-95-b0-e7-bb-84-e7-9a-84-e5-a4-9a-e6-80-81-e6-80-a7/">
+				        <h2 class="post-title">
+                            不要指望数组的多态性
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-07-19</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="多态">
+                    <span class="tag-text">多态</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-07-19">2014-07-19</time>
+				  <a href="/c++/2014/07/19/e4-b8-8d-e8-a6-81-e6-8c-87-e6-9c-9b-e6-95-b0-e7-bb-84-e7-9a-84-e5-a4-9a-e6-80-81-e6-80-a7/" title="不要指望数组的多态性">不要指望数组的多态性</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/07/19/e4-b8-8d-e8-a6-81-e6-8c-87-e6-9c-9b-e6-95-b0-e7-bb-84-e7-9a-84-e5-a4-9a-e6-80-81-e6-80-a7/">
+				        <h2 class="post-title">
+                            不要指望数组的多态性
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-07-19</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="Berkeley DB">
+                    <span class="tag-text">Berkeley DB</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-03-31">2016-03-31</time>
+				  <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/" title="Berkeley DB 锁子系统的配置">Berkeley DB 锁子系统的配置</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
+				        <h2 class="post-title">
+                            Berkeley DB 锁子系统的配置
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-03-31</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-02-18">2016-02-18</time>
+				  <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/" title="Berkeley DB 事务支持的应用架构">Berkeley DB 事务支持的应用架构</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/">
+				        <h2 class="post-title">
+                            Berkeley DB 事务支持的应用架构
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-02-18</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-05-02">2015-05-02</time>
+				  <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/" title="基于Berkeley DB的数据库备份系统">基于Berkeley DB的数据库备份系统</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
+				        <h2 class="post-title">
+                            基于Berkeley DB的数据库备份系统
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-05-02</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-31">2014-10-31</time>
+				  <a href="/berkeley%20db/2014/10/31/berkeley-db-e7-ae-80-e7-ae-80-e4-bb-8b/" title="Berkeley DB 简简介">Berkeley DB 简简介</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/2014/10/31/berkeley-db-e7-ae-80-e7-ae-80-e4-bb-8b/">
+				        <h2 class="post-title">
+                            Berkeley DB 简简介
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-31</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-20">2014-08-20</time>
+				  <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/" title="BDB 事务隔离等级">BDB 事务隔离等级</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/">
+				        <h2 class="post-title">
+                            BDB 事务隔离等级
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-20</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-08">2014-08-08</time>
+				  <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/" title="Berkeley DB 的桶操作">Berkeley DB 的桶操作</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/">
+				        <h2 class="post-title">
+                            Berkeley DB 的桶操作
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-08</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="Database">
+                    <span class="tag-text">Database</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2017-08-22">2017-08-22</time>
+				  <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" title="MySQL内存分配机制">MySQL内存分配机制</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+				        <h2 class="post-title">
+                            MySQL内存分配机制
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2017-08-22</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-03-31">2016-03-31</time>
+				  <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/" title="Berkeley DB 锁子系统的配置">Berkeley DB 锁子系统的配置</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
+				        <h2 class="post-title">
+                            Berkeley DB 锁子系统的配置
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-03-31</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-02-18">2016-02-18</time>
+				  <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/" title="Berkeley DB 事务支持的应用架构">Berkeley DB 事务支持的应用架构</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/">
+				        <h2 class="post-title">
+                            Berkeley DB 事务支持的应用架构
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-02-18</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-10-16">2015-10-16</time>
+				  <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/" title="PG 内存上下文">PG 内存上下文</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/">
+				        <h2 class="post-title">
+                            PG 内存上下文
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-10-16</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-05-02">2015-05-02</time>
+				  <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/" title="基于Berkeley DB的数据库备份系统">基于Berkeley DB的数据库备份系统</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
+				        <h2 class="post-title">
+                            基于Berkeley DB的数据库备份系统
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-05-02</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-31">2014-10-31</time>
+				  <a href="/database/2014/10/31/e8-af-a5-e4-b8-8d-e8-af-a5-e7-94-a8-e5-a4-96-e9-94-ae-ef-bc-9f/" title="该不该用外键？">该不该用外键？</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/2014/10/31/e8-af-a5-e4-b8-8d-e8-af-a5-e7-94-a8-e5-a4-96-e9-94-ae-ef-bc-9f/">
+				        <h2 class="post-title">
+                            该不该用外键？
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-31</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-08">2014-08-08</time>
+				  <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/" title="Berkeley DB 的桶操作">Berkeley DB 的桶操作</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/">
+				        <h2 class="post-title">
+                            Berkeley DB 的桶操作
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-08</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="构造函数">
+                    <span class="tag-text">构造函数</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-11">2014-08-11</time>
+				  <a href="/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/" title="无法触及的构造函数？">无法触及的构造函数？</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/">
+				        <h2 class="post-title">
+                            无法触及的构造函数？
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-11</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="事务">
+                    <span class="tag-text">事务</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-08-20">2014-08-20</time>
+				  <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/" title="BDB 事务隔离等级">BDB 事务隔离等级</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/2014/08/20/bdb-e4-ba-8b-e5-8a-a1-e9-9a-94-e7-a6-bb-e7-ad-89-e7-ba-a7/">
+				        <h2 class="post-title">
+                            BDB 事务隔离等级
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-08-20</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="保研">
+                    <span class="tag-text">保研</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-07">2014-10-07</time>
+				  <a href="/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/" title="凿一口深井">凿一口深井</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/">
+				        <h2 class="post-title">
+                            凿一口深井
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-07</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="实习">
+                    <span class="tag-text">实习</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-07">2014-10-07</time>
+				  <a href="/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/" title="凿一口深井">凿一口深井</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/">
+				        <h2 class="post-title">
+                            凿一口深井
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-07</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="设计原则">
+                    <span class="tag-text">设计原则</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2017-08-22">2017-08-22</time>
+				  <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" title="MySQL内存分配机制">MySQL内存分配机制</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+				        <h2 class="post-title">
+                            MySQL内存分配机制
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2017-08-22</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-12">2014-10-12</time>
+				  <a href="/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/" title="单一职责原则">单一职责原则</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/">
+				        <h2 class="post-title">
+                            单一职责原则
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-12</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="面向对象">
+                    <span class="tag-text">面向对象</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2017-08-22">2017-08-22</time>
+				  <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" title="MySQL内存分配机制">MySQL内存分配机制</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+				        <h2 class="post-title">
+                            MySQL内存分配机制
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2017-08-22</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-10-16">2015-10-16</time>
+				  <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/" title="PG 内存上下文">PG 内存上下文</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/">
+				        <h2 class="post-title">
+                            PG 内存上下文
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-10-16</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-01-21">2015-01-21</time>
+				  <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/" title="C++面向对象特性实现剖析 Data Member篇">C++面向对象特性实现剖析 Data Member篇</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/">
+				        <h2 class="post-title">
+                            C++面向对象特性实现剖析 Data Member篇
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-01-21</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-31">2014-10-31</time>
+				  <a href="/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/" title="面向对象之后增加的开销">面向对象之后增加的开销</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/">
+				        <h2 class="post-title">
+                            面向对象之后增加的开销
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-31</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="外键">
+                    <span class="tag-text">外键</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2014-10-31">2014-10-31</time>
+				  <a href="/database/2014/10/31/e8-af-a5-e4-b8-8d-e8-af-a5-e7-94-a8-e5-a4-96-e9-94-ae-ef-bc-9f/" title="该不该用外键？">该不该用外键？</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/2014/10/31/e8-af-a5-e4-b8-8d-e8-af-a5-e7-94-a8-e5-a4-96-e9-94-ae-ef-bc-9f/">
+				        <h2 class="post-title">
+                            该不该用外键？
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2014-10-31</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="PostgreSQL">
+                    <span class="tag-text">PostgreSQL</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-01-22">2016-01-22</time>
+				  <a href="/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/" title="PostgreSQL 客户端认证机制">PostgreSQL 客户端认证机制</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/">
+				        <h2 class="post-title">
+                            PostgreSQL 客户端认证机制
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-01-22</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-10-16">2015-10-16</time>
+				  <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/" title="PG 内存上下文">PG 内存上下文</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/">
+				        <h2 class="post-title">
+                            PG 内存上下文
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-10-16</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-03-14">2015-03-14</time>
+				  <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/" title="PostgreSQL 中的 Json —从使用到源码">PostgreSQL 中的 Json —从使用到源码</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/">
+				        <h2 class="post-title">
+                            PostgreSQL 中的 Json —从使用到源码
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-03-14</p> -->
+				</div>
+				<hr>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-01-09">2015-01-09</time>
+				  <a href="/database/reprinted%20articles/2015/01/09/postgresql-e6-98-a8-e5-a4-a9-e4-bb-8a-e5-a4-a9-e5-92-8c-e6-98-8e-e5-a4-a9/" title="PostgreSQL 昨天,今天和明天">PostgreSQL 昨天,今天和明天</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/reprinted%20articles/2015/01/09/postgresql-e6-98-a8-e5-a4-a9-e4-bb-8a-e5-a4-a9-e5-92-8c-e6-98-8e-e5-a4-a9/">
+				        <h2 class="post-title">
+                            PostgreSQL 昨天,今天和明天
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-01-09</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="Json">
+                    <span class="tag-text">Json</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-03-14">2015-03-14</time>
+				  <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/" title="PostgreSQL 中的 Json —从使用到源码">PostgreSQL 中的 Json —从使用到源码</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/">
+				        <h2 class="post-title">
+                            PostgreSQL 中的 Json —从使用到源码
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-03-14</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="c++ 11">
+                    <span class="tag-text">c++ 11</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-03-14">2015-03-14</time>
+				  <a href="/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/" title="Ten C++11 Features Every C++ Developer Should Use">Ten C++11 Features Every C++ Developer Should Use</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/">
+				        <h2 class="post-title">
+                            Ten C++11 Features Every C++ Developer Should Use
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-03-14</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="平凡的世界">
+                    <span class="tag-text">平凡的世界</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-04-12">2015-04-12</time>
+				  <a href="/life%20traces/2015/04/12/e5-b9-b3-e5-87-a1-e7-9a-84-e4-b8-96-e7-95-8c/" title="平凡的世界">平凡的世界</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2015/04/12/e5-b9-b3-e5-87-a1-e7-9a-84-e4-b8-96-e7-95-8c/">
+				        <h2 class="post-title">
+                            平凡的世界
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-04-12</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="备份">
+                    <span class="tag-text">备份</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-05-02">2015-05-02</time>
+				  <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/" title="基于Berkeley DB的数据库备份系统">基于Berkeley DB的数据库备份系统</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
+				        <h2 class="post-title">
+                            基于Berkeley DB的数据库备份系统
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-05-02</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="MPI">
+                    <span class="tag-text">MPI</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-07-28">2015-07-28</time>
+				  <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/" title="MPI 中的点对点通信">MPI 中的点对点通信</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/">
+				        <h2 class="post-title">
+                            MPI 中的点对点通信
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-07-28</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="并行">
+                    <span class="tag-text">并行</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-07-28">2015-07-28</time>
+				  <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/" title="MPI 中的点对点通信">MPI 中的点对点通信</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/">
+				        <h2 class="post-title">
+                            MPI 中的点对点通信
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-07-28</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="笔试题">
+                    <span class="tag-text">笔试题</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-09-14">2015-09-14</time>
+				  <a href="/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/" title="一套笔试题">一套笔试题</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/">
+				        <h2 class="post-title">
+                            一套笔试题
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-09-14</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="Thinking">
+                    <span class="tag-text">Thinking</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2015-12-09">2015-12-09</time>
+				  <a href="/life%20traces/reprinted%20articles/2015/12/09/499/" title="暗时间">暗时间</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/reprinted%20articles/2015/12/09/499/">
+				        <h2 class="post-title">
+                            暗时间
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2015-12-09</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="年终总结">
+                    <span class="tag-text">年终总结</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2016-01-01">2016-01-01</time>
+				  <a href="/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/" title="再见2015">再见2015</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/">
+				        <h2 class="post-title">
+                            再见2015
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2016-01-01</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+			<div class="one-tag-list">
+			  	<span class="fa fa-tag listing-seperator" id="mysql">
+                    <span class="tag-text">mysql</span>
+                </span>
+				
+				  <!-- <li class="listing-item">
+				  <time datetime="2017-08-22">2017-08-22</time>
+				  <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" title="MySQL内存分配机制">MySQL内存分配机制</a>
+				  </li> -->
+				 <div class="post-preview">
+				    <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+				        <h2 class="post-title">
+                            MySQL内存分配机制
+				        </h2>
+				        
+				    </a>
+				    <!-- <p class="post-meta">2017-08-22</p> -->
+				</div>
+				<hr>
+				
+			</div>
+			
+
+		</div>
+	</div>
+</div>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

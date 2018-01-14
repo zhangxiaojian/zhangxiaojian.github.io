@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>PostgreSQL 客户端认证机制 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#PostgreSQL" title="PostgreSQL">PostgreSQL</a>
+                        
+                    </div>
+                    <h1>PostgreSQL 客户端认证机制</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 22, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>最近实验室数据库需要提高安全性，因为以前只有自己人用，基本上是在裸奔，知道端口号和IP就可以连接上，不需要任何认证信息，没有安全可言。最简单的认证方式就是用户名和密码，但平常使用PG的时候都没有用到，就研究了一下PG的认证方式，取取经。</p>
+
+<h3 id="配置与使用">配置与使用</h3>
+
+<p>PG的认证方式有很多种，而且对于不同的database，不同的user，不同的访问IP都可以选择不同的方式认证。具体在配置文件pg_hba.conf中说明。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>local</td>
+      <td>DATABASE </td>
+      <td>USER </td>
+      <td>METHOD </td>
+      <td>[OPTIONS]</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>host</td>
+      <td>DATABASE </td>
+      <td>USER </td>
+      <td>ADDRESS </td>
+      <td>METHOD </td>
+      <td>[OPTIONS]</td>
+    </tr>
+    <tr>
+      <td>hostssl</td>
+      <td>DATABASE </td>
+      <td>USER </td>
+      <td>ADDRESS </td>
+      <td>METHOD </td>
+      <td>[OPTIONS]</td>
+    </tr>
+    <tr>
+      <td>hostnossl</td>
+      <td>DATABASE </td>
+      <td>USER </td>
+      <td>ADDRESS </td>
+      <td>METHOD </td>
+      <td>[OPTIONS]</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>配置的时候大写字母要被对应的内容所取代。</p>
+
+<p>其中local匹配本地Unix域套接字访问。host 对应TCP/IP的链接认证，即可以匹配SSL链接请求，也可以匹配非SSL链接请求。hostssl 匹配使用TCP/IP的SSL链接请求，如果需要PG支持SSL，需要在客户端和服务器端安装openSSL，并且在编译阶段使用 –with-openssl，具体配置参考<strong><a href="http://www.postgresql.org/docs/9.5/interactive/install-procedure.html">这里</a></strong>。Hostnossl匹配普通的TCP/IP 链接。</p>
+
+<p>后面内容与字面描述一致，ADDRESS使用CIDR-address（IP/掩码）格式，声明匹配的客户端IP地址范围。METHOD是具体的认证方式，OPTION是具体认证方式可以配置的选项，以name-value的形式出现。例如：</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>local</td>
+      <td>all</td>
+      <td>all</td>
+      <td>127.0.0.1/32</td>
+      <td>md5</td>
+    </tr>
+    <tr>
+      <td>host</td>
+      <td>postgres</td>
+      <td>all</td>
+      <td>192.168.12.10/32</td>
+      <td>md5</td>
+    </tr>
+    <tr>
+      <td>host</td>
+      <td>all</td>
+      <td>all</td>
+      <td>192.168.0.0/16</td>
+      <td>ident map=omicron</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>第一个表示本地使用Unix域套接字访问，任何用户访问任何数据库的认证方式都是md5。安装PG后对本地的访问默认是trust, 更改为md5后使用psql登录：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>postgres@ubuntu:~<span class="nv">$ </span>psql
+Password:
+</code></pre></div></div>
+
+<p>默认登陆的是postgres数据库，初始是没有密码的，输入任何密码都会被拒绝，需要在后台设置密码：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    alter role postgres password <span class="s1">'your password'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>密码会使用md5加密保存，并且会在系统内部随机生成一个四位大小的随机数，和明文密码一起经过md5加密，为了提高破解的难度，也称作“加盐”。</p>
+
+<p>ident 认证方式是比较登录PG的用户和登录客户端的用户名是否相同，假设使用用户名messi登录了linux，在此账户下访问PG，如果访问的数据库用户不是messi，就不允许登陆。但是大多数情况下，两个用户名并不相同，所以PG提供了另一个映射文件：pg_ident.conf ，其中内容格式如下：</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>map-name</td>
+      <td>system-username</td>
+      <td>database-username</td>
+    </tr>
+    <tr>
+      <td>omicron</td>
+      <td>iniesta</td>
+      <td>messi</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>omicron 是map的名字，在上述第三个例子中定义ident，此时登录OS的用户是iniesta，但可以访问PG中用户为messi的数据库。如果system-username字段以一个反斜杠(/)开始， 那么该字段的剩余部分被作为一个规则表达式对待。可以参看<strong><a href="http://www.postgresql.org/docs/9.5/interactive/functions-matching.html#FUNCTIONS-POSIX-REGEXP">PG的正则表达式语法</a></strong>。除了md5，ident认证方式，还有其它多种认证方式，请参看<strong><a href="http://www.postgresql.org/docs/9.5/interactive/client-authentication.html">官方文档</a></strong>。</p>
+
+<h3 id="源码解析"> 源码解析</h3>
+
+<p>当postmaster启动的时候，会读取并解析上述两个配置文件，分别调用load_hba() load_ident() 两个函数，这两个函数会逐行的解析里面的内容，每一行的内容都有一个对应的数据结构来描述，分别是：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">IdentLine</span>
+<span class="p">{</span>
+    <span class="kt">int</span>		<span class="n">linenumber</span><span class="p">;</span>        <span class="cm">/*记录行号*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">usermap</span><span class="p">;</span>        <span class="cm">/*map名*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ident_user</span><span class="p">;</span>     <span class="cm">/*认证的用户，也就是需要映射的OS登录用户名*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">pg_role</span><span class="p">;</span>        <span class="cm">/*pg 角色名*/</span>
+    <span class="n">regex_t</span>		<span class="n">re</span><span class="p">;</span>         <span class="cm">/*正则表达式*/</span>
+<span class="p">}</span> <span class="n">IdentLine</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">HbaLine</span>
+<span class="p">{</span>
+    <span class="kt">int</span>		<span class="n">linenumber</span><span class="p">;</span>    <span class="cm">/*记录行号*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">rawline</span><span class="p">;</span>           <span class="cm">/*原本的内容*/</span>
+    <span class="n">ConnType</span>	<span class="n">conntype</span><span class="p">;</span>      <span class="cm">/*链接类型*/</span>
+    <span class="n">List</span>	   <span class="o">*</span><span class="n">databases</span><span class="p">;</span>         
+    <span class="n">List</span>	   <span class="o">*</span><span class="n">roles</span><span class="p">;</span>      
+    <span class="k">struct</span> <span class="n">sockaddr_storage</span> <span class="n">addr</span><span class="p">;</span> <span class="cm">/*IP地址范围*/</span>
+    <span class="k">struct</span> <span class="n">sockaddr_storage</span> <span class="n">mask</span><span class="p">;</span> <span class="cm">/*子网掩码*/</span>
+    <span class="n">IPCompareMethod</span> <span class="n">ip_cmp_method</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">hostname</span><span class="p">;</span>
+    <span class="n">UserAuth</span>	<span class="n">auth_method</span><span class="p">;</span>  <span class="cm">/*认证方式 md5 ident等*/</span>
+
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">usermap</span><span class="p">;</span>          <span class="cm">/*ident map名*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">pamservice</span><span class="p">;</span>       <span class="cm">/*PAM服务*/</span>
+    <span class="kt">bool</span>		<span class="n">ldaptls</span><span class="p">;</span>      <span class="cm">/*ldap中是否使用TLS*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapserver</span><span class="p">;</span>       
+    <span class="kt">int</span>		<span class="n">ldapport</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapbinddn</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapbindpasswd</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapsearchattribute</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapbasedn</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">ldapscope</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapprefix</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">ldapsuffix</span><span class="p">;</span>
+    <span class="kt">bool</span>		<span class="n">clientcert</span><span class="p">;</span>     <span class="cm">/*ssl客户端证书认证*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">krb_server_hostname</span><span class="p">;</span> <span class="cm">/*krb 服务器名*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">krb_realm</span><span class="p">;</span>
+    <span class="kt">bool</span>		<span class="n">include_realm</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">radiusserver</span><span class="p">;</span>      <span class="cm">/*radi服务名*/</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">radiussecret</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">radiusidentifier</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">radiusport</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">HbaLine</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>逐行解析并放入这两个数据结构中，存放内容的空间会在特定的内存上下文中。解析完毕后会用PG中的List结构把每一行组成一个链表，分别会有静态全局变量指向链表头，以备后续认证访问。当postmaster正在运行，如果想改变认证方式，修改配置文件后需要发送SIGHUP信号，或者执行pg_ctl -D ./DATADIR reload命令，会重新读取配置文件。</p>
+
+<p>具体的认证行为在postgres进程中，因为PG的多进程架构，当新的链接请求到达pastmaster之后，会fork一个postgres进程进行处理，上述解析的内容也会从postmaster继承过来，但是postmaster重新读配置文件解析后，却不会影响已经执行的postgres，大多数情况postgres正在运行说明已经通过了验证，也不用理会认证方式的改变。一个新链接包含的内容保存在 Port 这个数据结构中，也有一个全局的指针指向它，在认证过程中与客户端的通信都是基于Port中的文件描述符。postgres也许并不需要关心此链接是一个本地的Unix域套接字，还是网络Socket。也把Port这个结构贴出来，源码里面的注释已经挺明白的：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">Port</span>
+<span class="p">{</span>
+    <span class="n">pgsocket</span>	<span class="n">sock</span><span class="p">;</span>			<span class="cm">/* File descriptor */</span>
+    <span class="kt">bool</span>		<span class="n">noblock</span><span class="p">;</span>		<span class="cm">/* is the socket in non-blocking mode? */</span>
+    <span class="n">ProtocolVersion</span> <span class="n">proto</span><span class="p">;</span>		<span class="cm">/* FE/BE protocol version */</span>
+    <span class="n">SockAddr</span>	<span class="n">laddr</span><span class="p">;</span>			<span class="cm">/* local addr (postmaster) */</span>
+    <span class="n">SockAddr</span>	<span class="n">raddr</span><span class="p">;</span>			<span class="cm">/* remote addr (client) */</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">remote_host</span><span class="p">;</span>	<span class="cm">/* name (or ip addr) of remote host */</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">remote_hostname</span><span class="p">;</span><span class="cm">/* name (not ip addr) of remote host, if
+                                 * available */</span>
+    <span class="kt">int</span>			<span class="n">remote_hostname_resolv</span><span class="p">;</span> <span class="cm">/* see above */</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">remote_port</span><span class="p">;</span>	<span class="cm">/* text rep of remote port */</span>
+    <span class="n">CAC_state</span>	<span class="n">canAcceptConnections</span><span class="p">;</span>	<span class="cm">/* postmaster connection status */</span>
+
+    <span class="cm">/*
+     * Information that needs to be saved from the startup packet and passed
+     * into backend execution.  "char *" fields are NULL if not set.
+     * guc_options points to a List of alternating option names and values.
+     */</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">database_name</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">user_name</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">cmdline_options</span><span class="p">;</span>
+    <span class="n">List</span>	   <span class="o">*</span><span class="n">guc_options</span><span class="p">;</span>
+
+    <span class="cm">/*
+     * Information that needs to be held during the authentication cycle.
+     */</span>
+    <span class="n">HbaLine</span>    <span class="o">*</span><span class="n">hba</span><span class="p">;</span>
+    <span class="kt">char</span>		<span class="n">md5Salt</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>		<span class="cm">/* Password salt */</span>
+
+    <span class="cm">/*
+     * Information that really has no business at all being in struct Port,
+     * but since it gets used by elog.c in the same way as database_name and
+     * other members of this struct, we may as well keep it here.
+     */</span>
+    <span class="n">TimestampTz</span> <span class="n">SessionStartTime</span><span class="p">;</span>		<span class="cm">/* backend start time */</span>
+
+    <span class="cm">/*
+     * TCP keepalive settings.
+     *
+     * default values are 0 if AF_UNIX or not yet known; current values are 0
+     * if AF_UNIX or using the default. Also, -1 in a default value means we
+     * were unable to find out the default (getsockopt failed).
+     */</span>
+    <span class="kt">int</span>			<span class="n">default_keepalives_idle</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">default_keepalives_interval</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">default_keepalives_count</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">keepalives_idle</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">keepalives_interval</span><span class="p">;</span>
+    <span class="kt">int</span>			<span class="n">keepalives_count</span><span class="p">;</span>
+
+<span class="cp">#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+</span>
+    <span class="cm">/*
+     * If GSSAPI is supported, store GSSAPI information. Otherwise, store a
+     * NULL pointer to make sure offsets in the struct remain the same.
+     */</span>
+    <span class="n">pg_gssinfo</span> <span class="o">*</span><span class="n">gss</span><span class="p">;</span>
+<span class="cp">#else
+</span>    <span class="kt">void</span>	   <span class="o">*</span><span class="n">gss</span><span class="p">;</span>
+<span class="cp">#endif
+</span>
+    <span class="cm">/*
+     * SSL structures (keep these last so that USE_SSL doesn't affect
+     * locations of other fields)
+     */</span>
+<span class="cp">#ifdef USE_SSL
+</span>    <span class="n">SSL</span>		   <span class="o">*</span><span class="n">ssl</span><span class="p">;</span>
+    <span class="n">X509</span>	   <span class="o">*</span><span class="n">peer</span><span class="p">;</span>
+    <span class="kt">char</span>	   <span class="o">*</span><span class="n">peer_cn</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">count</span><span class="p">;</span>
+<span class="cp">#endif
+</span>
+    <span class="cm">/* This field will be in a saner place in 9.4 and up */</span>
+    <span class="kt">int</span>			<span class="n">remote_hostname_errcode</span><span class="p">;</span>		<span class="cm">/* see above */</span>
+<span class="p">}</span> <span class="n">Port</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>可以看到，和客户端认证相关的除了基本的信息，比如要访问的数据库，客户端的地址，用户名等，里面包含了一个HbaLine 指针和 md5Salt。认证的入口是InitProcess函数，最终会调用ClientAuthentication，首先根据访问信息去匹配满足要求的HbaLine，如果匹配不到就会报错并退出数据库。接着验证客户端证书（如果有），然后就根据认证方式进入不同的认证方式分支。认证过程会进行多次通信。最终得到认证结果选择是否中断链接。</p>
+
+<p>以md5认证方式为例，第一步需要组装信息发送给客户端，要求客户端输入密码。具体发送消息的格式如下：</p>
+<table>
+<tbody>
+<tr>
+
+<td width="184">Type（‘R’char）
+</td>
+
+<td width="184">Type（MD5 int）
+</td>
+
+<td width="184">Salt（char[4]）
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>一个值为‘R’的char，表示需要客户端回应，接着是认证的类型，客户端根据类型做不同信息相应，最后是MD5特有的“盐”值，需要从数据库中取出来，发送给客户端，让客户端完成加密工作。第二步就是等待客户端发送过来的密码，与数据库的密码进行比对，完成验证。这里最重要的就是客户端需要统一信息发送接收和解析的格式。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>PG的多进程架构让认证流程变得很清晰，项目中采用多线程+epoll处理多个链接，逻辑就会稍微复杂一点。如果SSL加密可靠，似乎可以在网络上传送密码的明文，所有加密工作可以放到数据库端来做，这样客户端就少了一道加密的工作。关于ident认证方式，某种程度上借用了OS登录认证的保护，值得借鉴。</p>
+
+<h3 id="参考">参考</h3>
+
+<p><a href="http://product.dangdang.com/22552056.html"><strong>PostgreSQL 数据库内核分析</strong></a></p>
+
+<p><strong>http://www.jb51.net/article/40300.htm</strong></p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/" data-toggle="tooltip" data-placement="top" title="再见2015">
+                        Previous<br>
+                        <span>再见2015</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/" data-toggle="tooltip" data-placement="top" title="Berkeley DB 事务支持的应用架构">
+                        Next<br>
+                        <span>Berkeley DB 事务支持的应用架构</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/database/2016/01/22/postgresql-%e5%ae%a2%e6%88%b7%e7%ab%af%e8%ae%a4%e8%af%81%e6%9c%ba%e5%88%b6";
+    var disqus_url = "http://localhost:4000/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

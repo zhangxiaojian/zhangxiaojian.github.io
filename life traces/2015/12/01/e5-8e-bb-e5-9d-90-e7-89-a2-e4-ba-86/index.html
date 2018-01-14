@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>去坐牢了 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2015/12/01/e5-8e-bb-e5-9d-90-e7-89-a2-e4-ba-86/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>去坐牢了</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on December 1, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>前几天在微博上看到一道类似星座，性格，爱情，命运之类的测评题，我其实对这种一点都不信，测出来的答案大多都是那种比较含糊，符合大部分人的心里，还让人感觉好像真准，这个懂我！ 但是这个测试比较有意思，让我想了很久都不满意。题目是这样的：</p>
+
+<p><strong><em>把你关在一个5平米没有窗户的监狱里10年 ，只有一张硬床和行李，一个马桶，一个 铁门，头顶10米有个通风口，每天提供6个 馒头，一个自来水龙头。__ </em></strong></p>
+
+<p>为了深切体会生活环境，我找了一张监狱的图(比我想象的好多了，马桶真是是马桶而不是桶):</p>
+
+<p><a href="/img/uploads/2015/11/jail.jpg"><img src="/img/uploads/2015/11/jail.jpg" alt="jail" /></a></p>
+
+<p><strong><em>给你积分20分，可以换取以下东西：</em></strong>
+<strong><em>A : 10分：绝世美女（帅哥）一名，古今 中外任何美女任你挑，柳岩林志林奥黛丽 赫本都不是事儿。 </em></strong>
+<strong><em>B : 5分：电脑一台（里边有世界上所有的 单机游戏，但不能上网）</em></strong>
+<strong><em>C : 5分：宽带安装（可以上网了）</em></strong>
+<strong><em>D : 3分：世界上所有的书籍，报纸，电视 剧（用平板看，但不能上网）</em></strong>
+<strong><em>E : 5分：医药服务（可以治疗任何疾病， 否则半途死掉活该）</em></strong>
+<strong><em>F : 5分：美食（世界上任何地区国家的美 食，指正餐，零食除外）</em></strong>
+<strong><em>G : 3分：零食（除正餐之外的任何零食） </em></strong>
+<strong><em>H : 2分：洗漱卫生用品（牙膏牙刷毛巾卫 生纸、、、） </em></strong>
+<strong><em>I : 5分：牢房换成一层别墅，前后大阳台 ，背后雪山，面朝大海，100平米。 </em></strong>
+<strong><em>J : 15分：圣人一名（孔子、释迦牟尼、 耶稣等等）每天陪你说话4小时 </em></strong>
+<strong><em>K : 10分：牛人一名（*河蟹*、希特勒、 克林顿等等）每天陪你说话4小时 </em></strong>
+<strong><em>L : 7分：牛人一名（马云、莫言等等）每 天陪你说话4小时 </em></strong>
+<strong><em>M : 4分：名人一名（郭德纲、韩寒等等） 每天陪你说话4小时</em></strong>
+<strong><em>N : 1分：充气娃娃一个</em></strong>
+<strong><em>O : 1分：健身器械 </em></strong>
+<strong><em>P : 1分：饮料（包含咖啡茶叶等）</em></strong>
+<strong><em>Q : 2分：娱乐用品（桌游、扑克、棋类随 便挑）</em></strong>
+<strong><em>R : 5分：毒品 </em></strong>
+<strong><em>S : 10分：100万美元（已打到你亲人账 户上，他们可以随时花） </em></strong>
+<strong><em>好啦，开始你的10年梦幻监狱之旅了 ！选择东西说明理由，规则不能超出积分</em></strong></p>
+
+<p>这道题的魅力是要找出你真正需要的是什么，为了方便我把它们编上了号。显然，一千个哈姆雷特就有一千种选择。处在人生不同年龄阶段，不同生活背景，不同身体状况，不同生活方式，不同爱好特点等等都会做出不同的选择。选择意味着需求，人本质是高智慧的动物，有动物本身的需求，有智慧方面精神的需求。所以先把上面可选的分类：</p>
+
+<p>**基本需求：F ，P  ，G ，E ** (吃喝，虽然每天有馒头和自来水，但十年都这样吃恐怕不止是营养不良; 医疗服务，十年不得病还是有点难，活着是最起码的。其中F 和G可以互相替换)</p>
+
+<p><strong>生活需求：A ，H ，I ，N</strong>  (生活的更好一点，A 和 N可以互相替换，虽然我也承认奥黛丽赫本杀伤力确实很大。洗漱用品，没有这个就要做好十年上厕所没有纸的准备。大别墅，可以让人感觉不是在坐牢，请看上图十分钟)</p>
+
+<p><strong>精神需求：B ，C ，D ，J ，K ，L ，M ，Q  </strong>(在一个地方呆十年，如果不找点事做那真的要精神失常，至于做什么，人各有志)</p>
+
+<p>**特殊人群需求:R ，S **( 如果本来就需要吸毒度日，或者觉得十年太长，吸毒会感觉快一点，可以考虑入手。不过十年出狱，以后日子怎么过要考虑好。家里有特殊情况，脑补一下一个人因为家人重病需要钱才去抢银行，被抓后遇到了这个选择题。)</p>
+
+<p>**BUG: O **（健身应该属于个人爱好，就像我爱好踢球，可以锻炼身体，也可以消磨时间，但并不是精神需求。每天自己做做俯卧撑啊，仰卧起坐的也能达到效果。应该归属一类 “行”，但没有其它类似选项，就算它是个BUG好了）</p>
+
+<p>浏览完所有选项，最想选的是牢房换成别墅，因为当时看到的题目描述是提供基础的饭食和水，而不是六个馒头加自来水这么具体，这么基础。所以吃的和喝的一定要有，其中正餐要5分，零食只要3分，显然零食更加划算，“任何零食” 说明种类也足够丰富，营养也不必担心。本来主食和零食就是人生活习惯演化来的，北方主食面，南方主食米饭，西方主食披萨汉堡包，食物本无错，谁分主次？ 饮料没有替代的，选之，希望“等”里面种类会比较丰富。医疗服务一定要有，坐牢不过十年，都不用十八年后，就可以又是一条好汉，不能死啊。有了这几样，可以保证活着，这是最基本的需要。耗费分数：<strong>G + P + E = 9</strong></p>
+
+<p>余额已去近半，看来人生一半的收入都要用来吃喝看病，也有点符合现状。下来是生活需求方面，只吃饱喝足是不行的，十年不刷牙 and 十年上厕所没有纸 and 十年不洗漱，出来之后肯定被人嫌弃，别说找老婆了，工作都找不到。所以洗漱卫生用品Get。剩下三样并不是一定必须的，再说余额已不够见到赫本，牢无可恋。关于牢房换别墅，我觉得是很重要的，对于坐牢，思维之中就会认为自己被禁锢，而且是因为犯错。越被禁锢就越不想被禁锢，这是对自由的需要。有了这种思维，在牢房的日子就会更加难过，就像上学的时候自己跑去自习一下午和被老师关在教室罚写一下午作业的感觉是一样的。还有大话西游一句经典的台词：外面对我来说只是更大一点的牢房。所以别墅Get，十年生活环境，心情焕然一新。耗费分数：<strong>H + I = 7</strong></p>
+
+<p>此时留给精神需求的余额已经不多，JKLM每天只聊天四小时，十年都和一个人聊也烦了，不过韩寒分数竟然最低，还不如希特勒，我就无法理解了。。其中BCD，电脑 + 平板 + 网络无疑占用的现实生活中的大部分时间，当手机连不上网，就感觉被世界遗弃了一样。最让人纠结的选择就在这里，如果要电脑+网，除了不能住别墅，上厕所还没有纸，或者是要去喝自来水。如果要平板+网，不住别墅，确实是一个不错的选择，在这里纠结了好久，不过最后想想要闷在一个五平米的地方拿着pad刷微博聊微信打手游，还是更希望能吃饱喝足在一片开阔的地方散散步，吹吹风。想想小时候没有互联网的时候，在一个大院子里玩，过的也很开心。只剩四分，带走一个pad，看书看视频看报纸~ 耗费分数:<strong>D = 3</strong></p>
+
+<p>还有一分，可选的有N和O，开始想着选充气娃娃是不是显得有点猥琐，所以在朋友圈发状态的时候选择是健身器械，现在想想，有了大别墅，可以跑跑步，做做仰卧起坐俯卧撑什么的，可以代替健身，就选充气娃娃好了。PS 如果把健身器械换成一个足球，那我肯定选足球了。耗费分数：<strong>N = 1</strong></p>
+
+<p>好了，坐牢的日子里，一天大概是这样过的：睡个懒觉，起来洗漱，吃点零食，喝杯茶，然后看看报纸发生了什么搞笑的新闻，祖国是否安好，人民是否幸福。到了中饭时间，三个大馒头里面配点零食，喝点饮料。吃饱喝足在大别墅里散散步，感慨一下岁月，感慨一下人生，想念一下家人朋友，和进来之前认识的姑娘们。瞌睡了睡一会，不瞌睡就抱着pad看书吧，除了消遣的小说之类，还要看看专业书籍，出去之后还要找工作，要是pad上面能写代码，或者有PG源码来看就好了。一转眼又到了饭点，还是零食为主，馒头为零，吃饱喝足。到阳光明媚的地方跑跑步，晒晒太阳，或者面朝大海，看着雪山吹吹风。天黑后找点电视剧电影看，晚上洗白白就可以睡觉去了~</p>
+
+<p>后：现实生活拥有的远远比20分换来的多的多，但是否都需要，是否都珍惜 ？</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/c++/reprinted%20articles/2015/10/25/e4-bb-8efread-e5-92-8cmmap-e8-b0-88-e8-af-bb-e6-96-87-e4-bb-b6-e7-9a-84-e6-80-a7-e8-83-bd/" data-toggle="tooltip" data-placement="top" title="从fread和mmap 谈读文件的性能">
+                        Previous<br>
+                        <span>从fread和mmap 谈读文件的性能</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/reprinted%20articles/2015/12/09/499/" data-toggle="tooltip" data-placement="top" title="暗时间">
+                        Next<br>
+                        <span>暗时间</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2015/12/01/%e5%8e%bb%e5%9d%90%e7%89%a2%e4%ba%86";
+    var disqus_url = "http://localhost:4000/life%20traces/2015/12/01/e5-8e-bb-e5-9d-90-e7-89-a2-e4-ba-86/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

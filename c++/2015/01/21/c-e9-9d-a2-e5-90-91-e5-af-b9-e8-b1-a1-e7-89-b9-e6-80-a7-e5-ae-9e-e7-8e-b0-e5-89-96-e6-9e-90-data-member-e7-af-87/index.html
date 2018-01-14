@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>C++面向对象特性实现剖析 Data Member篇 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#c++" title="c++">c++</a>
+                        
+                        <a class="tag" href="/tags/#面向对象" title="面向对象">面向对象</a>
+                        
+                    </div>
+                    <h1>C++面向对象特性实现剖析 Data Member篇</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 21, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>这一段时间写博客的频率少了很多，一直在给实验室数据库写备份和恢复的功能，积攒了很多值得深入学习的点，之后会一一总结。这篇文章是选的课需要交一篇分析语言特性如何实现的结题报告，正好看完Inside the c++ object model 之后，就一直想总结一下c++是怎么实现面向对象的继承，多态等等特性的。这是上篇，主要分析类中的数据成员，也是主要部分，下篇介绍虚函数的实现情况。</p>
+
+<h3 id="c-与面向对象">c++ 与面向对象</h3>
+
+<p>传统的c语言是结构化程序设计语言的代表，由c语言完成的操作系统，数据库等大型软件如今仍然良好的运行在我们的电脑上。C语言效率高，更加接近底层，程序员在编程中可以掌握每一块内存，如何分配何时回收。c++是c语言的一个超集，它兼容了强大的传统c语言特性。并且支持面向对象编程技术，这一度曾使c++成为最流行的编程语言。当然，c++除了面向对象外，还增加了强大的模板元编程技术。本文主要以c++为主，深入分析面向对象是如何实现的。</p>
+
+<p>面向对象与结构化的组织方式上有很大不同，传统的c语言用struct结构来组织数据。用函数来处理数据。这两者是分开的。在面向对象中，它们都存在于对象中。一个对象由两部分组成，数据和处理数据的函数。</p>
+
+<p>举个例子：</p>
+
+<p>假设平面上有一个点，点有x，y两个坐标。我们需要得到这个点和坐标原点围成的正方行的面积。用c语言来做：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">Point2D</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">y</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">float</span> <span class="nf">getArea</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>首先用struct构造一个点的数据结构，需要计算某个点的面积的时候就调用函数getArea()。把结构中的数据x，y当作参数传入。如果是以对象来处理:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Point2D</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Point2D</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span><span class="p">)</span><span class="o">:</span><span class="n">x</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">y</span><span class="p">(</span><span class="n">y</span><span class="p">){}</span>
+        <span class="kt">float</span> <span class="n">getArea</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+        <span class="kt">float</span> <span class="n">y</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>数据和函数都在类中，会发现类中的getArea()函数比上面的getArea()函数少了两个参数。那是因为类中的函数可以访问类中的数据成员(至于怎么访问的后面会详细分析)。除了函数不同，还多了两个关键字，private和public，这是一个类对外部的声明，可以使用类中的接口放在public中，只能类自己使用的放在private中。这在降低系统耦合度和安全性方面很有用。就上面的例子来说，struct中的数据可以访问和被修改，如果另一个程序员在getArea()函数中把传入的x，y参数修改了。那么struct自己也不知道。甚至会得到错误的答案。但是在类中，根本没有可以修改数据成员的方法，只能构造一个Point2D对象，然后乖乖的获得它的面积。程序员可以根据自己的意图，来选择暴露给外部的接口，接口越少，与外部的耦合越少。</p>
+
+<p>当然，面向对象带来的不止于此，它最大的两个特点是继承和多态。</p>
+
+<p>继承：</p>
+
+<p>它定义了类之间的一种层级关系，或者说父子关系。子类拥有父类的public或者protected保护层级的接口访问权限。包括数据和函数。这就从代码层次得到了重用。并且对于程序员设计程序的思维方式起到了很大的改变。还是以上面的程序为例，假设现在需要一个类，来描述三维空间的长方体，刚才已经定义了描述二维空间的Point2D。如果是c struct风格，就需要这样定义：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">Point3D</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">y</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">z</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kt">float</span> <span class="nf">getArea</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span><span class="err">，</span><span class="kt">float</span> <span class="n">z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Point3D和Point2D除了看起来非常相似之外几乎没有什么关系。如果使用继承的方式，看起来就美观的多。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Point3D</span><span class="o">:</span><span class="k">public</span> <span class="n">Point2D</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Point3D</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span><span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span><span class="kt">float</span> <span class="n">z</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">:</span><span class="n">Point2D</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span><span class="n">_z</span><span class="p">(</span><span class="n">z</span><span class="p">){}</span>
+        <span class="kt">float</span> <span class="n">getArea</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Point2D</span><span class="o">::</span><span class="n">getArea</span><span class="p">()</span> <span class="o">*</span> <span class="n">_z</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="kt">float</span> <span class="n">_z</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>这时不需要重复的定义x和y，显得冗余。而且函数也不需要重载去选择到底调用哪一个来计算体积或者面积。那么有一个问题，刚说过子类之能访问父类的public和protected限定符后的数据或函数。那么位于父类的x和y怎么进行初始化和计算？ 一般的类都有一个public的构造函数（当然单例模式是个例外），可能有参数也可能没有参数，这完全取决于父类的定义。子类有责任去初始化父类，就是通过调用父类的构造函数。把父类的数据成员初始化为子类对象的一部分。这里父类构造函数是public的，由它去完成父类部分private的数据成员构造和初始化。假设我们定义一个Point3D的对象，它的在内存中的样子可能是这样：</p>
+
+<p><a href="/img/uploads/2015/01/c1.png"><img src="/img/uploads/2015/01/c1.png" alt="c1" /></a></p>
+
+<p>类的定义有着继承，复用。但是当一个类定义为一个对象的时候，它在内存中和用struct定义的并没有多大区别（函数除外，但是一般函数并不占用对象的内存空间）。</p>
+
+<p>多态：</p>
+
+<p>这可以说是面向对象的精华所在。核心思想就是父类能做的事情，子类肯定也能做。这在现实中也讲得通，被用的很多的例子：水果能吃，苹果是水果，所以苹果能吃。用来理解当然是好，但是要从程序的角度来考虑，才能真正掌握。一个类从被创建为对象，到被使用，复制，赋值，析构等等操作都是通过暴露给外部的接口完成的。换句话说，有了这些接口，我就可以使用这个对象提供的所有功能。而刚刚也说了，子类会继承父类暴露出来的接口，包括数据和函数。那么父类能做的事，子类当然也能做。还是刚才的例子，如果Point3D没有定义自己的getArea()函数，调用Point3D对象，还是会有一个getArea()函数，只不过计算的是x和y的乘积。来自子类的函数，自然只能访问子类的数据成员。从这里可以看出，子类不仅可以继承，而且还可以重写。把父类看着不顺眼的方法重写，调用的时候就不会调到继承而来的方法了。这其中的机制其实并不是将父类的方法覆盖掉，再也找不到了。而是在类中有自己的名字空间，在调用的时候，首先会在自己类的名字空间中去寻找匹配的函数，如果找不到，才去父类的名字空间里去找。看上面代码也知道，我们可以指定名字空间，在子类的getArea()函数中指定访问的函数是父类的getArea()函数。</p>
+
+<p>说了这么多，还都是不是多态，只是类之间的组织关系。多态是这么一回事，既然父类的事，子类都能做，自然就能把子类对象绑定到一个父类的指针或者引用上。那能不能我调用父类的接口，程序自己去判断到底是哪个子类绑定的或者本身就是父类自己绑定到自己，就去调用对应的方法。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Point2D</span> <span class="o">*</span><span class="n">pd</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Point3D</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">2.02</span><span class="p">,</span><span class="mf">3.03</span><span class="p">);</span>
+<span class="n">pd</span><span class="o">-&gt;</span><span class="n">getArea</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>pd是Point2D类型的指针，访问了Point2D的方法，但是它实际上指向的是Point3d类型的对象，调用的是Point3D中的函数。得到的结果是 1.01 * 2.02 * 3.03 。实现多态机制需要virtual 函数的概念。后面会详细介绍如何实现的。</p>
+
+<h3 id="data-member"><strong>Data member</strong></h3>
+
+<h4 id="1static-data">1.Static data</h4>
+
+<p>类中的静态数据成员，它属于类，并不属于某个特定的对象。可以通过类的对象来访问静态数据成员，但是所有对象访问的都是同一份实例。它的生命周期是全局的，在编译期就产生，直到整个进程退出。不管在类中定义多少个静态数据成员，它不会增加类的空间大小。sizeof得到的结果是一样的，因为它在程序编译的时期就被放进了程序的数据段中。如图所示：</p>
+
+<p><a href="/img/uploads/2015/01/c2.png"><img src="/img/uploads/2015/01/c2.png" alt="c2" /></a></p>
+
+<p>如图所示，程序中栈空间由高地址向低地址分配，主要是用于函数中的局部变量。堆空间由低地址向高地址分配，由程序员来自主的分配和回收。而在最下部，地址最低的地方，这里存放编译期间产生的静态数据和常量数据，所以这部分的空间大小不会变。</p>
+
+<p>静态数据成员是可以被继承的，但是它在内存中还是只有一份实例。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Base</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="k">static</span> <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="n">Base</span><span class="o">::</span><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">Derived</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Base</span><span class="p">{</span>
+
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"Derived : "</span><span class="o">&lt;&lt;</span><span class="n">Derived</span><span class="o">::</span><span class="n">a</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">Base</span><span class="o">::</span><span class="n">a</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">"Derived : "</span><span class="o">&lt;&lt;</span><span class="n">Derived</span><span class="o">::</span><span class="n">a</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>第一次输出的是1，第二次输出的是2.所谓继承，只是给予子类访问该静态数据成员的权限。静态数据成员的存取没有任何额外的开销，每次对它的访问都会被编译器转化为直接的参考引用。由于所有类的静态数据成员都存放在数据段，因此如果类A和类B定义了两个相同名字的静态成员，就会产生命名冲突。编译器采用name-mangling的手段，为每个变量生成一个独一无二的名字。确保不会重名。</p>
+
+<h4 id="2nostatic-data"><strong>2.Nostatic data</strong></h4>
+
+<p>2.1 非静态数据成员访问基础</p>
+
+<p>类的非静态数据成员在每个对象中都有一份实例，每个对象间的数据互相没有关联。可以使用对象和指针来访问数据成员，访问的方式是通过在编译期确定的每个数据成员在类中的offset，也就是偏移量。这是一个相对的地址。举个例子：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Base</span><span class="o">:</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Base</span><span class="p">()</span><span class="o">:</span><span class="n">b</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="n">c</span><span class="p">(</span><span class="mi">3</span><span class="p">){}</span>
+        <span class="kt">int</span> <span class="n">b</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">Base</span> <span class="n">object</span><span class="p">;</span>
+<span class="n">object</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>通过对象来访问public的数据成员，在编译时期成员b在类Base中的偏移量是确定的。B是Base的第一个数据成员，因此偏移量为0.通过object的地址加上偏移量，就能够定位到数据成员。C++引出了“指向Data Member的指针”来描述这种偏移。可以很灵活的访问数据成员。我们可以打印出偏移量到底是多少。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">printf</span><span class="p">(</span><span class="s">"&amp;Base::b = %pn"</span><span class="p">,</span><span class="o">&amp;</span><span class="n">Base</span><span class="o">::</span><span class="n">b</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><a href="/img/uploads/2015/01/c3.png"><img src="/img/uploads/2015/01/c3.png" alt="c3" /></a></p>
+
+<p>有的编译器会显示为1，这是为了区分空指针和偏移量为0的指针，因此从1开始寻址。在访问的时候减1即可。Vs2010显然做了优化。</p>
+
+<p>2.2 继承后数据成员访问</p>
+
+<p>C++标准规定，基类在被继承变成子类的一部分的时候，保持和基类本身同样的布局结构。这一点贯穿各种各样的继承形式。首先以不带virtual函数的单一继承为例。假设有一个类继承它:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Derived</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Base</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Derived</span><span class="p">()</span><span class="o">:</span><span class="n">w</span><span class="p">(</span><span class="mi">5</span><span class="p">){}</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="kt">int</span> <span class="n">w</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>一个Derived对象在内存中的样子是这样：</p>
+
+<p><a href="/img/uploads/2015/01/c4.png"><img src="/img/uploads/2015/01/c4.png" alt="c4" /></a></p>
+
+<p>蓝色是Base类对应的部分，白色是Derived类添加的部分。如果需要访问c这个数据成员，那么只需要使用当前对象的指针加上偏移量即可。在继承中我们可以这样做：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Base</span><span class="o">*</span> <span class="n">pb</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+<span class="n">pb</span><span class="o">-&gt;</span><span class="n">c</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这时pb实际上指向的地址是类Derived对象的地址，指针类型却是Base*，由于每个类中数据成员的偏移是固定的，所以pb-&gt;c这个操作会使用pb指针的地址加上数据成员c在Base类中偏移量。由图中我们可以看到，Base类在Derived类的起始部分，而且偏移量和Base中的一样。编译器不用做多余的操作就可以直接访问到正确的数据成员。</p>
+
+<p>2.3多重继承</p>
+
+<p>多重继承在Java等纯面向对象语言中已经不支持了，因为它比较复杂，而且多重继承可以使用单一继承来实现。Java中添加了接口的概念来弥补不支持多重继承带来的问题。多重继承中，子类拥有多个父类。并且子类的父类部分一如既往的保持完整。我们定义一个类Base2，并且让Derived继承Base和Base2。在内存中的布局是这样：</p>
+
+<p><a href="/img/uploads/2015/01/c5.png"><img src="/img/uploads/2015/01/c5.png" alt="c5" /></a></p>
+
+<p>蓝色是Base部分，棕色是Base2部分，白色是Derived自己的部分。这就存在一个和刚才不同的问题。假设这样访问数据成员d。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">Base2</span><span class="o">*</span> <span class="n">pb2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Derived</span><span class="p">();</span>
+    <span class="n">pb2</span> <span class="o">-&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>把Derived对象的地址赋值给Base2类型的指针pb2。由于数据成员的偏移量是和类型相关的。这里指针的类型是Base2，而数据成员d在Base2中的偏移量是0。那么使用指针的地址（也就是Object Derived地址）加上0的偏移，访问到的数据成员将是b。这就不符合语义了。此时需要编译器来调整，编译器会把new Derived()返回的地址加上sizeof（Base）,就不会访问出错了。</p>
+
+<p><a href="/img/uploads/2015/01/c6.png"><img src="/img/uploads/2015/01/c6.png" alt="c6" /></a></p>
+
+<p>如图所示，&amp;d的值和pb2的值不相同，相差8字节，而sizeof（Base）正好是8。</p>
+
+<p>2.4 支持多态的类数据成员访问</p>
+
+<p>简单来讲，就是含有virtual函数的类。当一个类中含有virtual函数的时候，编译器会在类中添加一个指针，叫做虚函数指针，指向一张表，表中含有虚函数的地址。以此机制来实现多态。具体在下一部分函数中再说。假如在类Base中定义一个虚函数。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="k">virtual</span> <span class="n">print</span><span class="p">(){}</span>
+</code></pre></div></div>
+
+<p>那么Base就变成这样了：</p>
+
+<p><a href="/img/uploads/2015/01/c7.png"><img src="/img/uploads/2015/01/c7.png" alt="c7" /></a></p>
+
+<p>虚函数指针可以放在开头也可以放在结尾，在vs2010中是放在类的开头的。除了多出来一个莫名的字段之外，导致类大小和数据成员offset增加。其它的数据访问方式和前面所述相同。</p>
+
+<p>2.5 含有虚基类的类数据成员访问方式</p>
+
+<p>假设有这种继承结构：</p>
+
+<p><a href="/img/uploads/2015/01/c8.png"><img src="/img/uploads/2015/01/c8.png" alt="c8" /></a></p>
+
+<p>那么在Derived岂不是要含有两份BaseT部分的数据成员？ 这显然是不行的。此时就需要引入虚继承的方式。使Base和Base2虚继承BaseT。那么就可以保证在Derived只含有一份BaseT的数据成员。所付出的代价就是需要更加复杂的手段来对数据成员进行访问。以Base为例：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Base</span><span class="o">:</span><span class="k">public</span> <span class="k">virtual</span> <span class="n">BaseT</span><span class="p">{</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">Base</span><span class="p">()</span><span class="o">:</span><span class="n">b</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="n">c</span><span class="p">(</span><span class="mi">3</span><span class="p">){}</span>
+        <span class="kt">void</span> <span class="k">virtual</span> <span class="n">print</span><span class="p">(){}</span>
+        <span class="kt">int</span> <span class="n">b</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>它在内存中的模型是这样的：</p>
+
+<p><a href="/img/uploads/2015/01/c9.png"><img src="/img/uploads/2015/01/c9.png" alt="c9" /></a></p>
+
+<p>其中k是来自基类BaseT的数据成员，第一个vfptr是虚函数指针，而ptr是专门为了支持虚基类继承而添加的指针。它指向的内存空间含有访问数据成员k的offset。在此例中，大小是12。从ptr的地址算起，加上b和c的大小，一共12。假设一个Base对象的地址指向_vfptr，要想访问k，那么首先要+4定位到ptr。然后再加上ptr中的offset，指针成功指向k。看一下Derived对象的内存布局就知道这种方式怎么保证只有一份BaseT的实例了。</p>
+
+<p><a href="/img/uploads/2015/01/c10.png"><img src="/img/uploads/2015/01/c10.png" alt="c10" /></a></p>
+
+<p>白色是Base部分，棕色是Base2部分，黄色是Derived部分。Derived想要访问k，首先把地址加4定位到ptr，然后取出offset=12，定位到棕色ptr，取出offset大小为8，定位到w，由于类Derived没有使用虚继承，所以简单加上它的sizeof大小即可。从图中可以看出，是通过不断地间接存取一直到能够访问k为止。因此访问虚基类的数据成员代价是挺高的。</p>
+
+<p>Data Member 到此结束，Function 部分后续完成后再来~</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/database/reprinted%20articles/2015/01/09/postgresql-e6-98-a8-e5-a4-a9-e4-bb-8a-e5-a4-a9-e5-92-8c-e6-98-8e-e5-a4-a9/" data-toggle="tooltip" data-placement="top" title="PostgreSQL 昨天,今天和明天">
+                        Previous<br>
+                        <span>PostgreSQL 昨天,今天和明天</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/" data-toggle="tooltip" data-placement="top" title="PostgreSQL 中的 Json —从使用到源码">
+                        Next<br>
+                        <span>PostgreSQL 中的 Json —从使用到源码</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/c++/2015/01/21/c%e9%9d%a2%e5%90%91%e5%af%b9%e8%b1%a1%e7%89%b9%e6%80%a7%e5%ae%9e%e7%8e%b0%e5%89%96%e6%9e%90-data-member%e7%af%87";
+    var disqus_url = "http://localhost:4000/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

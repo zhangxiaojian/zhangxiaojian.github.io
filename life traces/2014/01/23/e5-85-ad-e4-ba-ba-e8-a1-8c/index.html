@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>六人行 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2014/01/23/e5-85-ad-e4-ba-ba-e8-a1-8c/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>六人行</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 23, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>刚刚看完了最后一集的老友记，也有人翻译成六人行。一共有十季，每季大概二十多集。算算也有两百多集了。从大一开始看的，当时还纠结在四级能不能过。所以就想找点美剧连连听力。看来当时看六人行还真的挺有功利性的、</p>
+
+<p>说实话吧，开始的前三集看着怪怪的，总是有观众笑，不太适应。但是三集之后，总是和观众一起笑，也就不觉得什么了。后来几乎是每天看一集，为了练听力，计划着看。看着看着，变得一天看两集，三集，再后来坐在电脑前不知道干什么的时候就看，下午吃完饭，去自习之前看两集，回来吃夜宵看两集。看着六个朋友从新到老。看着他们各种可爱的搞笑。总是可以忘记很多烦恼、真心的、、</p>
+
+<p>大概看了四季的样子，也就是去年考六级的时候。说实话，大学来没怎么学英语，报六级也只是想试试而已，抱着看人品的态度，后来六级也过了，听力是里面分最高的，当时听完就感觉挺好的。四季六人行可不是白看的。的确达到了我最初看它的目的。</p>
+
+<p>第一次也只下了四季，看完之后上网一看发现它竟然有十季，当时的感觉是我怎么可能看完一部两百多集的电视剧、还记得家里的人看一部电视剧看了快两年，一天一天的等着看，从一个家族的爷的爷爷讲到孙子的孙子，每年回去都惊奇的发现他们还是在看着同一部电视剧，鄙视的要死，心理想着你们真是闲的无聊爆了、。不过现在看来我也是一样，看完了两百多集的电视剧，虽然一集只有二十到三十分钟。</p>
+
+<p>在网上下载到了剩下的六季，还是无聊就看，因为没有了功利性，有时候好久都不看，又有时候一次看好多。</p>
+
+<p>中间有一段时间不怎么想看。觉得有点无聊，总是seeing some gun，seeing some women。每一集都会换一个对象。每一集都会having sex with 、、、后来慢慢的理解他们的那种开放式的生活，甚至是有一点赞同、</p>
+
+<p>大概又看了几集之后，觉得里面的每一个人都很可爱，又自己的个性，又自己生活的方式和价值，每一集都会有想不到的搞笑的地方，虽然场地总是他们的两个房间和一个center park 咖啡馆。虽然总是那么几个人，虽然发生的事情是那么平常，甚至搞笑的手法也会有很多重复，但是，总是会和里面虚拟的观众一起笑。就好像你不是一个人在看。感觉特别好。</p>
+
+<p>从第七季开始，我开始不是无聊才去看它了，因为我挺害怕那一天把它看完了，就像看海贼王一样，一下看的太多，现在郁闷的等一周一集的更新。我开始只有在心情不好的时候看，看完之后，笑一笑，就没什么大不了的事了，要是还不行，就多看几集。真的挺管用的。</p>
+
+<p>前几天就看到最后一季了，前几集都是悠着看，今天没有悠住，一下子看了七八集，本来是想把结尾留到明天，但是突然心情不好，不小心在今天解决了。</p>
+
+<p>看的过程就是这样。</p>
+
+<p>开始对这部电视剧的理解和定位就是一个搞笑的短剧，类似与家有儿女什么的，后来在里面发现了搞笑之中的许多深刻，许多生活。里面感动的场面的确不多，但是一旦出现，那就真的会很感动。比如记得比较深的就是菲比帮他弟弟代孕的那集。起初是怕受不了离开自己生的孩子的痛，后来拥有一支宠物狗三天再送给他弟弟，看着他们高兴的样子，她虽然有不舍的痛，也有看着他弟弟开心的喜悦，当她决定帮他们代孕的时候说，如果离开我自己生的孩子会是现在痛苦的无数倍的话，那么我看到他们高兴而获得的喜悦也将会是现在的无数倍。平时为了小事争吵的他们，关键时刻都变得很伟大。</p>
+
+<p>他们的生活感觉很乱，尤其是感情方面，不断的和陌生熟悉的人交往，对待sex很是开放，绝不避讳，就好像和握手一样，没什么大不了的。</p>
+
+<p>在老友记中我学到的最深刻的就是like和love的区别，他们不会轻易的说出love。甚至和交往的人sex无数次，也会清楚的说是like  go out with you，have a crush on you。我认为说出了love就仿佛带有很多的责任在里面，就表示我愿意我接下来的生命都会有你的出现，而like只是大家在一起开心就好，spend time together。</p>
+
+<p>这两个词完全不是一个等级的、</p>
+
+<p>他们非常重视彼此的友谊，这种友谊超越了一切，在里面时常会有两个人共同想和想同的人交往的情况，记得有一次是钱德抢了乔伊的女朋友，虽然当时很生气，没过多久就好了，if you really love her ，that is sure I can forgive you。然后一个拥抱了事。  还有他们之间的交往，如果会伤害其他人，那么在得到他的理解前，就不会在一起。</p>
+
+<p>其实很羡慕那样的生活，整天好像没头没脑的活着，干一些没头没脑的事情， 什么都不担心，没有地方住就蹭有房子的人当室友，没有东西吃就到隔壁的冰箱里去拿。总是很积极很乐观。有高兴的事一定会一起分享，伤心也绝对会拿出来大家一起，没有什么谈不开的，因为那条友谊的线绝不会断。</p>
+
+<p>说说结局吧，Ross和Rechel重新在一起，maonika和chandler有了一对双胞胎，phepi 也结婚了，joey依旧和chandler住在一起，没头没脑的活着。虽然他们搬家了，不住在一起了，但肯定会经常在center park一起长期霸占着那条沙发一起继续生活的。Jeay会找到一个好姑娘，等他们都老的不行的时候在一起肯定也会非常搞笑。</p>
+
+<p>说说他们每一个人吧、、一次写完，要不就懒得再动了。</p>
+
+<p>这个先后还真是个问题、、、、</p>
+
+<p>Lady first</p>
+
+<p>摩尼卡：</p>
+
+<p>开始是一个大胖子，后来减肥成功变得很好看，喜欢别人夸她，尤其是喜欢整理和组织，比较好胜，是一名厨师，看来爱吃最后也可能会转化为将来的职业、善良什么的肯定是有，总是大无畏的承担每次各种节日的吃饭问题，我觉得还一直饲养着乔伊。特别喜欢孩子，和钱德之前的男友分手也是因为这个。是六人中第一次成功的一对，并且成功走向婚姻，完成了传说中最困难的从朋友到恋人的完美过渡。领养了一对双胞胎、肯定是个好妈妈、</p>
+
+<p>瑞秋</p>
+
+<p>毫无疑问是里面最漂亮的一个，家庭貌似也很好，出场的背景就是逃婚，然后像一个十足的大小姐一样用着老爸的信用卡，和摩尼卡住在一起，后来几乎和每一个人都做过室友。在其余五人的帮助下自力更生。爱哭，和罗斯分分合合，并有了一个baby。）——他们由于一次意外怀孕，之后并没有在一起，而且从不责怪对方，很清楚的认为两个人都是出于自愿，共同抚养孩子，该叫妈叫妈，该叫爸叫爸，即使只是朋友关系，这种才是真正所谓男女平等，一切都是那么自然，没有什么强迫啊，真佩服他们的思考方式，和生活态度。</p>
+
+<p>菲比</p>
+
+<p>这个稍微豪放一点，总是会以大喊大叫来表达自己激动的情绪，唱歌按摩为生，歌曲多为搞笑版，但是伟大起来那可不是一般人可以做到的。一次性为弟弟代孕生了个三胞胎。身世貌似也很坎坷，还当过女土匪，打劫了罗斯。不怎么会掩饰感情，最有意思的一次是因为做了一个梦半天不理罗斯，搞得罗斯很无语。“我只记得我很讨厌你，忘了是为什么了。。”就是这么回答ross的。Cute。</p>
+
+<p>钱德、、bing</p>
+
+<p>他在里面算是交往比较少的一个了，最擅长的就是搞笑了、或者说是讲笑话，还有配上各种搞笑的动作，搞笑搞的都不会正常的说话了，三句离不开一句笑话、、不允许别人比他说的笑话更好笑，哈哈。感情比较专一，对乔伊很好，即使搬家也不忘给他留一间房子。看来是为乔伊孤独终老做了一定的准备，还有那个oh my god 前女友，真是有杀伤力。</p>
+
+<p>罗斯：</p>
+
+<p>古生物学家，文化水平应该是最高的，对恐龙感兴趣，，每次说到恐龙都会被一顿鄙视，笨手笨脚的总是会弄出一些糗事。很早就喜欢瑞秋，饶了一大圈最后还是在一起真的很难得。感情很坎坷，光结婚就三次，当然离婚也三次、、以此经常被鄙视，是一个儿孙满堂的人，，虽然现在离孙还有点远。</p>
+
+<p>乔伊：</p>
+
+<p>How are you doing、，slept with  a lot of women。</p>
+
+<p>肥皂剧演员，也算是小有名气，这里面我觉得最可爱的就是他了，傻傻的，总是到钱德哪里蹭吃蹭喝，看到吃的就没办法了，乔伊崔比亚尼never share food、、、从不担心什么未来之类，绝对的一个及时行乐者。</p>
+
+<p>看的太久，突然也写不出太多的东西，很多都想不起来了，最重要的是真的描述不出每个人的可爱之处，他们搞笑和伟大的生活态度。总之之后，love不会轻易说出口。这个最深刻了。庆幸看了这么好看的一部电视剧、、</p>
+
+<p>以后在心情不好的时候真不知道怎么办了、、、、、、</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/2014/01/23/20130104/" data-toggle="tooltip" data-placement="top" title="20130104">
+                        Previous<br>
+                        <span>20130104</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/2014/02/24/blog/" data-toggle="tooltip" data-placement="top" title="Blog">
+                        Next<br>
+                        <span>Blog</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2014/01/23/%e5%85%ad%e4%ba%ba%e8%a1%8c";
+    var disqus_url = "http://localhost:4000/life%20traces/2014/01/23/e5-85-ad-e4-ba-ba-e8-a1-8c/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

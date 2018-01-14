@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>PostgreSQL 昨天,今天和明天 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/database/reprinted%20articles/2015/01/09/postgresql-e6-98-a8-e5-a4-a9-e4-bb-8a-e5-a4-a9-e5-92-8c-e6-98-8e-e5-a4-a9/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#PostgreSQL" title="PostgreSQL">PostgreSQL</a>
+                        
+                    </div>
+                    <h1>PostgreSQL 昨天,今天和明天</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 9, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>本文原作者为何伟平(laser)，文章转载来自 <a href="http://www.pgsqldb.org">www.pgsqldb.org</a></p>
+
+<h2 id="postgresql-简介">PostgreSQL 简介</h2>
+
+<h3 id="摘要">摘要</h3>
+
+<p>PostgreSQL 是一种非常先进的对象-关系型数据库管理系统（ORDBMS），目前功能最强大，特性最丰富和最先进的自由软件数据库系统。有些特性甚至连商业数据库都不具备。这个起源于伯克利（BSD）的数据库研究计划目前已经衍生成一项国际开发项目，并且有非常广泛的用户。本文是PostgreSQL长期用户何伟平（Laser/BITBIRD）的文章“PostgreSQL的昨天、今天和明天”的当前版本。</p>
+
+<h3 id="版本">版本</h3>
+
+<p>本文是作者何伟平（Laser/BitBIRD）在经过了十余年的 PostgreSQL 研究与应用之后的又一次重大改版：<strong>版本 3.0</strong>。这个版本反应了自5年前<strong>版本 2.0</strong>以来的变化与更新。</p>
+
+<h3 id="前言">前言</h3>
+
+<p>今天，Richard Stallman （RMS）自 1985 年 10 月发起的自由软件运动已经有超过了 20 年的历史了，如果说最初 RMS 的愿望是创造一个可自由获取的操作系统的话，那么到今天，自由软件的发展已经远远超过当年 RMS 的目标，并且和整个计算机软件业的发展过程一样，自由软件用户对自由软件的基础需求也经历了由基础工具（编译器、编辑器）到基础平台（操作系统）再到基础应用软件（图形界面、数据库、办公软件、图形处理软件）的过程；甚至超越了传统软件的贡献，在向更高层次的联网系统（WebOS），和联网应用（WebDB，WebApplication）发展。</p>
+
+<blockquote>
+  <p>_八卦：_笔者认为正是自由软件带来的“成本革命”，才令 WebOS、WebDB、Web 应用成为可能，这些庞大公共软件设施在昂贵的商业软件时代是根本不可能想像的。类似的相关文章见拙作<strong><a href="http://postgres.cn/mwiki/index.php/%E5%91%8A%E5%88%ABPC%E6%97%B6%E4%BB%A3%EF%BC%8C%E8%BF%8E%E6%9D%A5%E7%BD%91%E7%BB%9C%E6%97%B6%E4%BB%A3">告别PC时代，迎来网络时代</a>。</strong>
+PostgreSQL 是在这个发展过程中，最重要的基础链条之一：数据库系统的一个典型代表。<br />
+“PostgreSQL 是一种特性非常齐全的自由软件的对象-关系性数据库管理系统（ORDBMS），它的很多特性正是当今许多商业数据库的前身” –摘自 PostgreSQL 手册。</p>
+</blockquote>
+
+<h3 id="历史">历史</h3>
+
+<h4 id="ingres和postgres">Ingres和Postgres</h4>
+
+<p>谈到 PostgreSQL，我们得谈谈 Berkeley，也就是中文“加州大学伯克利分校”这所大学。伯克利（BSD）对计算机科学的贡献巨大，尤其是在操作系统领域，各种BSD系统以及Bill Joy的TCP实现在整个计算机科学的发展史上熠熠生辉，光芒闪耀。它们的光辉是如此耀眼，以至于让人几乎无法看到伯克利在其它计算机科学的分支上的成就，而 PostgreSQL 正是其中之一。</p>
+
+<p>PostgreSQL 的前身是 BSD 的始于 1977 年的 Ingres 项目，这个项目是 Michael Stonebraker 教授领导的，在 1982 年，Michael Stonebraker 离开伯克利商业化了 Ingres，成为 Relational Technologies 公司的一个产品，后来 Relational Tecchnologies 被 Computer Associates（CA）收购。Ingres 是一个非关系型的数据库（数据关系需要由用户有意识地维护），在 1985 年，Michael Stonebraker 回到伯克利开始一个后-Ingres（post-Ingres）的项目，目的是解决 Ingres 中，同时也是 1980 年代的数据库系统中的主要问题：数据关系维护的问题。这就是 Postgres 的开端。</p>
+
+<p>从1986年开始，Michael Stonebraker 教授发表了一系列论文，探讨了新的数据库的结构设计和扩展设计，然后在 1988 年有了一个原型设计，1989年6月发布了版本 1，1990年6月发布了版本 2，1991年发布了版本 3。在版本 3 里改进了规则系统，增加了多存储系统支持以及改进了查询引擎。在 1993年，用户开始暴涨，并且特性需求急剧增加；在做了一些代码清理、发布了版本 4 之后，Postgres 项目正式终止。而随后 Michael Stonebraker 教授再次去创业，成立 Illustra 公司提供 Postgres 的商业支持，后来 Illustra 在 1997 年被 Informix 收购，而 Michael 教授成为 Informix 的 CTO；再后来 Informix 在 2001 年被 IBM 收购。</p>
+
+<blockquote>
+  <p>_八卦：_看Michael Stonebreaker教授的经历，感觉在 US 这个教授的确是“进可创业，退可教书”的好职业。不过Michael教授对数据库、对人类的贡献有目共睹，无需指摘太多。<br />
+_后记：_Michael Stonebreaker教授目前回到了教育岗位，在MIT从事数据库研究，后面对流数据库（Stream database）和列数据（Column database）都有颇多论文并且也相应地创建了一些商业支持公司，是一个很有求知欲和创业欲的教授。</p>
+</blockquote>
+
+<h4 id="postgres95">Postgres95</h4>
+
+<p>Postgres 并没有因为 Postgres 项目的终止而停止发展，而是仍然在各种场合被人们所使用，在1994年，两名伯克利的研究生在做研究生课题的时候，向 Postgres 里增加了现代的 SQL 语言的支持。这里需要解释一下：E.F Code 的关系模型提出之后，对这个模型的实现有非常多的变种，相互之间并不兼容，比如Postgres用的是 QUEL/Postquel 语言，而 SQL 自身作为语言，一直到1992年才形成真正的国际标准（还是草案），当时称为 SQL2，但是人们常称为 SQL92。两位研究生是来自中国香港的 Andrew Yu 和 Jolly Chen 用 bison 和 flex 工具的组合，把Postgres 的Postquel查询语言替换成了 SQL92，然后将Postgres改名为 Postgres95。</p>
+
+<blockquote>
+  <p>_八卦：_笔者自己还和 Andrew Yu 有一面之缘，曾问起 Postgres95 起名原因，Andrew 同志回复的大致的意思的确是因为受了 MS 当年著名的 win95 的命名的影响。</p>
+</blockquote>
+
+<h4 id="postgresql">PostgreSQL</h4>
+
+<p>Andrew Yu 和 Jolly Chen 最大的贡献在于，完成了 Postgres95 之后，将其发布到了互联网上，随后的 1996 年，加拿大的 Hub.Org Networking Services的 Marc Fournier（一名 FreeBSD 黑客）提供了第一个非大学的开发服务器平台，然后 Bruce Momjian（美国）和 Vadim B. Mikheev（俄国）开始修改以及稳定伯克利发布的代码，并于1996年8月发布了第一个开源版本。</p>
+
+<p>随后，这些黑客把项目名称改变为 PostgreSQL，以对应 SQL 的支持，并且把 PostgreSQL 的版本号重新放到了原先 Postgres 项目的顺序中去，从 6.0 开 始（Postgres 本身到4.2，Postgres95 算5.0）。自 1996 年 8 月到现在的 2008 年，到今年北京奥运会开始的时候，PostgreSQL 项目将已经有 12 年的历史，而 Postgres 的年龄也会超过23岁，已经进入成熟的青年期。</p>
+
+<p>目前，PostgreSQL 的稳定版本到了 8.3.1，在RDBMS的各种特性方面，已经接近于“无可指摘”的境界了。而目前 PostgreSQL 的开发是围绕在更易用的 SQL 语言扩展、SQL 标准的兼容（比如SQL2003、XML/Xquery的支持）、扩展工具、外围工具等方面。</p>
+
+<blockquote>
+  <p>_八卦：_在软件的使用过程中，感觉软件如人一样：随着年龄的增长而成熟，一个软件的青春期是10余年的时候，会迎来软件的一次繁荣，而成熟期是第二个10年左右，迎来软件的第二次繁荣；然后进入壮年期和盛年期，就是第三和第四个10年左右；一般软件在经历四十余年之后肯定会进化成更高层次的某种动物。在这个过程中，每个十年都会有一些关键的转折点，如果没能顺利通过转折点，估计就会消失。PostgreSQL 的竞争对手之一 MySQL 正处于青春期变化的过程，值得观察。</p>
+</blockquote>
+
+<h4 id="postgresql读法">PostgreSQL读法</h4>
+
+<p>PostgreSQL 的读法：Post-gres-Q-L，因为大多自由软件开发人员把 SQL 念做：S-Q-L，而不是 IBM 常说的（squel）。类似的 MySQL 的官方读音也是：My-S-Q-L，而不是 My-see-quel。</p>
+
+<h3 id="特点">特点</h3>
+
+<p>PostgreSQL 的特点可以说是如数家珍，称其为最先进的开源软件数据库当之无愧。一些当前主流数据库的特性对比可以在本站的<strong><a href="http://postgres.cn/mwiki/index.php/%E4%B8%BB%E8%A6%81%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E5%AF%B9%E6%AF%94">主要关系型数据库系统对比</a></strong>一文中找到，就 PostgreSQL 而言，其主要特点有下面的不完全列表：</p>
+
+<h4 id="函数存储过程">函数/存储过程</h4>
+
+<p>SQL 语言因为是“集合思维（Thinking in Set）”，基于集合理论进行数据的处理，所以自身没有循环和分支的定义，因此在某些需要精确控制的过程类场合显得有些过于庞大，所以 PostgreSQL 还提供了非常丰富的过程类语言的支持：</p>
+
+<ul>
+  <li>
+    <p>内置的 plpgsql，一种很类似 Oracle 的 Plsql的语言。</p>
+  </li>
+  <li>
+    <p>脚本语言支持的有：PL/Lua，PL/LOLCODE，PL/Perl，plPHP，PL/Python，PL/Ruby，PL/sh，PL/Tcl 和 PL/Scheme。</p>
+  </li>
+  <li>
+    <p>编译语言有 C、C++ 和 JAVA。</p>
+  </li>
+  <li>
+    <p>统计语言 PL/R。</p>
+  </li>
+</ul>
+
+<h4 id="索引">索引</h4>
+
+<p>PostgreSQL 支持用户定义的索引访问方法，并且内置了 B-tree，哈希和 GiST索引。PostgreSQL 里的索引有下面几个特点：</p>
+
+<ul>
+  <li>
+    <p>可以从后向前扫描，这样在 ORDER BY field DESC 的时候就不用单独创建索引文件了。</p>
+  </li>
+  <li>
+    <p>可以创建表达式索引，这样就可以对字段的某个表达式或者函数的计算值进行索引，而不只是对字段值。</p>
+  </li>
+  <li>
+    <p>部分索引，就是只对一部分数据进行索引，在 CREATE INDEX 语句中可以有 WHERE 子句。</p>
+  </li>
+</ul>
+
+<h4 id="触发器">触发器</h4>
+
+<p>触发器是 SQL 查询的动作触发的事件。比如，一个 INSERT 查询可能激活一个检查输入值是否有效的触发器。大多数触发器都只是对 INSERT 或者 UPDATE 查询有效。</p>
+
+<p>PostgreSQL 完全支持触发器，可以附着在表上，但是不能在视图上。不过视图可以有规则。多个触发器是按照字母顺序触发的。并且我们还可以用其他过程语言书写触发器函数，不仅仅 PL/PgSQL。</p>
+
+<h4 id="并发管理mvcc">并发管理/MVCC</h4>
+
+<p>PostgreSQL 的并发管理使用的是一种叫做 MVCC（多版本并发机制）的东西，这个机制实际上就是现在在众多所谓的编程语言里头极其火爆的“Lock Free”的东西。其本质是通过类似科幻世界的时空穿梭的原理，给予每个用户一个自己的“时空”，然后通过原子的“时空”控制，控制时间基线，并以此控制并发更改的可见区域，从而实现近乎无锁的并发，而同时还能在很大程度上保证数据库的 ACID 特性。</p>
+
+<h4 id="规则rule">规则/RULE</h4>
+
+<p>规则允许我们对一个到来的查询生成的查询树进行改写。这个功能的一个用途是实现可更新的视图。</p>
+
+<h4 id="数据类型">数据类型</h4>
+
+<p>PostgreSQL 支持非常广泛的数据类型，包括：</p>
+
+<ul>
+  <li>
+    <p>任意精度的数值类型</p>
+  </li>
+  <li>
+    <p>无限长度的文本类型</p>
+  </li>
+  <li>
+    <p>几何原语</p>
+  </li>
+  <li>
+    <p>IPv4和IPv6类型</p>
+  </li>
+  <li>
+    <p>CIDR块和MAC地址</p>
+  </li>
+  <li>
+    <p>数组</p>
+  </li>
+</ul>
+
+<p>而且，用户还可以创建自己的类型，并且可以利用 GiST 框架把这些类型做成完全可索引的。比如来自 PostGIS 的地理信息系统（GIS）的数据类型。</p>
+
+<h4 id="用户定义对象">用户定义对象</h4>
+
+<p>因为PostgreSQL使用一种基于系统表的可扩展的结构设计（感谢 Michael Stonebraker和所有黑客们！），PostgreSQL内部的几乎所有对象都可以用户定义，包括：</p>
+
+<ul>
+  <li>
+    <p>索引</p>
+  </li>
+  <li>
+    <p>操作符（内部操作符可以被覆盖）</p>
+  </li>
+  <li>
+    <p>聚集函数</p>
+  </li>
+  <li>
+    <p>域</p>
+  </li>
+  <li>
+    <p>类型转换</p>
+  </li>
+  <li>
+    <p>编码转换</p>
+  </li>
+</ul>
+
+<h4 id="继承">继承</h4>
+
+<p>PostgreSQL 的表是可以相互继承的。一个表可以有父表，父表的结构变化也会导致子表的结构变化，而对子表的插入和数据更新等也会反映到父表中。</p>
+
+<h4 id="其它特性与扩展">其它特性与扩展</h4>
+
+<p>PostgreSQL 还支持大量其他的特性，比如：</p>
+
+<ul>
+  <li>
+    <p>完整性约束，包括外键，字段约束和行检查</p>
+  </li>
+  <li>
+    <p>视图，不过还没实现可更新视图，但是可以用规则系统实现这个目标</p>
+  </li>
+  <li>
+    <p>全联接，内联接和外联接and outer (left and right) joins</p>
+  </li>
+  <li>
+    <p>子查询</p>
+  </li>
+  <li>
+    <p>事务</p>
+  </li>
+  <li>
+    <p>支持 SQL:2003 标准的大部分特性</p>
+  </li>
+  <li>
+    <p>通过 SSL 加密的连接</p>
+  </li>
+  <li>
+    <p>二进制和文本大对象存储</p>
+  </li>
+  <li>
+    <p>在线备份</p>
+  </li>
+  <li>
+    <p>域</p>
+  </li>
+  <li>
+    <p>表空间</p>
+  </li>
+  <li>
+    <p>保存点</p>
+  </li>
+  <li>
+    <p>即时恢复</p>
+  </li>
+  <li>
+    <p>两阶段提交</p>
+  </li>
+  <li>
+    <p>TOAST（The Oversized-Attribute Storage Technique）用于透明地在独立的地方保存大的数据库属性，还会自动压缩</p>
+  </li>
+  <li>
+    <p>正则表达式</p>
+  </li>
+</ul>
+
+<p>此外 PostgreSQL 还有大量的附加模块和扩展版本，比如：</p>
+
+<ul>
+  <li>
+    <p>GPL 的用于处理 GIS 对象的 PostGIS</p>
+  </li>
+  <li>
+    <p>使用 PostGIS 的pgRouting 实现的最短路径算法</p>
+  </li>
+  <li>
+    <p>多种不同的主从/主主复制方案</p>
+
+    <ul>
+      <li>
+        <p>Slony-I</p>
+      </li>
+      <li>
+        <p>pgcluster</p>
+      </li>
+      <li>
+        <p>Mammoth replicator</p>
+      </li>
+      <li>
+        <p>Bucardo</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="人物">人物</h3>
+
+<p>对 PostgreSQL 做出巨大贡献的人物很多，这里只能摘其一二而为之。</p>
+
+<p>首先是伯克利，作为一个学院，好象不应该进入人物的范畴，但是如果没有 BSD 的优良的学术环境，创造出这样优秀的科学技术成果是不可能的。</p>
+
+<p>然后是 Michael Stonebraker 教授，正是这位学究的开明才能让这样优秀的科技成果走向了公众，并且。</p>
+
+<p>接下来有我们的同胞，Andrew Yu 和 Jolly Chen，他们为 PostgreSQL 走向现代做出了巨大的贡献。</p>
+
+<p>最后是现在正在辛勤耕耘的黑客们，这些黑客以他们执着的精神和高超的技术，为 PostgreSQL的日益完善做出了不可磨灭的贡 献。 黑客总共有数十人之多，我只好把核心成员挑出来介绍一下，而对于贡献了更多代码的其他重要黑客，只好暂且委屈他们一 阵子了，如果有机会，我还会进一步介绍他们。</p>
+
+<h4 id="目前主要贡献者">目前主要贡献者</h4>
+
+<p><strong>Tom Lane</strong>
+一位卡耐基梅隆大学（CMU）的电子工程学 ph.D（博士），是 PostgreSQL 的非常重要开发人员，其足迹遍部PostgreSQL 的每一个角落， 可以说对 PostgreSQL 的性能和稳定性以及特性的取舍有极其重要的贡献，在开始参加 PostgreSQL 项目之前，他已经有了十余年的自由软件开发经验， 可以说是老牌的自由软件程序员；</p>
+
+<p><strong>Jan Wieck</strong>
+一位来自德国的黑客，有十余年的数据库开发经验，原先曾经为 SAP 等大型软件厂商工作，后来加入 PostgreSQL 的开发；他也是喜欢大项目， 不过兴趣是用户端的特性，比如外键，一些过程语言比如 pl/pgsql 等，7.1 版本中的 CLOB（文本大对象）的部分也是他的作品。</p>
+
+<p><strong>Bruce Monjian</strong>
+来自美国，是一些文档和项目协调，以及许多完整性约束和 SQL 语法的标准等，比如 OUTER JOIN，同时维护 TODO 列表和 FAQ。</p>
+
+<p><strong>Marc Fournier</strong>
+加拿大黑客，主要的协调人，维护站点，邮件列表，以及发布版本等。</p>
+
+<p><strong>Peter Eisentraut</strong>
+德国/瑞典黑客，主要负责文档编写、完善，认证和权限管理，制作脚本和一些管理配置接口的制定，以及客户端交互工具 psql 等， 其作用日益突出，可以说在 7.2 版本的开发过程中是不可或缺的人物。
+另外还有大量来自欧洲，澳洲和亚洲（日本）等地的黑客。实际上，有越来越多的黑客的作用变得日益重要，在邮递列表中每天都 有来自不同黑客的 各种各样的补丁程序。所以，自由软件的特点就是，只要愿意，任何人都可以对它有足够的影响。也就是说， 我们命运是真正掌握在自己手里的。</p>
+
+<h4 id="历史名人">历史名人</h4>
+
+<p>下面是些曾经给 PostgreSQL 做过巨大贡献，但是目前已经退出 PostgreSQL 的活跃开发的黑客：</p>
+
+<p><strong>Thmas Lockhart</strong>
+一位毕业于加洲理工学院的美国黑客，主要负责文档和若干种数据类型（尤其是与时间相关的类型），SQL 语法的标准一致性，时间类型，以及完整性约束等。</p>
+
+<p><strong>Vadim Mikheev</strong>
+一位来自俄国的黑客，其特点是专干大项目，比如 V6.3 里面的子查询，V6.5里面的多版本并行控制，以及 7.1 里面的预写式日志系统等， 可以说是 PostgreSQL 的开拓者；</p>
+
+<h3 id="展望">展望</h3>
+
+<p>就目前而言， PostgreSQL 的前景非常好，目前的稳定版本是 7.3，这个版本在 7.2 版本的基础上再次做了大量的改进和提 高。</p>
+
+<p>7.1 是继 6.5 之后的又一个巨大的变化，她首先引入了预写式日志的功能。这样，事务就拥有了完善的日志机制，可以提供更 好的性能， 以及还可以实现更优良的备份和灾难恢复的能力（比如联机热备份和宕机后的自动恢复）。其次是对文本类型的数据 段的长度不再限制， 从而很大程度上解决了 PostgreSQL 的大对象的问题。尤其在如今的 web 应用盛行的环境下，这个功能 几乎立即将 PostgreSQL 摆到了 可以与其他所有类型的数据库竞争的地位。而且在 SQL 标准上又有进一步的提高，比如 OUTER JOIN 的支持等等。</p>
+
+<p>7.2 版本在 7.1 的基础上改进了原来的数据库定期清理工作中排它锁的过程，使数据库维护不再影响数据库的正常使用，同时 增强了查询优化的智能， 使数据库对索引的使用更加准确；同时还消除了每个安装节点的免维护事务次数的限制；国际化；以及 还有大量其他方面的增强。</p>
+
+<p>7.3 版本在 7.2 版本的基础上，继续增强了许多特性，包括可返回结果集的用户函数，模式（schema）的支持，准备好的查 询规划，DROP COLUMN 的支持， 以及vacuum的优化，更好的查询计划器，更好的权限管理系统等。7.3 版本在许多现实项 目中得到了充分的证明和大量的应用。标志着 PostgreSQL 正式成为主流数据库产品之一。</p>
+
+<p>在未来的 7.4 版本中，我们有望可以看到索引空间的重复利用，优化了的 IN 子句（大家不用为 IN 恶劣的性能发愁了），新的 前后端协议，更优的聚集函数。 甚至还可能提供 windows 的本机移植版本和具有相当的热备份功能的 PITR （即时恢复）和很 多人期待已久的表空间的功能。可以说 7.4 将是一个完全胜任 7x24 应用需求的真正的高端数据库，一个具有开拓企业级应用的 数据库。我们有什么理由不欢呼呢？</p>
+
+<h3 id="后记">后记</h3>
+
+<p>作为一种数据库管理系统，PostgreSQL 并不象 Linux 与某些商业操作系统相比那样，得到迅速广泛的承认，这一点是可以理解 的，Tom Lan 曾经有一段话说得实在： “首先，商业数据库系统不象某些商业操作系统那样实在太烂，相反，商业数据库系统的 质量还是非常高的，与之相比，PostgreSQL 仍然有一定差距”但同时他也相信 “我们已经达到商业级的数据库系统的质 量……”</p>
+
+<p>的确，自由软件的发展具有跳跃性，因为开发者大多是利用空余时间进行开发，当开发者云集的时候，新的东西可能一下子就增加 上去；而如果在自由软件运动的低潮时， 因为缺少开发人员，所以可能会有一长段时间的沉寂，而后又会随着社会的发展而出现 新的活动。也就是一种螺旋的上升。</p>
+
+<p>因而，我们在面对自由软件的时候，一定要有一点：要相信自己和依靠自己，因为自由软件的发展的确需要每一个爱好者充分发挥 自己的聪明才智， 同时，也只有自由软件给你提供了这样的机会——依靠自己的力量改变自己的命运。最后，也只有这样，自由 软件之光才能真正照耀我们的世界。</p>
+
+<h3 id="附录">附录</h3>
+
+<h4 id="参考资料">参考资料</h4>
+
+<h4 id="历史-1">历史</h4>
+
+<p><a href="http://www.daemonnews.org/199907/devhistory.html">http://www.daemonnews.org/199907/devhistory.html</a></p>
+
+<p><a href="http://www.postgresql.org/osdn/history.pdf">http://www.postgresql.org/osdn/history.pdf</a></p>
+
+<p><a href="http://www.postgresql.org/osdn/tour.pdf">http://www.postgresql.org/osdn/tour.pdf</a></p>
+
+<h4 id="特性">特性</h4>
+
+<p><a href="http://www.postgresql.org/idocs/">http://www.postgresql.org/idocs/</a></p>
+
+<p><a href="http://www.pgsqldb.com/pgsqldoc-7.2c/index.html">http://www.pgsqldb.com/pgsqldoc-7.2c/index.html</a></p>
+
+<h3 id="注释">注释：</h3>
+
+<p>本文中黑客一词源于英文 Hacker，是指那些计算机尖子，对计算机及全人类都有贡献的创造者， 不是一般媒体上的“黑客” 概念，那是指 Cracker，也就是破坏者。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/berkeley%20db/2014/10/31/berkeley-db-e7-ae-80-e7-ae-80-e4-bb-8b/" data-toggle="tooltip" data-placement="top" title="Berkeley DB 简简介">
+                        Previous<br>
+                        <span>Berkeley DB 简简介</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/" data-toggle="tooltip" data-placement="top" title="C++面向对象特性实现剖析 Data Member篇">
+                        Next<br>
+                        <span>C++面向对象特性实现剖析 Data Member篇</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/database/reprinted%20articles/2015/01/09/postgresql-%e6%98%a8%e5%a4%a9%e4%bb%8a%e5%a4%a9%e5%92%8c%e6%98%8e%e5%a4%a9";
+    var disqus_url = "http://localhost:4000/database/reprinted%20articles/2015/01/09/postgresql-e6-98-a8-e5-a4-a9-e4-bb-8a-e5-a4-a9-e5-92-8c-e6-98-8e-e5-a4-a9/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>MySQL内存分配机制 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Database" title="Database">Database</a>
+                        
+                        <a class="tag" href="/tags/#mysql" title="mysql">mysql</a>
+                        
+                        <a class="tag" href="/tags/#设计原则" title="设计原则">设计原则</a>
+                        
+                        <a class="tag" href="/tags/#面向对象" title="面向对象">面向对象</a>
+                        
+                    </div>
+                    <h1>MySQL内存分配机制</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on August 22, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="前言">前言</h2>
+<p>内存资源由操作系统管理，分配与回收操作可能会执行系统调用（以 malloc 算法为例，较大的内存空间分配接口是 mmap， 而较小的空间 free 之后并不归还给操作系统 ），频繁的系统调用必然会降低系统性能，但是可以最大限度的把使用完毕的内存让给其它进程使用，相反长时间占有内存资源可以减少系统调用次数，但是内存资源不足会导致操作系统频繁换页，降低服务器的整体性能。</p>
+
+<p>数据库是使用内存的“大户”，合理的内存分配机制就尤为重要，上一期月报介绍了 <a href="http://mysql.taobao.org/monthly/2017/07/07/">PostgreSQL 的内存上下文</a>，本文将介绍在 MySQL 中又是怎么管理内存的。</p>
+
+<h2 id="基础接口封装">基础接口封装</h2>
+<p>MySQL 在基本的内存操作接口上面封装了一层,增加了控制参数 my_flags</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="o">*</span><span class="n">my_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="n">myf</span> <span class="n">my_flags</span><span class="p">)</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">my_realloc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">oldpoint</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">,</span> <span class="n">myf</span> <span class="n">my_flags</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">my_free</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+</code></pre></div></div>
+<p>my_flags 的值目前有：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MY_FAE</span> 		<span class="cm">/* Fatal if any error */</span>
+<span class="n">MY_WME</span>			<span class="cm">/* Write message on error */</span>
+<span class="n">MY_ZEROFILL</span>	<span class="cm">/* Fill array with zero */</span>
+</code></pre></div></div>
+<p>MY_FAE 表示内存分配失败就退出整个进程，MY_WME 表示内存分配失败是否需要记录到日志中，MY_ZEROFILL 表示分配内存后初始化为0。</p>
+
+<h2 id="mem_root">MEM_ROOT</h2>
+
+<h3 id="基本结构">基本结构</h3>
+<p>在 MySQL 的 Server 层中广泛使用 MEM_ROOT 结构来管理内存，避免频繁调用封装的基础接口，也可以统一分配和管理，防止发生内存泄漏。不同的 MEM_ROOT 之间互相没有影响，不像 PG 中不同的内存上下文之间还有关联。这可能得益于 MySQL Server 层是面向对象的代码，MEM_ROOT 作为类中的一个成员变量，伴随着对象的整个生命周期。比较典型的类有： THD，String, TABLE, TABLE_SHARE, Query_arena, st_transactions 等。</p>
+
+<p>MEM_ROOT 分配内存的单元是 Block，使用 USED_MEM 结构体来描述。结构比较简单，Block 之间相互连接形成内存块链表，left 和 size 表示对应 Block 还有多少可分配的空间和总的空间大小。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">st_used_mem</span>
+<span class="p">{</span>				   <span class="cm">/* struct for once_alloc (block) */</span>
+  <span class="k">struct</span> <span class="n">st_used_mem</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>	   <span class="cm">/* Next block in use */</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">left</span><span class="p">;</span>		   <span class="cm">/* memory left in block  */</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span>	<span class="n">size</span><span class="p">;</span>		   <span class="cm">/* size of block */</span>
+<span class="p">}</span> <span class="n">USED_MEM</span><span class="p">;</span>
+</code></pre></div></div>
+<p>而 MEM_ROOT 结构体负责管理 Block 链表 ：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">st_mem_root</span>
+<span class="p">{</span>
+  <span class="n">USED_MEM</span> <span class="o">*</span><span class="n">free</span><span class="p">;</span>                  <span class="cm">/* blocks with free memory in it */</span>
+  <span class="n">USED_MEM</span> <span class="o">*</span><span class="n">used</span><span class="p">;</span>                  <span class="cm">/* blocks almost without free memory */</span>
+  <span class="n">USED_MEM</span> <span class="o">*</span><span class="n">pre_alloc</span><span class="p">;</span>             <span class="cm">/* preallocated block */</span>
+  <span class="cm">/* if block have less memory it will be put in 'used' list */</span>
+  <span class="kt">size_t</span> <span class="n">min_malloc</span><span class="p">;</span>
+  <span class="kt">size_t</span> <span class="n">block_size</span><span class="p">;</span>               <span class="cm">/* initial block size */</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">block_num</span><span class="p">;</span>          <span class="cm">/* allocated blocks counter */</span>
+  <span class="cm">/* 
+     first free block in queue test counter (if it exceed 
+     MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
+  */</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">first_block_usage</span><span class="p">;</span>
+
+  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">error_handler</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+<span class="p">}</span> <span class="n">MEM_ROOT</span><span class="p">;</span>
+
+</code></pre></div></div>
+<p>整体结构就是两个 Block 链表，free 链表管理所有的仍然存在可分配空间的 Block，used 链表管理已经没有可分配空间的所有 Block。pre_alloc 类似于 PG 内存上下文中的 keeper，在初始化 MEM_ROOT 的时候就可以预分配一个 Block 放到 free 链表中，当 free 整个 MEM_ROOT 的时候可以通过参数控制，选择保留 pre_alloc 指向的 Block。min_malloc 控制一个 Block 剩余空间还有多少的时候从 free 链表移除，加入到 used 链表中。block_size 表示初始化 Block 的大小。block_num 表示 MEM_ROOT 管理的 Block 数量。first_block_usage 表示 free 链表中第一个 Block 不满足申请空间大小的次数，是一个调优的参数。err_handler 是错误处理函数。</p>
+
+<h3 id="分配流程">分配流程</h3>
+<p>使用 MEM_ROOT 首先需要初始化，调用 init_alloc_root, 通过参数可以控制初始化的 Block 大小和 pre_alloc_size 的大小。其中比较有意思的点是 min_block_size 直接指定一个值 32，个人觉得不太灵活，对于小内存的申请可能会有比较大的内存碎片。另一个是 block_num 初始化为 4，这个和决定新分配的 Block 大小策略有关。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">init_alloc_root</span><span class="p">(</span><span class="n">MEM_ROOT</span> <span class="o">*</span><span class="n">mem_root</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">block_size</span><span class="p">,</span>
+                     <span class="kt">size_t</span> <span class="n">pre_alloc_size</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">unused</span><span class="p">)))</span>
+<span class="p">{</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">used</span><span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">pre_alloc</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">min_malloc</span><span class="o">=</span> <span class="mi">32</span><span class="p">;</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">block_size</span><span class="o">=</span> <span class="n">block_size</span> <span class="o">-</span> <span class="n">ALLOC_ROOT_MIN_BLOCK_SIZE</span><span class="p">;</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">error_handler</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">block_num</span><span class="o">=</span> <span class="mi">4</span><span class="p">;</span>                       <span class="cm">/* We shift this with &gt;&gt;2 */</span>
+  <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">first_block_usage</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">pre_alloc_size</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">pre_alloc</span><span class="o">=</span>
+         <span class="p">(</span><span class="n">USED_MEM</span><span class="o">*</span><span class="p">)</span> <span class="n">my_malloc</span><span class="p">(</span><span class="n">pre_alloc_size</span><span class="o">+</span> <span class="n">ALIGN_SIZE</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">USED_MEM</span><span class="p">)),</span>
+                               <span class="n">MYF</span><span class="p">(</span><span class="mi">0</span><span class="p">))))</span>
+    <span class="p">{</span>
+      <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">-&gt;</span><span class="n">size</span><span class="o">=</span> <span class="n">pre_alloc_size</span><span class="o">+</span><span class="n">ALIGN_SIZE</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">USED_MEM</span><span class="p">));</span>
+      <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">-&gt;</span><span class="n">left</span><span class="o">=</span> <span class="n">pre_alloc_size</span><span class="p">;</span>
+      <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">rds_update_query_size</span><span class="p">(</span><span class="n">mem_root</span><span class="p">,</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">DBUG_VOID_RETURN</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>初始化完成就可以调用 alloc_root 进行内存申请，整个分配流程并不复杂，代码也不算长，为了方便阅读贴出来，也可以略过直接看分析。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="o">*</span><span class="nf">alloc_root</span><span class="p">(</span> <span class="n">MEM_ROOT</span> <span class="o">*</span><span class="n">mem_root</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">size_t</span>        <span class="n">get_size</span><span class="p">,</span> <span class="n">block_size</span><span class="p">;</span>
+    <span class="n">uchar</span>        <span class="o">*</span> <span class="n">point</span><span class="p">;</span>
+    <span class="n">reg1</span> <span class="n">USED_MEM</span>    <span class="o">*</span><span class="n">next</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">reg2</span> <span class="n">USED_MEM</span>    <span class="o">**</span><span class="n">prev</span><span class="p">;</span>
+
+    <span class="n">length</span> <span class="o">=</span> <span class="n">ALIGN_SIZE</span><span class="p">(</span> <span class="n">length</span> <span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">free</span><span class="p">)</span> <span class="p">)</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="p">)</span> <span class="c1">// 判断 free 链表是否为空</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="o">*</span><span class="n">prev</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">left</span> <span class="o">&lt;</span> <span class="n">length</span> <span class="o">&amp;&amp;</span>
+             <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">first_block_usage</span><span class="o">++</span> <span class="o">&gt;=</span> <span class="n">ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP</span> <span class="o">&amp;&amp;</span>
+             <span class="p">(</span><span class="o">*</span><span class="n">prev</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">left</span> <span class="o">&lt;</span> <span class="n">ALLOC_MAX_BLOCK_TO_DROP</span> <span class="p">)</span> <span class="c1">// 优化策略</span>
+        <span class="p">{</span>
+            <span class="n">next</span>                <span class="o">=</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+            <span class="o">*</span><span class="n">prev</span>                <span class="o">=</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span> <span class="cm">/* Remove block from list */</span>
+            <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span>            <span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">used</span><span class="p">;</span>
+            <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">used</span>            <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+            <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">first_block_usage</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="c1">// 找到一个空闲空间大于申请内存空间的 Block </span>
+        <span class="k">for</span> <span class="p">(</span> <span class="n">next</span> <span class="o">=</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span> <span class="n">next</span> <span class="o">&amp;&amp;</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">left</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">;</span> <span class="n">next</span> <span class="o">=</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span> <span class="p">)</span>
+            <span class="n">prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">next</span> <span class="p">)</span> <span class="c1">// free 链表为空，或者没有满足可分配条件 Block</span>
+    <span class="p">{</span>       <span class="cm">/* Time to alloc new block */</span>
+        <span class="n">block_size</span>    <span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">block_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">block_num</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">);</span>
+        <span class="n">get_size</span>    <span class="o">=</span> <span class="n">length</span> <span class="o">+</span> <span class="n">ALIGN_SIZE</span><span class="p">(</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">USED_MEM</span><span class="p">)</span> <span class="p">);</span>
+        <span class="n">get_size</span>    <span class="o">=</span> <span class="n">MY_MAX</span><span class="p">(</span> <span class="n">get_size</span><span class="p">,</span> <span class="n">block_size</span> <span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="p">(</span><span class="n">next</span> <span class="o">=</span> <span class="p">(</span><span class="n">USED_MEM</span> <span class="o">*</span><span class="p">)</span> <span class="n">my_malloc</span><span class="p">(</span> <span class="n">get_size</span><span class="p">,</span> <span class="n">MYF</span><span class="p">(</span> <span class="n">MY_WME</span> <span class="o">|</span> <span class="n">ME_FATALERROR</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">error_handler</span> <span class="p">)</span>
+                <span class="p">(</span><span class="o">*</span><span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">error_handler</span><span class="p">)();</span>
+            <span class="n">DBUG_RETURN</span><span class="p">(</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="mi">0</span> <span class="p">);</span>                              <span class="cm">/* purecov: inspected */</span>
+        <span class="p">}</span>
+        <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">block_num</span><span class="o">++</span><span class="p">;</span>
+        <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span>    <span class="o">=</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+        <span class="n">next</span><span class="o">-&gt;</span><span class="n">size</span>    <span class="o">=</span> <span class="n">get_size</span><span class="p">;</span>
+        <span class="n">next</span><span class="o">-&gt;</span><span class="n">left</span>    <span class="o">=</span> <span class="n">get_size</span> <span class="o">-</span> <span class="n">ALIGN_SIZE</span><span class="p">(</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">USED_MEM</span><span class="p">)</span> <span class="p">);</span>    
+        <span class="o">*</span><span class="n">prev</span>        <span class="o">=</span> <span class="n">next</span><span class="p">;</span>		<span class="c1">// 新申请的 Block 放到 free 链表尾部</span>
+    <span class="p">}</span>
+
+    <span class="n">point</span> <span class="o">=</span> <span class="p">(</span><span class="n">uchar</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="n">next</span> <span class="o">+</span> <span class="p">(</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">size</span> <span class="o">-</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">left</span> <span class="o">-=</span> <span class="n">length</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">min_malloc</span> <span class="p">)</span>  <span class="c1">// 分配完毕后，Block 是否还能在 free 链表中继续分配</span>
+    <span class="p">{</span>                                                                       <span class="cm">/* Full block */</span>
+        <span class="o">*</span><span class="n">prev</span>                <span class="o">=</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>                   <span class="cm">/* Remove block from list */</span>
+        <span class="n">next</span><span class="o">-&gt;</span><span class="n">next</span>            <span class="o">=</span> <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">used</span><span class="p">;</span>
+        <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">used</span>            <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+        <span class="n">mem_root</span><span class="o">-&gt;</span><span class="n">first_block_usage</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>首先判断 free 链表是否为空，如果不为空，按逻辑应该遍历整个链表，找到一个空闲空间足够大的 Block，但是看代码是先执行了一个判断语句，这其实是一个空间换时间的优化策略，因为free 链表大多数情况下都是不为空的，几乎每次分配都需要从 free 链表的第一个 Block 开始判断，我们当然希望第一个 Block 可以立刻满足要求，不需要再扫描 free 链表，所以根据调用端的申请趋势，设置两个变量：ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP 和 ALLOC_MAX_BLOCK_TO_DROP，当 free 链表的第一个 Block 申请次数超过 ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP 而且剩余的空闲空间小于 ALLOC_MAX_BLOCK_TO_DROP，就把这个 Block 放到 used 链表里，因为它已经一段时间无法满足调用端的需求了。</p>
+
+<p>如果在 free 链表中没有找到合适的 Block，就需要调用基础接口申请一块新的内存空间，新的内存空间大小当然至少要满足这次申请的大小，同时预估的新 Block 大小是 : <code class="highlighter-rouge">mem_root-&gt;block_size * (mem_root-&gt;block_num &gt;&gt; 2)</code> 也就是初始化的 Block 大小乘以当前 Block 数量的 1/4，所以初始化 MEM_ROOT 的 block_num 至少是 4。</p>
+
+<p>找到合适的 Block 之后定位到可用空间的位置就行了，返回之前最后需要判断 Block 分配之后是否需要移动到 used 链表。</p>
+
+<p>归还内存空间的接口有两个：<code class="highlighter-rouge">mark_blocks_free(MEM_ROOT *root)</code>和 <code class="highlighter-rouge">free_root(MEN_ROOT *root，myf MyFlags)</code> ，可以看到两个函数的参数不像基础封装的接口，没有直接传需要归还空间的指针，传入的是 MEM_ROOT 结构体指针，说明对于 MEM_ROOT 分配的内存空间，是统一归还的。<code class="highlighter-rouge">mark_blocks_free</code> 不真正的归还 Block，而是放到 free 链表中标记可用。<code class="highlighter-rouge">free_root</code> 真正归还空间给操作系统，MyFlages 可以控制是否和标记删除的函数行为一样，也可以控制 pre_alloc 指向的 Block 是否归还。</p>
+
+<h2 id="总结">总结</h2>
+<ul>
+  <li>从空间利用率上来讲，MEM_ROOT 的内存管理方式在每个 Block 上连续分配，内部碎片基本在每个 Block 的尾部，由 min_malloc 成员变量和参数 ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP，ALLOC_MAX_BLOCK_TO_DROP 共同决定和控制，但是 min_malloc 的值是在代码中写死的，有点不够灵活，可以考虑写成可配置的，同时如果写超过申请长度的空间，就很有可能会覆盖后面的数据，比较危险。但相比 PG 的内存上下文，空间利用率肯定是会高很多的。</li>
+  <li>从时间利用率上来讲，不提供 free 一个 Block 的操作，基本上一整个 MEM_ROOT 使用完毕才会全部归还给操作系统，可见 MySQL 在内存上面还是比较“贪婪”的。
+*</li>
+</ul>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/2016/11/09/e5-88-b0-e5-ba-95-e8-b0-81-e5-a5-87-e6-80-aa/" data-toggle="tooltip" data-placement="top" title="到底谁奇怪">
+                        Previous<br>
+                        <span>到底谁奇怪</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/computer%20science/database/mysql/2017/11/20/665/" data-toggle="tooltip" data-placement="top" title="MySQL 信号处理机制">
+                        Next<br>
+                        <span>MySQL 信号处理机制</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/database/mysql/2017/08/22/mysql%e5%86%85%e5%ad%98%e5%88%86%e9%85%8d%e6%9c%ba%e5%88%b6";
+    var disqus_url = "http://localhost:4000/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

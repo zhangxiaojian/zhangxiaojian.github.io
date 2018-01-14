@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>再见2015 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#年终总结" title="年终总结">年终总结</a>
+                        
+                    </div>
+                    <h1>再见2015</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 1, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>2015年马上就要结束了，感觉过的好快，不过仔细想想这一年还是经历了挺多事，当然也少不了有遗憾。不管好的坏的，都是今天总结的下酒菜。</p>
+
+<h3 id="dpinm">DPINM</h3>
+
+<p>这是今年开始做的项目，D是分布式，P是并行，INM是实验室的数据库名字。名字不是我起的，因为开始时候一头雾水，都不知道能不能做得好，还即要并行，又要分布。当时还是挺期待这个项目了，因为单机版数据师兄师姐已经写了几代了，剩下多是修修补补的工作。这对我们来说不是分析，设计，代码，完成这种流程就能搞定的，因为刚开始的时候根本不知道要如何下手。分布的动机是单机版的处理能力有限，比如插入数据一多，内存就爆了，根本插入不进去（当然这是设计的问题），速度也慢了。所以我们开始分析单机的瓶颈在哪。用了新买的内存超大的机器运行，没有出现内存爆的情况。这样的工作持续了一段时间，分布式方向始终没有进展，明明开始了一个新的项目，却不知道具体要做什么，有同学就很迷茫，甚至提出要退出，觉得这是在浪费时间。经历一段比较尴尬的时期。作为项目组唯一一个有Y染色体的，开始 take over。第一步，不管怎样，先要让系统转起来吧，这样大家看到一个比较具体的东西才不会迷茫。通信是分布的前提，自己动手写一个网络层的通信虽然灵活，但是进度太慢。于是结识了<a href="http://www.zhangxiaojian.name/?p=403"><strong>MPI</strong></a>，用于集群间的信息传递，还有进程管理。搭好环境，这时算是有了眉目，用一致性Hash把数据分到不同机器即可。但是原有接口出现很多问题，比如Instance的ID空间就会重复，使用Instance的名字Hash分配，名字是否能确定不会重复等等。为了使逻辑层尽可能的不改动，对上层提供了统一的接口，如果在本地找不到的数据，就透明的去其它节点请求。像这样：</p>
+
+<p><a href="/img/uploads/2015/12/zj1.png"><img src="/img/uploads/2015/12/zj1.png" alt="zj1" /></a></p>
+
+<p>项目终于可以转起来了，大家可以在自己负责的模块进行分布式的探索。这时候在内存管理方面遇到了麻烦，因为MPI负责通信，我把它设计成单例模式，为了避免频繁接收消息需要分配空间，就预分配了一定的空间，但是发送接收都要走这里，很容易覆盖读写。而且INM中实例的部分反序列化的，从其它节点接收到的数据不能立刻释放，接收节点容易忘记释放，出现内存泄漏。这种问题想到了上课时候PostgreSQL中的一个特性——<a href="http://www.zhangxiaojian.name/?p=447"><strong>内存上下文</strong></a>，提供一种调度机制解决频繁分配空间的问题，还可以避免内存泄漏，完美！于是花了一段时间把它读懂，用C++重写了一下，正好赶上<a href="http://totemdb.whu.edu.cn/personal/ywpeng/pg2015/"><strong>PG象行活动武汉大学站</strong></a>，靠<a href="http://totemdb.whu.edu.cn/personal/ywpeng/index_cn.html"><strong>彭老师</strong></a>罩，做了一次分享。下面可是不少业界的大牛啊，下午还有机会交流了下，收获很多。</p>
+
+<p>当然，一个分布式数据库要做的工作还有很多，虽然老板看到系统能用很High，我知道离核心的东西还远。基本上此时开发进入一个停滞期，开始阅读分布式的书籍，论文。不得不说我此前对论文是有偏见的，可能是小时候看<a href="http://blog.sina.com.cn/u/1191258123"><strong>韩寒</strong></a>太多，总觉得是把人都能看懂的东西写的鬼都看不懂。因为毕业要求发论文，不能不硬着头皮看，看了很多分布式事务处理，系统设计，CAP，Replication，HA，Zookeeper等等。发现很多东西论文讲的很清楚，很到位。系统设计的可能不是很详细，不足以作为参考写出一个数据库，但很多思想都是博客，书籍里面体会不到的。经过这段时期，已经对要做的事比较清楚了，具体的设计已经有了眉目，更加具体的实现就要留到明年再做了！</p>
+
+<h3 id="football">FootBall</h3>
+
+<p>这一年的足球生活也算精彩，因为是本命年，按照多灾多难的歪理邪说应该命运多舛（成语有毒）。我本来估计最有可能受伤的地方就是球场了，做好了迎接血光之灾的准备，却没想到最美好的事发生在了球场。虽然早就加入了院队，但没有真正融入，一开始参加校赛连名单都没进，我一怒之下都不打算再去了。不过后来想想该去还是要去，不去才是怂了。果然，韩寒这次说对了，怀才就像怀孕，时间久了总能看出来。现在想想，如果真的不去了，那得错过多少啊。之后参加了<strong>五人制比赛</strong>，赶上了学校第一届，相比全场，还是更喜欢踢这种小的，很早就想踢一次正式的五人制比赛，总算实现了。<strong>足协杯</strong>，踢的是8人半场，大家对这个比赛并不太重视，因为各种瞎组队，出成绩的机会比较少，从这次比赛我竟然觉得踢边后卫是很爽的，小组赛第二场进了第一个球和3：2落后扳平的一个球。虽然最后还是5：3输了，但我感觉和赢了一样。加上后来发生的事我才知道，这场比赛有多值得怀念。<strong>研究生联赛</strong>，同样是半场，按照历史成绩，我们还算是传统强队，加上今年阵容确实不错，小组赛踢的基本上比较顺利，不过却没有出线。小组赛最后一场的对手来找我们踢默契球，可以携手出线，因为赛程很紧，基本上是背靠背在打，大家商量也觉得没什么，就答应了。结果惹怒了老师，没有能够出线。以至于为此郁闷了很久，因为我本可以按照自己的想法，拒绝这样踢。其实那场比赛踢的比平常都要累，节奏把握不好，而且根本感觉不到踢球比赛的乐趣。下一届比赛，一定要好好踢。<strong>院赛</strong>，自己院的比赛，研究生组了一队，拿到了冠军。都是熟人，比较好玩。<strong>振兴杯</strong>，学校足球最高级别的比赛，大家都很重视，甚至暑假的时候就在商量阵型，名单安排等等。每周训练啊，至少一场热身赛啊，赛前开会动员啊，还是挺正式的。从边后卫改成了后腰。正式比赛前一天晚上，本科球队来武汉玩，约了一场夜场，真是两者不可兼顾，夜场只提了半场，很不尽兴啊。不过第二天振兴杯有一个助攻，一个进球。哈哈，提了这么多年，这还是第一次在学校正式比赛进球。不知道算不算是弥补了本科最后一场打丢可以让球队出线的进球。淘汰赛第一场就碰到经常一起踢野球的小伙伴他们院，领先，被扳平，被反超，结束前扳平，点球获胜，真是惊心动魄。然后遇到这届比赛的冠军队，被虐的不行，确实是实力差距啊。八强也是平了历史最好成绩，第一次参赛也还满意。后面赛后结束出去聚餐，很巧的碰到淘汰赛第一场的对手他们，开始还有点尴尬，后来一起对着喝，我才知道小伙伴他们输了比赛后都哭了，因为是最后一届。足球确实值得让男生痛哭，怎么会不懂。不得不承认，武大的比赛真是不少，以前在中南都是跑去踢野球，来了武大训练+比赛，基本就够啊。附一张比赛照（还是对手照的，哈哈）：</p>
+
+<p><a href="/img/uploads/2016/01/zj4.png"><img src="/img/uploads/2016/01/zj4.png" alt="zj4" /></a></p>
+
+<p>除了学校的比赛，本科队友虽然都不在一个地方了，还是抑制不住我们一起踢球的欲望。清明大家齐聚上海，在外滩坐轮船兜了一圈，看个电影，睡个懒觉，就准备在上交踢比赛了！客场作战人员不是很够，上半场被进了两个，不过我们还是有实力的，下半场就扳回来了。虽然没有赢，不过也没有输啊，晚上大伙还是高高兴兴吃烧烤，自然又喝的不省人事了。国庆去了西安，终于回到老家了，不过规模比较小，本来主要是旅游的，结果还是到陕师大，西交大踢了两次。陕师大我们几个穿着牛仔裤，开始被人鄙视不加，让我们和几个小学生玩，后来加上和他们踢，被我们虐的不要不要的，有一种大隐隐于牛仔裤的感觉。去西交大前一天爬了华山，还有点感冒，不过该踢还是要踢起，没想到第一次进西交大就差点和别人打起来，怎么说都是我高中的理想大学啊。碰到了一群大人，素质略低，然后就换了一边人踢。踢的很激烈，到最后都抽筋了，不过进了三个球，感冒瞬间好了很多，晚上当然又去腐败了。最近的一次是在武汉，不是什么节日，一个队友跳槽了，有几天空闲，就搞起了。约了一个夜场，上半场还是挺焦灼的，不过下半场我一下，就开始虐对面，此时应该感谢组织带我飞。虽然大家都毕业了，每次也没有什么计划，基本上都是前一两天决定去，然后一个人喊，大家就开始订票，结束一次就想着下一次去哪。人只要在，到哪和谁踢都不怕，从大二建队开始到处被虐，到现在已经不记得上次输是什么时候了。</p>
+
+<p><a href="/img/uploads/2016/01/zj5.png"><img src="/img/uploads/2016/01/zj5.png" alt="zj5" /></a><a href="/img/uploads/2016/01/zj6.png"><img src="/img/uploads/2016/01/zj6.png" alt="zj6" /></a></p>
+
+<h3 id="life">Life</h3>
+
+<p>这一年也有很多波折，经历了亲人的离去，家里新成员的诞生，悲欢离合也都过了一遍。遇到了很多好事，觉得生活充满希望，前途一片光明，也有低落的时候，一片光明，却发现没有出路。体会最深的是，无论什么事，只靠想是不行，试过才知道。与其后悔这件事没做，那件事没做，不过说这件事做好了，那件事没做好。畅想一下明年吧，把DPINM做好；小论文要早点发；找个搞数据库的工作；去实习赚点毕业旅行的钱；考驾照；翻译一份BDB资料；研究生联赛好好踢；blablabla….</p>
+
+<p>新年好</p>
+
+<p><a href="/img/uploads/2016/01/zj7.png"><img src="/img/uploads/2016/01/zj7.png" alt="zj7" /></a></p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/reprinted%20articles/2015/12/09/499/" data-toggle="tooltip" data-placement="top" title="暗时间">
+                        Previous<br>
+                        <span>暗时间</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/" data-toggle="tooltip" data-placement="top" title="PostgreSQL 客户端认证机制">
+                        Next<br>
+                        <span>PostgreSQL 客户端认证机制</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2016/01/01/%e5%86%8d%e8%a7%812015";
+    var disqus_url = "http://localhost:4000/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

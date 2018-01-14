@@ -19,7 +19,7 @@
     <link rel="shortcut icon" href="/img/favicon.ico">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="http://localhost:4000/">
+    <link rel="canonical" href="http://localhost:4000/page2/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -180,188 +180,196 @@
             ">
     			
 <div class="post-preview">
-    <a href="/computer%20science/mysql/2017/11/25/undrop-for-innodb/">
+    <a href="/life%20traces/2015/12/01/e5-8e-bb-e5-9d-90-e7-89-a2-e4-ba-86/">
         <h2 class="post-title">
-            undrop-for-innodb
+            去坐牢了
         </h2>
         
         <div class="post-content-preview">
-            简介
-undrop-for-innodb 是针对 innodb 的一套数据恢复工具，可以从文件级别恢复诸如：DROP/TRUNCATE table, 删除表中某些记录，innodb 文件被删除，文件系统损坏，磁盘 corruption 等几种情况。本文简单介绍下使用方法和原理浅析。
+            前几天在微博上看到一道类似星座，性格，爱情，命运之类的测评题，我其实对这种一点都不信，测出来的答案大多都是那种比较含糊，符合大部分人的心里，还让人感觉好像真准，这个懂我！ 但是这个测试比较有意思，让我想了很久都不满意。题目是这样的：
 
-准备
+把你关在一个5平米没有窗户的监狱里10年 ，只有一张硬床和行李，一个马桶，一个 铁门，头顶10米有个通风口，每天提供6个 馒头，一个自来水龙头。__ 
 
-git clone https://github.com/twindb/undrop-for-inn...
+为了...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on November 25, 2017
+        Posted by zhangxiaojian on December 1, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/computer%20science/database/mysql/2017/11/20/665/">
+    <a href="/c++/reprinted%20articles/2015/10/25/e4-bb-8efread-e5-92-8cmmap-e8-b0-88-e8-af-bb-e6-96-87-e4-bb-b6-e7-9a-84-e6-80-a7-e8-83-bd/">
         <h2 class="post-title">
-            MySQL 信号处理机制
+            从fread和mmap 谈读文件的性能
         </h2>
         
         <div class="post-content-preview">
-            背景
-在 AliSQL 上面有人提交了一个 bug，在使用主备的时候  service stop mysql  不能关闭主库，一直显示 shutting down mysql …，到底怎么回事呢，先来看一下  service stop mysql  是怎么停止数据库的。配置 MySQL 在系统启动时启动需要把 MYSQL_BASEDIR/support-files 目录下的脚本 mysql....
+            本文转自 http://blog.163.com/digoal@126/blog/static/163877040201571610166742/  比较详细地介绍了文件读写的几种机制，分析很到位。
+
+[原文]
+
+1. https://www.byvoid.com/blog/fast-readfile/
+
+2. http://blog.csdn.net/jwh_bupt/article/de...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on November 20, 2017
+        Posted by zhangxiaojian on October 25, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/">
+    <a href="/database/2015/10/16/pg-e5-86-85-e5-ad-98-e4-b8-8a-e4-b8-8b-e6-96-87/">
         <h2 class="post-title">
-            MySQL内存分配机制
+            PG 内存上下文
         </h2>
         
         <div class="post-content-preview">
-            前言
-内存资源由操作系统管理，分配与回收操作可能会执行系统调用（以 malloc 算法为例，较大的内存空间分配接口是 mmap， 而较小的空间 free 之后并不归还给操作系统 ），频繁的系统调用必然会降低系统性能，但是可以最大限度的把使用完毕的内存让给其它进程使用，相反长时间占有内存资源可以减少系统调用次数，但是内存资源不足会导致操作系统频繁换页，降低服务器的整体性能。
+            本文首先大体讲一个内存上下文是干什么的，结构是怎么样的。然后具体介绍PG中现有的一套分配策略，并不详细分析源码的每一处（可以参考PG内核分析这本书），而是说说其中思路流程，如何调节参数进行优化。最后介绍如何使用C++重写其中的源码，让内存上下文不仅仅是PG中的一个特性，而是可以作为一个内存分配的库，供其它程序使用。并附上重写后的源码供大家参考。
 
-数据库是使用内存...
+大体概述
+
+PostgreSQL 从7.1开...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on August 22, 2017
+        Posted by zhangxiaojian on October 16, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/life%20traces/2016/11/09/e5-88-b0-e5-ba-95-e8-b0-81-e5-a5-87-e6-80-aa/">
+    <a href="/computer%20science/2015/09/14/e4-b8-80-e5-a5-97-e7-ac-94-e8-af-95-e9-a2-98/">
         <h2 class="post-title">
-            到底谁奇怪
+            一套笔试题
         </h2>
         
         <div class="post-content-preview">
-            奇怪的大叔
+            前一阵想着能不能挣点外块改善生活，就应聘当某在线教育的解题员，这是阿里几年前的一套笔试题，也是让我试着做的题。看了下，网上应该没有解答这么详细的，毕竟也花了一些功夫。至于应聘，觉得此公司有点混乱，就罢了。另外貌似也失去了改善生活的动力。不过好东西，还是要放出来~
 
-我是黄山本地人，今年四十多岁了，上有老下有小的，我书读的不多，年轻的时候还可以靠出点力，现在真是有力都没地方使，黄山这几年主要是发展旅游业，其它行业不太景气，前几年我们一帮伙计发现了商机，因为黄山汽车站和火车站离景区还是有一段距离的，没有直达的公交车，的士根本就不够用！现在的游客都是比较有钱才出来逛的，宁可多花点钱，也不想耽误太多时间在路上。于是我们一帮人开始用自己的私家车拉客...
+1.有一个虚拟存储系统，若进程在内存中占3页（开始时内存为空），若采用先进先出（FIFO）页面淘汰算法，当执行如下访问页号序列后...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on November 9, 2016
+        Posted by zhangxiaojian on September 14, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/life%20traces/2016/09/13/my_25_years/">
+    <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/">
         <h2 class="post-title">
-            我的25年
+            MPI 中的点对点通信
         </h2>
         
         <div class="post-content-preview">
-            前段时间看了大神P叔的博客，除了技术之外，看得出对自己人生清晰的规划，结合P叔现在的成就，可以说当年吹的牛逼都实现了，并且有过之而无不及。其中有一篇 我的20年 ，四岁就知道自己想上国防科大，真是让四岁还不知道要上哪所小学的我羡慕不已。今天刚刚好走过25年的人生，也来总结一下~
+            使用MPI作为集群通信的工具已经有一段时间，一开始只是粗略的了解了一下它提供的消息传递接口，虽然可以解决大部分问题，但是使用不便，效率较低。这几天仔细看了看官方的文档，在MPI中提供了很多有用的函数接口，使用者完全可以在其上建立灵活的通信层。本文主要介绍集群点对点的通信。
 
-1991/09/20 （农历八月十三）下午3：15 张小贱闪亮登场，刚出生貌似五斤二两，注定从一开始就是个瘦子。...
+首先看一个简单的例子，从一个节点发送一条message到另一个节点：
+
+#include &lt;mpi.h&gt;
+...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on September 13, 2016
+        Posted by zhangxiaojian on July 28, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
+    <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
         <h2 class="post-title">
-            Berkeley DB 锁子系统的配置
+            基于Berkeley DB的数据库备份系统
         </h2>
         
         <div class="post-content-preview">
-            最近小伙伴在分布式数据库（DPINM）环境下做实验，数据集比较大，分到集群中每台机器上，会报lock不够用的错。Berkeley DB在初始化的时候，就会初始化锁子系统，为锁结构分配内存空间，一旦启动，是不可以动态分配的，如果不够用，就会报错。后来调节了参数，加大了Locks,  Lockers, Locked Object 的最大数量，重启之后被惊呆了，锁子系统映射到文件系统的共享内存空间...
+            趁着五一，劳动一下，把这篇酝酿已久的博客写了。这是去年做的东西，完成了一段时间，经过测试使用还可以，基本可以保证数据库的Durability，无论是突然断电还是磁盘坏了等等。文章的大部分内容都是之前完成的（为了交高级数据库这门课的课程报告….）。适合需要使用Berkeley DB或者其它存储引擎建立自己的备份系统的人阅读和参考。或者是想看看设计思路的~
+
+摘要
+
+本文所述内容基于实验室的IN...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on March 31, 2016
+        Posted by zhangxiaojian on May 2, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/">
+    <a href="/life%20traces/2015/04/12/e5-b9-b3-e5-87-a1-e7-9a-84-e4-b8-96-e7-95-8c/">
         <h2 class="post-title">
-            Berkeley DB 事务支持的应用架构
+            平凡的世界
         </h2>
         
         <div class="post-content-preview">
-            本文翻译自Berkeley DB 官方文档 Architecting Transactional Data Store applications 一节，主要讲述使用BDB作为存储引擎时提供事务支持的几种进程访问模式。每个BDB环境都对应一个文件系统目录，其中包涵存储的数据和运行时提供的锁资源，互斥变量资源，共享缓冲池等。每个目录可以被多个BDB进程打开访问，但使用复杂度有较大区别。需要说明的...
+            前年寒假的时候，买了一套平凡的世界，买之前一点都不了解，仅仅是听了别人的推荐。为了省邮费，还要加一本，就买了effective c++，现在来看这两本书一样那么好看和精彩。
+
+ 
+
+现在刚刚看完电视剧版的，重温了一遍平凡的感动，可能是因为两年之间生活也发生了改变，又有了一些不同的感受。看完书的时候是这样写的：
+
+终于在临走的一天晚上看完了平凡的世界，要不还要把它带到学校去，三本大书，估计要累...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on February 18, 2016
+        Posted by zhangxiaojian on April 12, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/">
+    <a href="/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/">
         <h2 class="post-title">
-            PostgreSQL 客户端认证机制
+            Ten C++11 Features Every C++ Developer Should Use
         </h2>
         
         <div class="post-content-preview">
-            最近实验室数据库需要提高安全性，因为以前只有自己人用，基本上是在裸奔，知道端口号和IP就可以连接上，不需要任何认证信息，没有安全可言。最简单的认证方式就是用户名和密码，但平常使用PG的时候都没有用到，就研究了一下PG的认证方式，取取经。
+            本文转载自 这里 ，是英文版的，有一份中文版在 这里，中文的不让转载，只好转英文的了。介绍了C++ 11的几个特性，写的超好，不转不快 ！
 
-配置与使用
-
-PG的认证方式有很多种，而且对于不同的database，不同的user，不同的访问IP都可以选择不同的方式认证。具体在配置文件pg_hba....
+This article discusses a series of features new to C++11 that all developers should learn and use. There are lots of new addit...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on January 22, 2016
+        Posted by zhangxiaojian on March 14, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/">
+    <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/">
         <h2 class="post-title">
-            再见2015
+            PostgreSQL 中的 Json —从使用到源码
         </h2>
         
         <div class="post-content-preview">
-            2015年马上就要结束了，感觉过的好快，不过仔细想想这一年还是经历了挺多事，当然也少不了有遗憾。不管好的坏的，都是今天总结的下酒菜。
-
-DPINM
-
-这是今年开始做的项目，D是分布式，P是并行，INM是实验室的数据库名字。名字不是我起的，因为开始时候一头雾水，都不知道能不能做得好，还即要并行，又要分布。当时还是挺期待这个项目了，因为单机版数据师兄师姐已经写了几代了，剩下多是修修补补的工作。这...
+            都不好意思开头了，又是选的课要提交报告，自我约束写文章确实不行。。希望文章不差就好。上课选分析的模块，拼了老命选上了存储部分，以为可以深入底层，变成高手，找到好工作，迎娶白富美，一看代码才发现，和存储没有半毛钱关系，虽然如此，源码写的确实很好，也是受益不少。PostgreSQL从9.2开始支持Json类型，把它当成标准类型一种，渐渐地提供了12个SQL函数。这篇文章先简单介绍一下Json，然...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on January 1, 2016
+        Posted by zhangxiaojian on March 14, 2015
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/life%20traces/reprinted%20articles/2015/12/09/499/">
+    <a href="/c++/2015/01/21/c-e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e7-89-b9-e6-80-a7-e5-ae-9e-e7-8e-b0-e5-89-96-e6-9e-90-data-member-e7-af-87/">
         <h2 class="post-title">
-            暗时间
+            C++面向对象特性实现剖析 Data Member篇
         </h2>
         
         <div class="post-content-preview">
-            本文转自Mind Hack
+            这一段时间写博客的频率少了很多，一直在给实验室数据库写备份和恢复的功能，积攒了很多值得深入学习的点，之后会一一总结。这篇文章是选的课需要交一篇分析语言特性如何实现的结题报告，正好看完Inside the c++ object model 之后，就一直想总结一下c++是怎么实现面向对象的继承，多态等等特性的。这是上篇，主要分析类中的数据成员，也是主要部分，下篇介绍虚函数的实现情况。
 
-Mind Hack 这个博客前两年就看到了，虽然文章数量不多，可以说是我看过最好的博客，甚至在建自己博客站点的时候用的都是相同的主题。其中除了计算机技术方面的文章，其它思维方式的文章真的会有一种 Mind 被 Hack 的感觉。最近干活效率很低，同样生活效率也低，不仅收获很少，而且并不开心。特转其中一篇重读，抓住时间。
-
-正文：
-
-如果你有一台计算机，你装了一个...
+c++ ...
         </div>
     </a>
     <p class="post-meta">
-        Posted by zhangxiaojian on December 9, 2015
+        Posted by zhangxiaojian on January 21, 2015
     </p>
 </div>
 <hr>
@@ -371,9 +379,13 @@ Mind Hack 这个博客前两年就看到了，虽然文章数量不多，可以�
 
 <ul class="pager">
     
+    <li class="previous">
+        <a href="/">&larr; Newer Posts</a>
+    </li>
+    
     
     <li class="next">
-        <a href="/page2">Older Posts &rarr;</a>
+        <a href="/page3">Older Posts &rarr;</a>
     </li>
     
 </ul>

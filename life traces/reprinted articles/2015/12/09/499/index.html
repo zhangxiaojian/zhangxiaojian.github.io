@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>暗时间 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/reprinted%20articles/2015/12/09/499/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Thinking" title="Thinking">Thinking</a>
+                        
+                    </div>
+                    <h1>暗时间</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on December 9, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>本文转自<strong><a href="http://mindhacks.cn/2009/12/20/dark-time/">Mind Hack</a></strong></p>
+
+<p>Mind Hack 这个博客前两年就看到了，虽然文章数量不多，可以说是我看过最好的博客，甚至在建自己博客站点的时候用的都是相同的主题。其中除了计算机技术方面的文章，其它思维方式的文章真的会有一种 Mind 被 Hack 的感觉。最近干活效率很低，同样生活效率也低，不仅收获很少，而且并不开心。特转其中一篇重读，抓住时间。</p>
+
+<p>正文：</p>
+
+<p>如果你有一台计算机，你装了一个系统之后就整天把它搁置在那里，你觉得这台计算机被实际使用了吗？没有。因为CPU整天运行的就是空闲进程。运行空闲进程也是一天，运行大数据量计算的程序也是一天，对于CPU来说同样的一天，价值却是完全不一样的。</p>
+
+<p>大脑也是如此。</p>
+
+<p>善于利用思维时间的人，可以无形中比别人多出很多时间，从而实际意义上能比别人多活很多年。我们经常听说“心理年龄”这个词，思考得多的人，往往心理年龄更大。有人用10年才能领悟一个道理，因为他们是被动领悟——只有在现实撞到他脸上的时候才感到疼，疼完了之后还是不记得时时提醒自己，结果很快时过境迁抛之脑后，等到第二次遇到同一个坑的时候早忘了曾经跌过跟头了，像这样的效率，除非天天摔坑里，否则遗忘的效率总是大过吃亏长的记性。善于利用思维时间的人则能够在重要的事情上时时主动提醒自己，将临时的记忆变成硬编码的行为习惯。</p>
+
+<p>每个人的手表都走得一样快，但每个人的生命却不是。衡量一个人生活了多少年，应该用思维时间来计算。举一个极端的例子，如果一个人从生下来开始就呆在一个为他特殊建造的无菌保护室里，没有社会交往，没有知识获取，度过了18年，你会不会认为他成年了？</p>
+
+<p>认为时间对每个人是均等的是一个错觉，认为别人有一天，我也有一天，其实根本不是这样。如果你正在学习一门专业，你使用自己所投入的天数来衡量，很容易会产生一种错觉，认为投入了不少时间，然而其实，“投入时间”这个说法本身就是荒唐的，实际投入的是时间和效率的乘积。你可以“投入”很多时间在一件事情上面，却发现毫无进展，因为你没有整天把你要做的事情，要学习的东西常驻在你的大脑中，时刻给予它最高的优先级。你走路的时候吃饭的时候，做梦的时候心心念念想的就是这件事情，你的CPU总是分配给它，这个时候你的思维时间就被利用到了极致，你投入的时间就真正等于了实际流逝的时间，因为你的CPU是满载的。</p>
+
+<p>如果你有做总结的习惯，你在度过一段时间之后总结自己在某某领域投入了多少时间，建议千万不要粗略地去计算有多少天下班后拿起书来翻看过，因为这样你也许会发现书倒是常翻，但领悟却不见得多深，表面上花的时间不少，收益却不见得那么大。因为看书并记住书中的东西只是记忆，并没有涉及推理，只有靠推理才能深入理解一个事物，看到别人看不到的地方，这部分推理的过程就是你的思维时间，也是人一生中占据一个显著比例的“<strong>暗时间</strong>”，你走路、买菜、洗脸洗手、坐公车、逛街、出游、吃饭、睡觉，所有这些时间都可以成为“暗时间”，你可以充分利用这些时间进行思考，反刍和消化平时看和读的东西，让你的认识能够脱离照本宣科的层面。这段时间看起来微不足道，但日积月累将会产生庞大的效应。</p>
+
+<p>能够充分利用暗时间的人将无形中多出一大块生命，你也许会发现这样的人似乎玩得不比你少，看得不比你多，但不知怎么的就是比你走得更远。比如我就经常发现一些国外的牛人们为什么不仅学习牛逼，连“业余”玩儿的东东也都搞得特牛逼，一点都不业余（上次在<a href="http://www.douban.com/subject/3440613/">《How We Decide》</a>上看到<a href="http://en.wikipedia.org/wiki/Michael_Binger">斯坦福的一个牛人</a>，理论物理学博士，同时是世界扑克大赛的前六名保持者，迄今累计奖金拿了六百多万刀），你会奇怪，<strong>这些家伙到底哪来的时间，居然可以在不止一个领域做到卓越</strong>？</p>
+
+<p>程序员们都知道，任务切换需要耗费许多额外的花销，通俗地来讲，首先需要保存当前上下文以便下次能够顺利切换回来，然后要加载目标任务的上下文。如果一个系统不停地在多个任务之间来回倒腾，就会耗费大量的时间在上下文切换上，无形中浪费很多的时间。</p>
+
+<p>相比之下，如果只做一件任务，就不会有此损失。这就是为什么专注的人比不专注的人时间利用效率高得多的原因。任务切换的暗时间看似非常不明显，甚至很多人认为“多任务”是件很好的事情（有时候的确是），但日积月累起来就会发现，消耗在切换上的时间越来越多。</p>
+
+<p>另外，大脑开始一件任务的时候必须要有一定时间来“热身”，这个时间因人而异，并且可以通过练习来改变。举个例子，你看了一会书之后，忽然感到一阵无聊，忍不住打开浏览器，十分钟后你想起来还要继续看书，但要回复到当时理想的状态，却需要一段时间来努力去集中精力，把记忆中相关的知识全都激活起来，从而才能进入“状态”，因为你上了十分钟网之后这些记忆已经被抑制了。如果这个“热身”状态需要一刻钟，那么看似十分钟的上网闲逛其实就花费了二十五分钟。</p>
+
+<p>如果阅读的例子还不够生动，对于程序员来说其实有更好的例子：你写程序写得正high，忽然被叫去开了一通会，写到一半的代码搁在那儿。等你开完会回来你需要多久能够重新进入状态？又或者，你正在调试程序，你已经花了二十分钟的时间把与这个bug可能相关的代码前前后后都理解了一遍，心中构建了一个大致的地图，就在这时，呃，你又被叫去开了个会(:D)，开完会回来，可想而知，得花上一些时间来回想一下刚刚弄清的东西了。</p>
+
+<p>迅速进入状态的能力是可以锻炼的，根据我个人的经验，至少可以缩短到3-5分钟。但要想完全进入状态，却是很难在这么短的时间实现的。所谓完全进入状态，举个例子：你看了3个小时的书，或者调试了半个小时的程序之后，往往满脑子都是相关的东西，所有这些知识都处在活跃状态，换言之你大脑中所有相关的记忆神经网络都被激活了，要达到这样一种忘记时间流逝的“沉浸”状态（心理学上叫做“<a href="http://en.wikipedia.org/wiki/Flow_%28psychology%29">流体验</a>”），不是三两分钟的事情。而一旦这种状态被破坏，无形间效率就会大打折扣。这也是为什么我总是倾向于创造大块的时间来阅读重要的东西，因为这样有利于“沉浸”进去，使得新知识可以和大脑中与其相关的各种既有的知识充分融合，关联起来，<a href="http://mindhacks.cn/2009/03/28/effective-learning-and-memorization/">后者对于深刻的记忆非常有帮助</a>。</p>
+
+<p>要充分利用暗时间，不仅要能够迅速进入状态，另一个很重要的习惯就是能够保持状态多久（<a href="http://www.douban.com/subject/1867455/">思维体力</a>）。《<a href="http://www.douban.com/subject/1770012/">The Psychology of Invention in the Mathematical Field</a>》上有一段关于庞加莱的思考习惯的介绍，很有代表性。庞加莱经常在去海边休假或者在路上走的时候在脑海中思索数学问题，很多时候解答就在这些时候忽然闪现。虽然我和庞加莱是没法比的，但是常常也在路上想出答案，这真是一种愉悦的体验。</p>
+
+<p><strong>能够迅速进入专注状态，以及能够长期保持专注状态，是高效学习的两个最重要习惯。</strong></p>
+
+<p>很多人都有这样的体验（包括我自己），工作了之后，要处理的事情一下多出了很多，不像在校园，环境简单，生活单纯，能够心无旁骛地做一件事情而不被打扰。工作之后的状况就是，首先需要处理的事情变多，导致时不时需要在多个任务之间切换；另一方面，即便能够把任务的优先级分配得比较合理，也难免在做一件事情的时候心中忽然想起另一件事还没做的焦虑来，因为没做完的事情会在大脑中留下一个“隐藏的进程”，时不时地发个消息提醒你一下，中断你正在做的事情。</p>
+
+<p>因此这里就涉及到最后一个高效的习惯：抗干扰。只有具备超强的抗干扰能力，才能有效地利用起前面提到的种种暗时间。抗干扰能力也是可以练习出来的，上本科那会经常坐车，所以我就常常拿着本大部头在车上看，坐着看或者站着看都可，事实证明在有干扰的环境中看书是非常锻炼专注能力的一个办法:D 另外，经常利用各种碎片时间阅读和思考，对迅速集中注意力和保持注意力都非常有帮助。记得很久以前TopLanguage上大伙曾经有次饶有兴趣地讨论<a href="http://groups.google.com/group/pongba/browse_thread/thread/388640d8d07f81f/">“马桶时间”的利用</a>，包括<a href="http://groups.google.com/group/pongba/msg/2ba79504a3062a10">在卫生间放个小书柜</a>。（估计很多同学心有戚戚焉吧:D）</p>
+
+<p>后：</p>
+
+<p>这篇文章从提高效率的角度讲了“暗时间”，如果从另一个方面来考虑，选择所做的事也可以增加效率。这里的效率也许不仅仅是对一件事，而是对于一个人而言。如果相同的时间，相同的投入，相同的专注只去做类似的事，实际上也是低效的。比如每天放松都会看两集电视剧，看完甄嬛传看芈月传，看完国产看美剧。如果相同的时间，去试着跑步，学一种运动等，就会丰富很多，整个人的”效率“是不是有所提高呢？这种思维好像和”多而不专“相互冲突，可以参考上文”<a href="http://en.wikipedia.org/wiki/Michael_Binger">斯坦福的一个牛人</a>“。假设这个人效率奇高，应付博士学位绰绰有余，但空下来的时间没有去尝试打扑克，怎么会成为扑克高手？如果所做的事充满乐趣，就不会放弃去做其它的，但如果所做的事非常熟悉，不悲不喜，不如去做更多没有做过的事。（又让我想起了小学看过的一本薄薄的书，”<a href="http://book.douban.com/subject/4722180/"><strong>谁动了我的奶酪</strong></a>“）</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/life%20traces/2015/12/01/e5-8e-bb-e5-9d-90-e7-89-a2-e4-ba-86/" data-toggle="tooltip" data-placement="top" title="去坐牢了">
+                        Previous<br>
+                        <span>去坐牢了</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/2016/01/01/e5-86-8d-e8-a7-812015/" data-toggle="tooltip" data-placement="top" title="再见2015">
+                        Next<br>
+                        <span>再见2015</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/reprinted%20articles/2015/12/09/499";
+    var disqus_url = "http://localhost:4000/life%20traces/reprinted%20articles/2015/12/09/499/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>MySQL 信号处理机制 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/database/mysql/2017/11/20/665/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>MySQL 信号处理机制</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on November 20, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="背景">背景</h2>
+<p>在 <a href="https://github.com/alibaba/AliSQL/issues/68">AliSQL</a> 上面有人提交了一个 bug，在使用主备的时候  service stop mysql  不能关闭主库，一直显示 shutting down mysql …，到底怎么回事呢，先来看一下  service stop mysql  是怎么停止数据库的。配置 MySQL 在系统启动时启动需要把 MYSQL_BASEDIR/support-files 目录下的脚本 mysql.sever 放到 /etc/init.d/ 目录下，脚本来控制 mysqld 的启动和停止。看一下脚本中的代码 ：</p>
+
+<div class="language-perl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="nv">test</span> <span class="o">-</span><span class="nv">s</span> <span class="s">"$mysqld_pid_file_path"</span>
+     <span class="k">then</span>
+       <span class="nv">mysqld_pid</span><span class="o">=</span><span class="sb">`cat "$mysqld_pid_file_path"`</span>
+
+       <span class="k">if</span> <span class="p">(</span><span class="nb">kill</span> <span class="o">-</span><span class="mi">0</span> <span class="nv">$mysqld_pid</span> <span class="mi">2</span><span class="o">&gt;</span><span class="sr">/dev/</span><span class="nv">null</span><span class="p">)</span>
+       <span class="k">then</span>
+         <span class="nv">echo</span> <span class="nv">$echo_n</span> <span class="s">"Shutting down MySQL"</span>
+         <span class="nb">kill</span> <span class="nv">$mysqld_pid</span>
+         <span class="c1"># mysqld should remove the pid file when it exits, so wait for it.</span>
+         <span class="nv">wait_for_pid</span> <span class="nv">removed</span> <span class="s">"$mysqld_pid"</span> <span class="s">"$mysqld_pid_file_path"</span><span class="p">;</span> <span class="nv">return_value</span><span class="o">=</span><span class="vg">$?</span>
+	<span class="o">...</span>
+	
+</code></pre></div></div>
+
+<p>实际上的关闭动作就是向 mysqld 进程发送一个 kill pid 的信号，也就是 TERM ， wait_for_pid  函数中就是不断检测 $MYSQL_DATADIR 下面的 pid 文件是否存在，并且打印 ‘.’，所以上述问题应该是 mysqld 没有正确处理接收到的信号。</p>
+
+<h2 id="信号处理机制">信号处理机制</h2>
+
+<h3 id="多线程信号处理">多线程信号处理</h3>
+<p>进程中的信号处理是异步的，当信号发送给进程之后，就会中断进程当前的执行流程，跳到注册的对应信号处理函数中，执行完毕后再返回进程的执行流程。在多线程信号处理中，一般采用一个单独的线程阻塞的等待信号集，然后处理信号，重新阻塞等待。线程的信号处理有以下几个特点：</p>
+
+<ul>
+  <li>每个线程都有自己的信号屏蔽字（单个线程可以屏蔽某些信号）</li>
+  <li>信号的处理是整个进程中所有线程共享的（某个线程修改信号处理行为后，也会影响其它线程）</li>
+  <li>进程中的信号是递送到单个线程的，如果一个信号和硬件故障相关，那么该信号就会被递送到引起该事件的线程，否是是发送到任意一个线程。</li>
+</ul>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">pthread_sigmask</span><span class="p">(</span><span class="kt">int</span> <span class="n">how</span><span class="p">,</span> <span class="k">const</span> <span class="n">sigset_t</span> <span class="o">*</span> <span class="k">restrict</span> <span class="n">set</span><span class="p">,</span> <span class="n">sigset_t</span> <span class="o">*</span><span class="k">restrict</span> <span class="n">oset</span><span class="p">);</span>
+</code></pre></div></div>
+<p>在进程中使用 sigprocmask 设置信号屏蔽字，在线程中使用 pthread_sigmask，他们的基本相同，pthread_sigmask 工作在线程中，失败时返回错误码，而 sigprocmask 会设置 errno 并返回 -1。参数 how 控制设置屏蔽字的行为，值为 SIG_BLOCK（把信号集添加到现有信号集中，取并集）, SIG_SET_MASK（设置信号集为 set）, SIG_UNBLOCK（从信号集中移除 set 中的信号）。set 表示需要操纵的信号集合。oset 返回设置之前的信号屏蔽字，如果设置 set 为 NULL，可以通过 oset 获得当前的信号屏蔽字。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">sigwait</span><span class="p">(</span><span class="k">const</span> <span class="n">sigset_t</span> <span class="err">\</span><span class="o">*</span><span class="k">restrict</span> <span class="n">set</span><span class="p">,</span> <span class="kt">int</span> <span class="err">\</span><span class="o">*</span><span class="k">restrict</span> <span class="n">sig</span><span class="p">)</span>
+</code></pre></div></div>
+<p>sigwait 将会挂起调用线程，直到接收到 set 中设置的信号，具体的信号将会通过 sig 返回，同时会从 set 中删除 sig 信号。 在调用 sigwait 之前，必须阻塞那些它正在等待的信号，否则在调用的时间窗口就可能接收到信号。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">pthread_kill</span><span class="p">(</span><span class="n">pthread_t</span> <span class="kr">thread</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sig</span><span class="p">)</span>
+</code></pre></div></div>
+<p>发送信号到指定线程，如果 sig 为 0，可以用来判断线程是否还活着。</p>
+
+<p>man pthread_sigmask 里面给了一个例子：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="mi">1</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">pthread</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">2</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">stdio</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">3</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">stdlib</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">4</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">unistd</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">5</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">signal</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">6</span> <span class="err">#</span><span class="n">include</span> <span class="o">&lt;</span><span class="n">errno</span><span class="p">.</span><span class="n">h</span><span class="o">&gt;</span>
+  <span class="mi">7</span>
+  <span class="mi">8</span> <span class="cm">/* Simple error handling functions */</span>
+  <span class="mi">9</span>
+ <span class="mi">10</span> <span class="err">#</span><span class="n">define</span> <span class="n">handle_error_en</span><span class="p">(</span><span class="n">en</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span> \
+ <span class="mi">11</span>     <span class="k">do</span> <span class="p">{</span> <span class="n">errno</span> <span class="o">=</span> <span class="n">en</span><span class="p">;</span> <span class="n">perror</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span> <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span> <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+ <span class="mi">12</span>
+ <span class="mi">13</span>     <span class="k">static</span> <span class="kt">void</span> <span class="o">*</span>
+ <span class="mi">14</span> <span class="n">sig_thread</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+ <span class="mi">15</span> <span class="p">{</span>
+ <span class="mi">16</span>     <span class="n">sigset_t</span> <span class="o">*</span><span class="n">set</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigset_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">arg</span><span class="p">;</span>
+ <span class="mi">17</span>     <span class="kt">int</span> <span class="n">s</span><span class="p">,</span> <span class="n">sig</span><span class="p">;</span>
+ <span class="mi">18</span>
+ <span class="mi">19</span>     <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+ <span class="mi">20</span>         <span class="n">s</span> <span class="o">=</span> <span class="n">sigwait</span><span class="p">(</span><span class="n">set</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sig</span><span class="p">);</span>
+ <span class="mi">21</span>         <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+ <span class="mi">22</span>             <span class="n">handle_error_en</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">"sigwait"</span><span class="p">);</span>
+ <span class="mi">23</span>         <span class="n">printf</span><span class="p">(</span><span class="s">"Signal handling thread got signal %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sig</span><span class="p">);</span>
+ <span class="mi">24</span>     <span class="p">}</span>
+ <span class="mi">25</span> <span class="p">}</span>
+ <span class="mi">26</span>
+ <span class="mi">27</span> <span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+ <span class="mi">28</span> <span class="p">{</span>
+ <span class="mi">29</span>     <span class="n">pthread_t</span> <span class="kr">thread</span><span class="p">;</span>
+ <span class="mi">30</span>     <span class="n">sigset_t</span> <span class="n">set</span><span class="p">;</span>
+ <span class="mi">31</span>     <span class="kt">int</span> <span class="n">s</span><span class="p">;</span>
+ <span class="mi">32</span>     <span class="cm">/* Block SIGINT; other threads created by main() will inherit
+ 33      *               a copy of the signal mask. */</span>                                                                                                
+ <span class="mi">32</span>     <span class="cm">/* Block SIGINT; other threads created by main() will inherit
+ 33      *               a copy of the signal mask. */</span>
+ <span class="mi">34</span>
+ <span class="mi">35</span>     <span class="n">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">set</span><span class="p">);</span>
+ <span class="mi">36</span>     <span class="n">sigaddset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">set</span><span class="p">,</span> <span class="n">SIGQUIT</span><span class="p">);</span>
+ <span class="mi">37</span>     <span class="n">sigaddset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">set</span><span class="p">,</span> <span class="n">SIGUSR1</span><span class="p">);</span>
+ <span class="mi">38</span>     <span class="n">s</span> <span class="o">=</span> <span class="n">pthread_sigmask</span><span class="p">(</span><span class="n">SIG_BLOCK</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">set</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+ <span class="mi">39</span>     <span class="c1">//s = sigprocmask(SIG_BLOCK, &amp;set, NULL);</span>
+ <span class="mi">40</span>     <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+ <span class="mi">41</span>         <span class="n">handle_error_en</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">"pthread_sigmask"</span><span class="p">);</span>
+ <span class="mi">42</span>
+ <span class="mi">43</span>     <span class="n">s</span> <span class="o">=</span> <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="kr">thread</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sig_thread</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">set</span><span class="p">);</span>
+ <span class="mi">44</span>     <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+ <span class="mi">45</span>         <span class="n">handle_error_en</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">"pthread_create"</span><span class="p">);</span>
+ <span class="mi">46</span>
+ <span class="mi">47</span>     <span class="cm">/* Main thread carries on to create other threads and/or do
+ 48      *               other work */</span>
+ <span class="mi">49</span>
+ <span class="mi">50</span>     <span class="n">pause</span><span class="p">();</span>            <span class="cm">/* Dummy pause so we can test program */</span>
+ <span class="mi">51</span>     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+ <span class="mi">52</span> <span class="p">}</span>
+</code></pre></div></div>
+<p>执行一下：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>./a.out &amp;
+<span class="o">[</span>1] 5423
+<span class="nv">$ </span><span class="nb">kill</span> <span class="nt">-QUIT</span> %1
+Signal handling thread got signal 3
+<span class="nv">$ </span><span class="nb">kill</span> <span class="nt">-USR1</span> %1
+Signal handling thread got signal 10
+<span class="nv">$ </span><span class="nb">kill</span> <span class="nt">-TERM</span> %1
+<span class="o">[</span>1]+  Terminated              ./a.out
+</code></pre></div></div>
+<p>测试了一下，把上面代码的 pthread_sigmask 替换成 sigprocmask ，同样能够正确执行，说明线程也能够继承原进程的屏蔽字，不过还是尽量使用 pthread_sigmask, 表述清楚点，而且说不定还有其它坑。</p>
+
+<h3 id="mysql-信号处理">MySQL 信号处理</h3>
+<p>MySQL 是典型的多线程处理，它的信号处理形式和上一小节介绍的差不多，在 mysqld 启动的时候调用 my_init_signal 初始化信号屏蔽字，把需要信号处理线程处理的信号屏蔽起来，然后启动信号处理函数，入口是 signal_hand 。</p>
+
+<p>在 my_init_signal 函数中，设置 SIGSEGC, SIGABORT, SIGBUS, SIGILL, SIGFPE 的处理函数为 handle_fatal_signal，把 SIGPIPE，SIGQUIT, SIGHUP, SIGTERM, SIGTSTP 加入到信号屏蔽字里，调用 sigprocmask 和 pthread_sigmask 设置屏蔽字。这一系列动作是在 mysql 启动其它辅助线程之前完成的动作，意图很明显，就是让之后的线程都继承设置的信号屏蔽字，把所有的信号交给信号处理线程去处理。</p>
+
+<p>signal_hand 函数首先把需要处理的信号放到信号集合里去，然后完成 create_pid_file ，data 目录下的 pid 文件实际上是由信号处理线程创建的。接着等待 mysqld 完成启动，各个线程之间需要同步，核心代码是一个死循环，通过 my_sigwait 调用 sigwait 阻塞的等待信号的到来。我们目前主要关心 SIGTERM 的处理，和 SIGQUIT, SIGKILL 处理方式相同，都是调用 kill_server 关闭整个数据库。</p>
+
+<h2 id="bug-fix">Bug Fix</h2>
+<p>文中开头的链接中提到 loose-rpl_semi_sync_master_enabled = 0 关闭就不会有问题， 如果为 1 就会出现无法关闭的情况，顺着这个线索寻找，rpl_semi_sync_master_enabled 在主备使用 semisync 情况下控制启动 Master 节点的 Ack Receiver 线程，初始化阶段的调用堆栈为:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>init_common_variables
+		|
+		|----- ReplSemiSyncMaster::initObject
+						|
+						|----- Ack_receiver::start
+								
+</code></pre></div></div>
+<p>而 init_common_variables 的调用是在 my_init_signal 之前，也就是 Ack Receiver 线程没有办法继承信号屏蔽字，不会屏蔽 SIGTERM 信号。在 my_init_signal 中还有一段这样的代码：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Fix signals if blocked by parents (can happen on Mac OS X) */</span>
+  <span class="p">....</span>
+  <span class="n">sa</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">print_signal_warning</span><span class="p">;</span>
+  <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="n">sigaction</span><span class="err">\</span><span class="o">*</span><span class="p">)</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="p">...</span>
+</code></pre></div></div>
+<p>对于信号的修改的作用于整个进程的，也就是说之前启动的 Ack Receiver 线程没有信号屏蔽字，而且注册了信号处理函数。当 SIGTERM 发生后，信号处理线程和 Ack Receiver 线程都可以接收信号处理，信号被随机的分发（测试高概率都是发给 Ack Receiver），print_signal_warning 仅仅打印信息到 errlog，就出现了无法关闭 mysqld 的情况了。</p>
+
+<p>修改也比较简单，把 initObject 的操作放到 my_init_signal 之后就好，注意不能把 init_common_variables 整个移到 my_init_signal 之前，因为 my_init_signal 里面还有要初始化的变量呢。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/database/mysql/2017/08/22/mysql-e5-86-85-e5-ad-98-e5-88-86-e9-85-8d-e6-9c-ba-e5-88-b6/" data-toggle="tooltip" data-placement="top" title="MySQL内存分配机制">
+                        Previous<br>
+                        <span>MySQL内存分配机制</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/computer%20science/mysql/2017/11/25/undrop-for-innodb/" data-toggle="tooltip" data-placement="top" title="undrop-for-innodb">
+                        Next<br>
+                        <span>undrop-for-innodb</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/database/mysql/2017/11/20/665";
+    var disqus_url = "http://localhost:4000/computer%20science/database/mysql/2017/11/20/665/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

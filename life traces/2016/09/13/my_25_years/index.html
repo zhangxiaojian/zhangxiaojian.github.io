@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>我的25年 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/life%20traces/2016/09/13/my_25_years/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>我的25年</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on September 13, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>前段时间看了大神P叔的博客，除了技术之外，看得出对自己人生清晰的规划，结合P叔现在的成就，可以说当年吹的牛逼都实现了，并且有过之而无不及。其中有一篇 <strong><a href="http://www.penglixun.com/life/diary/my_20_years.html">我的20年</a></strong> ，四岁就知道自己想上国防科大，真是让四岁还不知道要上哪所小学的我羡慕不已。今天刚刚好走过25年的人生，也来总结一下~</p>
+
+<p><strong>1991/09/20</strong> （农历八月十三）下午3：15 张小贱闪亮登场，刚出生貌似五斤二两，注定从一开始就是个瘦子。</p>
+
+<p>1992 1岁 ，最先学会的运动是爬，而且不会往前爬，只会往后爬，有大人逗我的话，只能是越逗越远。大概是一岁零三个月的时候学会走路，现在觉得学会走路是特别有纪念意义的事，高中的时候才能正式开启“职业生涯”。</p>
+
+<p><strong>1993 ~ 1995</strong> **2岁到4岁 **那时候我是大人眼中的“家娃”，基本上不怎么出去，就在家里玩一些小玩具，把所有的玩具分成两派，左手拿一个，右手拿一个，然后让他们打来打去，我还记得有一个类似奥特曼的，他就是我这里的英雄，各种打架总是他赢。 这时候年幼无知，不知道怎么回事，特别喜欢穿裙子。。我到现在也无法理解。。还有一件事，以前家里厨房过来有一道帘子，妈妈做好饭往里面端，我往外面跑，隔着门帘撞到了她怀里，热腾腾的稀饭浇了我一脸，基本上是毁容了，后来有一个亲戚在药店上班，拿了什么特效药，不过嘱咐我千万不能用手碰，也不能出去见风。还好小时候比较听话，乖乖呆在家里，后来恢复的还行。不过总是觉得是因为这碗稀饭，才导致现在只能靠才华吃饭。。</p>
+
+<p><strong>1996</strong> <strong>5岁</strong> 到了上幼儿园的年纪，不过“家娃”属性太重，第一天被送到的时候我看着这么多小孩，还有不认识的老师，哭着喊着不要呆，最后妈妈还是心一软把我带回去了，所以没有上过幼儿园。回去之后要准备上学前班，要我在家自己练自己的名字，怎么说上学要会写名字吧。不过快开学的时候才发现我练错了，，练的是健康的“健”，户口本上的是刀剑的”剑“，因为小时候身体不好，就想健康点，后来派出所报名字是姥爷去的，我和我姐的名字都惨遭报错。</p>
+
+<p><strong>1997</strong> <strong>6岁</strong> 学前班，终于开始了我长达二十年的求学生涯。</p>
+
+<p><strong>1998</strong> <strong>7岁</strong> 一年级，性格慢慢开朗起来，开始变成大人口中的”野“娃，不像现在的高楼小区，当时住在一个大院子里，认识了好多玩伴。每天放学就在院子里玩各种游戏，一直到下午吃饭的时候就能听到家长们在呼唤自己孩子的名字回去吃饭，而我们听到以后就躲起来等他们到其它地方去找。</p>
+
+<p><strong>1999</strong> <strong>8岁</strong> 二年级，这年还是有点印象，因为一首来吧来吧，相约98。还因为另一件事，感冒发烧去打吊针，结果分给一个实习护士，手脚扎满然后在头上扎，一共11针，终于大功告成。不知道她是否还记得当年一个小朋友让她的扎针技术突飞猛进。</p>
+
+<p><strong>2000</strong> <strong>9岁</strong> 三年级，都说可以跨世纪了，真的是千载难逢，我还是继续着无忧无虑的生活，和小伙伴们玩着市面上流行的东西。弹子（玻璃球），画片，烟盒，啤酒瓶的盖子，四驱车，悠悠球，沙包，皮筋，铁环等等。爬高上低，在大院子的每个角落探险，大院子里有很多小孩，自然跟着几个稍大点的分成小群体，当时最流行的两句话就是：我不和你玩了。小心我告你妈。我在里面算稍大的一批，也有点号召力，最关键的是，上面说的那些玩的东西，几乎没有人可以与我匹敌，经常玩一下午把别人赢光，然后再买给他，用它家里冰箱的一根巧乐滋来交换。</p>
+
+<p>2001 10岁 四年级，清楚的记得换了班主任，还从主教学楼搬到了新教学楼的一层。这时候出现了游戏机，插卡的那种。大家也都开始玩。经过我长时间的申请，并且当时的游戏机还叫学习机，里面内置的游戏可以联系打字和英语，家里人看到有益学习，终于让我的手。然后就开始购置游戏卡，100 合 1 ，300 合 1，不过最好玩的游戏永远是 4 合 1，7 合 1。价钱也贵很多，好像当时就要20一盘。为了资源充分利用，全院子的小伙伴就开始互相交换着玩，我还记得把我最喜欢的热血4合1给换出去了，他再也没有还给我。。</p>
+
+<p><strong>2002</strong> <strong>11岁</strong> 五年级，学校开设了电脑课程，我还清楚的记得机房后面贴着几个大字 ” 电脑要从娃娃抓起“。第一堂课教开关机，开机要先开主机再开显示器，关机要先关显示器再关主机。我并没有像很多计算机大神前辈一样，从此开启了一发不可收拾的计算机之路。当时根本买不起家用pc，上课也是练打字，做ppt，扫雷，纸牌，听歌。 不过开始了几年一发不可收拾的书法之路，当时作业的字写得特别丑，每次班主任都会点名批评，说”字和狗爬的一样“，一次和妈妈逛街，路过少年宫，看到有书法培训班，我俩都以为是钢笔字，就果断报名了，去上课才发现是毛笔书法，不过老师说这样才能练出来字，就开始练字了~</p>
+
+<p><strong>2003</strong> <strong>12岁</strong> 六年级，经过一段时间的练习，字确实好看了很多，也疯狂的喜欢上了练字，一没事就写，在学校上课没有装备就用中性笔在书上按照毛笔的写法练，这个习惯保持了好多年。开始班上集体是练”颜“体字的，就是颜真卿的字，后来我去书店看字帖的时候发现了”欧“体字，欧阳询的字，像是发现了新大陆，感觉字体特别清秀，看着就忍不住想要临摹。上课的时候就趁老师不注意偷偷拿自己的字帖写，被老师发现了好几次，叫我练颜体。但是根本忍不住啊，老师可能发现这个孩子对欧体是真爱，就特别同意我练欧体字。现在也要感谢老师的开明，才让我保持了多年的兴趣。顺利的考过了书法六级。六年级还有一件重要事，因为院子比我高一两级的孩子英语成绩都惨不忍睹，尤其是我姐，从他们口中得知，英语单词真是难记，初中课程也难的多，一不留神就落在后面听不懂了。因为有了前车之鉴，妈妈就给我报名了英语辅导班，遇到了Anna 老师，学习了后面特别受用的音标，记单词就快的多，后面跟着老师学习了新概念英语 1 ，2。初中高中英语一直都还不错。</p>
+
+<p><strong>2004</strong> <strong>13岁  </strong>初一，换了一所学校，换了一个新家，一群新的同学。课程比小学紧了不少，起码要开始上晚自习了，练字时间就渐渐少了。另一个原因是迷上了打乒乓球，中学乒乓球气氛很好，有十二个质量不错的球桌。每天放学最后一节课提前五分钟收拾好书包，铃一响就冲下去，晚了就没位置了。周六周日，一有时间就去打球，技术也好了很多，也开始看乒乓球比赛，知道了马琳，王励勤，王皓（现在的马龙张继科都是当时的不起眼的小弟），疯狂的喜欢这乒乓球，就像之前疯狂的喜欢书法一样。</p>
+
+<p><strong>2005</strong> <strong>14岁</strong> 初二，加了两门课，物理和化学。学习属性开始慢慢出现了，物理第一次月考之后连续好几次都是满分，数学化学也差不多，慢慢班里前几，尝到了好处，比如去打乒乓球班主任再也不会说先把成绩搞上去。。</p>
+
+<p><strong>2006</strong> <strong>15岁</strong> 初三，开始意识到要上一个好的高中，中考前几个月通过了西安铁一中的考试，中考差不多都会要。可是铜川的中考成绩普遍低于西安成绩，去西铁一中要交好多钱的择校费。就留在了本地读高中。</p>
+
+<p><strong>2007</strong> <strong>16岁</strong> 高一，因为中考成绩好，报名晚了几天，找到了副校长办公室，免了军训，还让他把初中玩的好的几个人分到一个班。。高一成绩还行，打酱油参加数学竞赛，竟然过了，当时数列都还没有学，然后和一群高二的去参加比赛，没得什么奖。。不过文理分科的时候是第一名，记得这么清楚是因为以后的学号都是01，每次考试都要坐第一排，真是不爽。不过这都不重要，因为高一正式开始了我的“职业生涯”，学校有一个土操场，体育课我们借个足球摆两个门就开始踢，所过之处尘土飞扬，寸草不生。初中听妈妈的话坚决不去网吧，会“学坏”，高中网吧盛行，忍不住去了。和几个踢球的同学一块开始玩实况足球 8，包夜的话能玩一晚上不停。班上有不少开始被我们带着踢实况足球的最后都忍不住开始了在操场上踢真正的足球，可见所谓的玩游戏都是坏处，是不对的。</p>
+
+<p><strong>2008</strong> <strong>17岁</strong> 高二，各种竞赛都报名了，数理化生，比较可惜的是所在小城市没有普及信息竞赛，要不可以早几年开始编程。其它竞赛学校的态度也是随便参加一下，当时带班的数学老师就说了，虽然是竞赛培训，但也不能为了几个苗苗讲的太深。。物理竞赛书上的很多题，老师自己都不会，还是我牺牲了坐公交思考人生的时间思考物理想明白的。。真是和大城市不能比，，从来没有学生是打算靠竞赛进入大学的。后来得了几个三等奖，学校奖励了100，老师奖励2500。我也是百思不得解。不过土球场装上了塑胶，一个正规的6人足球场比什么奖都来的开心。</p>
+
+<p><strong>2009</strong> <strong>18岁</strong> 高三，开始一轮一轮的复习，差不多一半的考试可以第一，不过对于未来要去哪个学校，学什么专业，都没有太大的方向。一次月考结束，分给了学校几个西交大自主招生的考试名额，什么都没准备，就去试了下。老师带着我们去西安，找了个30一晚比较皮夹气的住宿，睡的特别不舒服，一直到凌晨三点都没有睡着。第二天六点就起来考试了，而且是一天连考六门，中午不带休息。所以基本上是懵逼的，我还记得一哥们在我旁边直接睡着了，打呼噜。。结果自然失败，不过决定高考就考西交大吧，离家近，学校又不错。在周围邻居里面吹个牛逼还是够的。高考发挥一般，考试的时候我竟然在几道大题没有做的情况下，脑子里开始想足球比赛的画面。。分数出来高重点线小50分，报西交大是没戏了，于是填了两个省内两个省外，随波逐流。专业也是两个大类，当时比较火爆的土木建筑类，还有就是计算机类。现在想来，真是万幸，几乎是踩着线进的合并没多久中南，进的成立没多久的软件学院。</p>
+
+<p><strong>2010</strong> <strong>19岁</strong> 大一，幸运的被分到1008班，720寝室。大一比较懵懂，高中的时候受很多大学生回来吹牛的影响，认为大学真的只要及格就好，自由，自由，自由，可能真的对刚刚高考完的我们很有杀伤力。那时候我只想锻炼好身体，正好遇到了同样喜欢踢球的室友，我们三个报名参加四人比赛拿了亚军，还一起加了信息学院足球队，因为软件学院刚刚独立，没有球队。经常下午踢完球书不带就去上课。我还加了乒乓球协会，混了一个部长。。至今想不明白怎么选上的。。</p>
+
+<p><strong>2011</strong> <strong>20岁</strong> 大二，从新校区搬到了铁道校区，开始有公司来给我们实训，这时候才正式开始认识写代码这件事。做一个局域文件传输系统，我负责写消息传输这块，抱着c++的书，跑通了两台机器的文件发送和接收，别提多高兴了。这学期专业课也开始多了，经过大一的惨痛教训，开始认真上课，自习，考试，写代码（主要是课程设计）。成绩突飞猛进，排在年级第五，拿了一万多的奖学金，感觉有钱无比。。踢球也有重要收获，我们班经过惨烈的三场淘汰赛，拿到了冠军，那张我们一起跳起来的照片值得一生珍藏。除了班里，我们也开始和大三的学长一起组建软件学院足球队，不过这一年非常坎坷，有很多的矛盾，也是到处输球，不过现在想起来，是我们以后在场上场下变得互相信任不可获缺的一部分。</p>
+
+<p><strong>2012</strong> <strong>21岁</strong> 大三，选了嵌入式的方向，经过几次课设，实训，接触了Java开发，嵌入式系统，Linux c/C++ 开发。还和小伙伴组队学安卓，暑假搞了个软件参加谷歌应用大赛，赚了个背包。这个阶段对计算越来越有兴趣，能写出来东西，最好是能运行的界面，当时就觉得很有成就感了。后来大三下学期需要找暑期实习，开始投简历，面试。初出茅庐，不知道行业深浅。被腾讯挂了，阿里电话面试java被问的世界观都碎了。还好后来过了三家+华为，就选择在华为实习。面试期间多次想过考研，研友都找好了，暑假自习室都租好了！不过后来我和研友发现都可以保研，又都找到实习了，就果断转让自习位置。<strong><a href="http://www.zhangxiaojian.name/%E5%87%BF%E4%B8%80%E5%8F%A3%E6%B7%B1%E4%BA%95/">这篇文章</a></strong>说了在华为实习后为什么选择保研。另一件事：这一年我们球队开始越来越团结，一起成立的软件学院足球队，备战队史首次参加的校级比赛。每天下午一起训练，一起踢野球，踢完球去洗澡然后到后街吃饭，约其它院的友谊赛。和去年不同，我们已经很少输了！第一次参加校级比赛，就小组第一出线，从开始被最不看好，到最后虐爆传统强队，创造了历史，也结下了深刻的友谊。</p>
+
+<p><strong>2013</strong> <strong>22岁</strong>， 大四，实习拒绝转正后，开始变得索然无味，确定保研之后就结束了实习，早早来到了实验室。此时已经决定了以后发展的方向——数据库。不得不说，受到了<strong><a href="http://hedengcheng.com/">登博</a></strong> 的影响，那时登博还在网易，我是参加网易宣讲第一次见到登博，关注了他的微博，由此认识了阿里系，网易系的数据库大牛们，听说了阿里云，听说了RDS。在实验室接触了Berkeley DB，用它当存储引擎实现实验室自己的数据库。下学期回到学校，和最珍贵的大学生活，1008班，720寝室，软件学院足球队告别。</p>
+
+<p><strong>2014</strong> <strong>23岁</strong>，研一，最重要的事就是选了<strong><a href="http://totemdb.whu.edu.cn/personal/ywpeng/index_cn.html">彭老师</a></strong> 的课《PostgreSQL 数据库内核分析》，实验室数据库开发过程中遇到的难题，在PG中都能找到很好的解决方式和思路。看着PG几乎完美的代码，和彭老师精彩的课堂讲解，对PG产生了很大兴趣，开始自己试着看一块，改改里面的东西，偷点拿出来放到实验室的数据库里用。后来在校园里碰到彭老师踢完球回来，原来都是足球爱好者，彭老师拉我进院里老师的足球队，晚上有野球也带我去玩。</p>
+
+<p><strong>2015</strong> <strong>24岁</strong>，研二，开始从头开发分布式数据库，实验室单机数据库因为逻辑复杂出现瓶颈，学了不少分布式的东西，用了几个月时间搭出来一个可以用的版本。因为彭老师的关照，接触到了PG界的大神<strong><a href="http://blog.163.com/digoal@126/">德哥</a></strong> ，在众多大神面前做了内核的分享。还接触到了现在的老大<strong><a href="http://weibo.com/tdingqi?refer_flag=1005055013_&amp;is_all=1">奇哥</a></strong>，时间比较短，只是匆匆聊了几句，留了电话。因为早就确定了未来的工作是阿里的数据库部门（这点和P叔一样，说明阿里数据库团队叼了很多年啊，哈哈），今年的实习就忍不住投了，经过了至今最变态的面试后，见到了从登博开始知道的所有数据库大神，实习两个月拿到了正式的offer，虽然从PG转到了MySQL，不过就像明虚师兄说的一样，未来全栈，不应该是一个数据库领域的专家。</p>
+
+<p><strong>2016</strong> <strong>25岁</strong>，回到学校没有几天，最后一年的学生生涯，最后一年足球“职业生涯”</p>
+
+<p>过去是读书的20年，未来是为理想和生活奋斗的20年，加油。</p>
+
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/" data-toggle="tooltip" data-placement="top" title="Berkeley DB 锁子系统的配置">
+                        Previous<br>
+                        <span>Berkeley DB 锁子系统的配置</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/2016/11/09/e5-88-b0-e5-ba-95-e8-b0-81-e5-a5-87-e6-80-aa/" data-toggle="tooltip" data-placement="top" title="到底谁奇怪">
+                        Next<br>
+                        <span>到底谁奇怪</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/life%20traces/2016/09/13/my_25_years";
+    var disqus_url = "http://localhost:4000/life%20traces/2016/09/13/my_25_years/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

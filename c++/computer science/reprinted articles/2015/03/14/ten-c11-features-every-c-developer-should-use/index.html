@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>Ten C++11 Features Every C++ Developer Should Use - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#c++ 11" title="c++ 11">c++ 11</a>
+                        
+                    </div>
+                    <h1>Ten C++11 Features Every C++ Developer Should Use</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on March 14, 2015</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<p>本文转载自 <a href="http://www.codeproject.com/Articles/570638/Ten-Cplusplus11-Features-Every-Cplusplus-Developer">这里</a> ，是英文版的，有一份中文版在 <a href="http://blog.jobbole.com/44015/">这里</a>，中文的不让转载，只好转英文的了。介绍了C++ 11的几个特性，写的超好，不转不快 ！</p>
+
+<p>This article discusses a series of features new to C++11 that all developers should learn and use. There are lots of new additions to the language and the standard library, and this article barely scratches the surface. However, I believe some of these new features should become routine for all C++ developers. You could probably find many similar articles evangelizing different C++11 features. This is my attempt to assemble a list of C++ features that should be a norm nowadays.</p>
+
+<h2 id="auto">auto</h2>
+
+<p>Before C++11 the auto keyword was used for storage duration specification. In the new standard its purpose was changed towards type inference. <code class="highlighter-rouge">auto</code> is now a sort of placeholder for a type, telling the compiler it has to deduce the actual type of a variable that is being declared from its initializer. It can be used when declaring variables in different scopes such as namespaces, blocks or initialization statement of for loops.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>auto i = 42;        // i is an int
+auto l = 42LL;      // l is an long long
+auto p = new foo(); // p is a foo*
+</code></pre></div></div>
+
+<p>Using <code class="highlighter-rouge">auto</code> usually means less code (unless your type is int which is one letter shorter). Think of iterators in STL that you always had to write while iterating over containers. It makes obsolete creating typedefs just for the sake of simplicity.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>std::map&lt;std::string, std::vector&lt;int&gt;&gt; map;
+for(auto it = begin(map); it != end(map); ++it) 
+{
+}
+</code></pre></div></div>
+
+<p>You should note that auto cannot be used as the return type of a function. However, you can use auto in place of the return type of function, but in this case the function must have a trailing return type. In this case auto does not tell the compiler it has to infer the type, it only instructs it to look for the return type at the end of the function. In the example below the return type of function compose is the return type of operator+ that sums values of types T1 and T2.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T1, typename T2&gt;
+auto compose(T1 t1, T2 t2) -&gt; decltype(t1 + t2)
+{
+   return t1+t2;
+}
+auto v = compose(2, 3.14); // v's type is double
+</code></pre></div></div>
+
+<h2 id="nullptr">nullptr</h2>
+
+<p>Zero used to be the value of null pointers, and that has drawbacks due to the implicit conversion to integral types. The keyword <code class="highlighter-rouge">nullptr</code> denotes a value of type <code class="highlighter-rouge">std::nullptr_t</code> that represents the null pointer literal. Implicit conversions exists from nullptr to null pointer value of any pointer type and any pointer-to-member types, but also to bool (as false). But no implicit conversion to integral types exist.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo(int* p) {}
+
+void bar(std::shared_ptr&lt;int&gt; p) {}
+
+int* p1 = NULL;
+int* p2 = nullptr;   
+if(p1 == p2)
+{
+}
+
+foo(nullptr);
+bar(nullptr);
+
+bool f = nullptr;
+int i = nullptr; // error: A native nullptr can only be converted to bool or, using reinterpret_cast, to an integral type
+</code></pre></div></div>
+
+<p>For backward compatibility 0 is still a valid null pointer value.</p>
+
+<h2 id="range-based-for-loops">Range-based for loops</h2>
+
+<p>C++11 augmented the for statement to support the “foreach” paradigm of iterating over collections. In the new form, it is possible to iterate over C-like arrays, initializer lists and anything for which the non-member <code class="highlighter-rouge">begin()</code>and <code class="highlighter-rouge">end()</code> functions are overloaded.</p>
+
+<p>This for each for is useful when you just want to get and do something with the elements of a collection/array and don’t care about indexes, iterators or number of elements.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>std::map&lt;std::string, std::vector&lt;int&gt;&gt; map;
+std::vector&lt;int&gt; v;
+v.push_back(1);
+v.push_back(2);
+v.push_back(3);
+map["one"] = v;
+
+for(const auto&amp; kvp : map) 
+{
+  std::cout &lt;&lt; kvp.first &lt;&lt; std::endl;
+
+  for(auto v : kvp.second)
+  {
+     std::cout &lt;&lt; v &lt;&lt; std::endl;
+  }
+}
+
+int arr[] = {1,2,3,4,5};
+for(int&amp; e : arr) 
+{
+  e = e*e;
+}
+</code></pre></div></div>
+
+<h2 id="override-and-final">Override and final</h2>
+
+<p>I always founded the virtual methods badly designed in C++ because there wasn’t (and still isn’t) a mandatory mechanism to mark virtual methods as overridden in derived classes. The virtual keyword is optional and that makes reading code a bit harder, because you may have to look through the top of the hierarchy to check if the method is virtual. I have always used, and encouraged people to use the virtual keyword on derived classes also, to make the code easier to read. However, there are subtle errors that can still arise. Take for instance the following example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class B 
+{
+public:
+   virtual void f(short) {std::cout &lt;&lt; "B::f" &lt;&lt; std::endl;}
+};
+
+class D : public B
+{
+public:
+   virtual void f(int) {std::cout &lt;&lt; "D::f" &lt;&lt; std::endl;}
+};
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">D::f</code> is supposed to override <code class="highlighter-rouge">B::f</code>. However, the signature differ, one takes a <code class="highlighter-rouge">short</code>, one takes an <code class="highlighter-rouge">int</code>, therefor<code class="highlighter-rouge">B::f</code> is just another method with the same name (and overload) and not an override. You may call <code class="highlighter-rouge">f()</code> through a pointer to <code class="highlighter-rouge">B</code> and expect to print <code class="highlighter-rouge">D::f</code>, but it’s printing <code class="highlighter-rouge">B::f</code>.</p>
+
+<p>Here is another subtle error: the parameters are the same, but the method in the base class is marked const, while me method in the derived is not.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class B 
+{
+public:
+   virtual void f(int) const {std::cout &lt;&lt; "B::f " &lt;&lt; std::endl;}
+};
+
+class D : public B
+{
+public:
+   virtual void f(int) {std::cout &lt;&lt; "D::f" &lt;&lt; std::endl;}
+};
+</code></pre></div></div>
+
+<p>Again, these two are overloads and not overrides, so if you call f() through a pointer to B it will print B::f and not D::f.</p>
+
+<p>Fortunately there is now a way to describe your intentions. Two new special identifiers (not keywords) have been added: override, to indicate that a method is supposed to be an override of a virtual method in a base class, and final, to indicate that a derived class shall not override a virtual method. The first example would become:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class B 
+{
+public:
+   virtual void f(short) {std::cout &lt;&lt; "B::f" &lt;&lt; std::endl;}
+};
+
+class D : public B
+{
+public:
+   virtual void f(int) override {std::cout &lt;&lt; "D::f" &lt;&lt; std::endl;}
+};
+</code></pre></div></div>
+
+<p>This now triggers a compiler error (the same error you’d get for the second example too, if using the <code class="highlighter-rouge">override</code>specifier):</p>
+
+<blockquote>'D::f' : method with override specifier 'override' did not override any base class methods</blockquote>
+
+<p>On the other hand if you intend to make a method impossible to override any more (down the hierarchy) mark it as <code class="highlighter-rouge">final</code>. That can be in the base class, or any derived class. If it’s in a derived classes you can use both the<code class="highlighter-rouge">override</code> and <code class="highlighter-rouge">final</code> specifiers.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class B 
+{
+public:
+   virtual void f(int) {std::cout &lt;&lt; "B::f" &lt;&lt; std::endl;}
+};
+
+class D : public B
+{
+public:
+   virtual void f(int) override final {std::cout &lt;&lt; "D::f" &lt;&lt; std::endl;}
+};
+
+class F : public D
+{
+public:
+   virtual void f(int) override {std::cout &lt;&lt; "F::f" &lt;&lt; std::endl;}
+};
+</code></pre></div></div>
+
+<p>function declared as ‘final’ cannot be overridden by ‘F::f’</p>
+
+<h2 id="strongly-typed-enums">Strongly-typed enums</h2>
+
+<p>“Traditional” enums in C++ have some drawbacks: they export their enumerators in the surrounding scope (which can lead to name collisions, if two different enums in the same have scope define enumerators with the same name), they are implicitly converted to integral types and cannot have a user-specified underlying type.</p>
+
+<p>These issues have been fixed in C++ 11 with the introduction of a new category of enums, called strongly-typed enums. They are specified with the <code class="highlighter-rouge">enum class</code> keywords. They no longer export their enumerators in the surrounding scope, are no longer implicitly converted to integral types and can have a user-specified underlying type (a feature also added for traditional enums).</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>enum class Options {None, One, All};
+Options o = Options::All;
+</code></pre></div></div>
+
+<h2 id="smart-pointers">Smart pointers</h2>
+
+<p>There have been tons of articles written on this subject, therefore I just want to mention the smart pointers with reference counting and auto releasing of owned memory that are available:</p>
+
+<ul>
+  <li>
+    <p><a href="http://en.cppreference.com/w/cpp/memory/unique_ptr">unique_ptr</a>: should be used when ownership of a memory resource does not have to be shared (it doesn’t have a copy constructor), but it can be transferred to another unique_ptr (move constructor exists).</p>
+  </li>
+  <li>
+    <p><a href="http://en.cppreference.com/w/cpp/memory/shared_ptr">shared_ptr</a>: should be used when ownership of a memory resource should be shared (hence the name).</p>
+  </li>
+  <li>
+    <p><a href="http://en.cppreference.com/w/cpp/memory/weak_ptr">weak_ptr</a>: holds a reference to an object managed by a shared_ptr, but does not contribute to the reference count; it is used to break dependency cycles (think of a tree where the parent holds an owning reference (<code class="highlighter-rouge">shared_ptr</code>) to its children, but the children also must hold a reference to the parent; if this second reference was also an owning one, a cycle would be created and no object would ever be released).</p>
+  </li>
+</ul>
+
+<p>On the other hand the auto_ptr is obsolete and should no longer be used.</p>
+
+<p>When you should unique_ptr and when you should use shared_ptr depends on the ownership requirements and I recommend reading this <a href="http://stackoverflow.com/questions/15648844/using-smart-pointers-for-class-members">discussion</a>.</p>
+
+<p>The first example below shows <code class="highlighter-rouge">unique_ptr</code>. If you want to transfer ownership of an object to another<code class="highlighter-rouge">unique_ptr</code> use <code class="highlighter-rouge">std::move</code> (I’ll discuss this function in the last paragraph). After the ownership transfer, the smart pointer that ceded the ownership becomes null and <code class="highlighter-rouge">get()</code> returns <code class="highlighter-rouge">nullptr</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo(int* p)
+{
+   std::cout &lt;&lt; *p &lt;&lt; std::endl;
+}
+std::unique_ptr&lt;int&gt; p1(new int(42));
+std::unique_ptr&lt;int&gt; p2 = std::move(p1); // transfer ownership
+
+if(p1)
+  foo(p1.get());
+
+(*p2)++;
+
+if(p2)
+  foo(p2.get());
+</code></pre></div></div>
+
+<p>The second example shows <code class="highlighter-rouge">shared_ptr</code>. Usage is similar, though the semantics are different since ownership is shared.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo(int* p)
+{
+}
+void bar(std::shared_ptr&lt;int&gt; p)
+{
+   ++(*p);
+}
+std::shared_ptr&lt;int&gt; p1(new int(42));
+std::shared_ptr&lt;int&gt; p2 = p1;
+   
+bar(p1);   
+foo(p2.get());
+</code></pre></div></div>
+
+<p>The first declaration is equivalent to this one</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>auto p3 = std::make_shared&lt;int&gt;(42);
+</code></pre></div></div>
+
+<p>[make_shared<T>](http://en.cppreference.com/w/cpp/memory/shared_ptr/make_shared) is a non-member function and has the advantage of allocating memory for the shared object and the smart pointer with a single allocation, as opposed to the explicit construction of a shared_ptr via the contructor, that requires at least two allocations. In addition to possible overhead, there can be situations where memory leaks can occur because of that. In the next example memory leaks could occur if seed() throws an error.</T></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo(std::shared_ptr&lt;int&gt; p, int init)
+{
+   *p = init;
+}
+foo(std::shared_ptr&lt;int&gt;(new int(42)), seed());
+</code></pre></div></div>
+
+<p>No such problem exists if using make_shared. The third sample shows usage of <code class="highlighter-rouge">weak_ptr</code>. Notice that you always must get a shared_ptr to the referred object by calling lock(), in order to access the object.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>auto p = std::make_shared&lt;int&gt;(42);
+std::weak_ptr&lt;int&gt; wp = p;
+
+{
+  auto sp = wp.lock();
+  std::cout &lt;&lt; *sp &lt;&lt; std::endl;
+}
+
+p.reset();
+
+if(wp.expired())
+  std::cout &lt;&lt; "expired" &lt;&lt; std::endl;
+</code></pre></div></div>
+
+<p>If you try to lock on an expired <code class="highlighter-rouge">weak_ptr</code> (the object is weakly reference has been released) you get an empty shared_ptr.</p>
+
+<h2 id="lambdas">Lambdas</h2>
+
+<p>Anonymous functions, called lambda, have been added to C++ and quickly rose to prominence. It is a powerful feature borrowed from functional programming, that in turned enabled other features or powered libraries. You can use lambdas wherever a function object or a functor or a <code class="highlighter-rouge">std::function</code> is expected. You can read about the syntax <a href="http://msdn.microsoft.com/en-us/library/dd293603.aspx">here</a>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>std::vector&lt;int&gt; v;
+v.push_back(1);
+v.push_back(2);
+v.push_back(3);
+
+std::for_each(std::begin(v), std::end(v), [](int n) {std::cout &lt;&lt; n &lt;&lt; std::endl;});
+
+auto is_odd = [](int n) {return n%2==1;};
+auto pos = std::find_if(std::begin(v), std::end(v), is_odd);
+if(pos != std::end(v))
+  std::cout &lt;&lt; *pos &lt;&lt; std::endl;
+</code></pre></div></div>
+
+<p>A bit trickier are recursive lambdas. Imagine a lambda that represents a Fibonacci function. If you attempt to write it using auto you get compilation error:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>auto fib = [&amp;fib](int n) {return n &lt; 2 ? 1 : fib(n-1) + fib(n-2);};
+
+
+
+
+
+error C3533: 'auto &amp;': a parameter cannot have a type that contains 'auto'
+error C3531: 'fib': a symbol whose type contains 'auto' must have an initializer
+error C3536: 'fib': cannot be used before it is initialized
+error C2064: term does not evaluate to a function taking 1 arguments
+</code></pre></div></div>
+
+<p>The problem is auto means the type of the object is inferred from its initializer, yet the initializer contains a reference to it, therefore needs to know its type. This is a cyclic problem. The key is to break this dependency cycle and explicitly specify the function’s type using std::function.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>std::function&lt;int(int)&gt; lfib = [&amp;lfib](int n) {return n &lt; 2 ? 1 : lfib(n-1) + lfib(n-2);};
+</code></pre></div></div>
+
+<h2 id="non-member-begin-and-end">non-member begin() and end()</h2>
+
+<p>You probably noticed I have used in the samples above non-member <code class="highlighter-rouge">begin()</code> and <code class="highlighter-rouge">end()</code> functions. These are a new addition to the standard library, promoting uniformity, consistency and enabling more generic programming. They work with all STL containers, but more than that they are overloadable, so they can be extended to work with any type. Overloads for C-like arrays are also provided.</p>
+
+<p>Let’s take for instance the previous example where I was printing a vector and then looking for its first odd element. If the std::vector was instead a C-like array, the code might have looked like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int arr[] = {1,2,3};
+std::for_each(&amp;arr[0], &amp;arr[0]+sizeof(arr)/sizeof(arr[0]), [](int n) {std::cout &lt;&lt; n &lt;&lt; std::endl;});
+
+auto is_odd = [](int n) {return n%2==1;};
+auto begin = &amp;arr[0];
+auto end = &amp;arr[0]+sizeof(arr)/sizeof(arr[0]);
+auto pos = std::find_if(begin, end, is_odd);
+if(pos != end)
+  std::cout &lt;&lt; *pos &lt;&lt; std::endl;
+</code></pre></div></div>
+
+<p>With non-member <code class="highlighter-rouge">begin()</code> and <code class="highlighter-rouge">end()</code> it could be put as this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int arr[] = {1,2,3};
+std::for_each(std::begin(arr), std::end(arr), [](int n) {std::cout &lt;&lt; n &lt;&lt; std::endl;});
+
+auto is_odd = [](int n) {return n%2==1;};
+auto pos = std::find_if(std::begin(arr), std::end(arr), is_odd);
+if(pos != std::end(arr))
+  std::cout &lt;&lt; *pos &lt;&lt; std::endl;
+</code></pre></div></div>
+
+<p>This is basically identical code to the <code class="highlighter-rouge">std::vector</code> version. That means we can write a single generic method for all types supported by <code class="highlighter-rouge">begin()</code> and <code class="highlighter-rouge">end()</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename Iterator&gt;
+void bar(Iterator begin, Iterator end) 
+{
+   std::for_each(begin, end, [](int n) {std::cout &lt;&lt; n &lt;&lt; std::endl;});
+
+   auto is_odd = [](int n) {return n%2==1;};
+   auto pos = std::find_if(begin, end, is_odd);
+   if(pos != end)
+      std::cout &lt;&lt; *pos &lt;&lt; std::endl;
+}
+
+template &lt;typename C&gt;
+void foo(C c)
+{
+   bar(std::begin(c), std::end(c));
+}
+
+template &lt;typename T, size_t N&gt;
+void foo(T(&amp;arr)[N])
+{
+   bar(std::begin(arr), std::end(arr));
+}
+
+int arr[] = {1,2,3};
+foo(arr);
+
+std::vector&lt;int&gt; v;
+v.push_back(1);
+v.push_back(2);
+v.push_back(3);
+foo(v);
+</code></pre></div></div>
+
+<h2 id="static_assert-and-type-traits">static_assert and type traits</h2>
+
+<p><code class="highlighter-rouge">static_assert</code> performs an assertion check at compile-time. If the assertion is true, nothing happens. If the assertion is false, the compiler displays the specified error message.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T, size_t Size&gt;
+class Vector
+{
+   static_assert(Size &lt; 3, "Size is too small");
+   T _points[Size];
+};
+
+int main()
+{
+   Vector&lt;int, 16&gt; a1;
+   Vector&lt;double, 2&gt; a2;
+   return 0;
+}
+
+
+
+
+
+error C2338: Size is too small
+see reference to class template instantiation 'Vector&lt;T,Size&gt;' being compiled
+   with
+   [
+      T=double,
+      Size=2
+   ]
+</code></pre></div></div>
+
+<p>static_assert becomes more useful when used together with type traits. These are a series of classes that provide information about types at compile time. They are available in the [<type_traits>](http://www.cplusplus.com/reference/type_traits/) header. There are several categories of classes in this header: helper classes, for creating compile-time constants, type traits classes, to get type information at compile time, and type transformation classes, for getting new types by applying transformation on existing types.</type_traits></p>
+
+<p>In the following example function add is supposed to work only with integral types.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T1, typename T2&gt;
+auto add(T1 t1, T2 t2) -&gt; decltype(t1 + t2)
+{
+   return t1 + t2;
+}
+</code></pre></div></div>
+
+<p>However, there are no compiler errors if one writes</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>std::cout &lt;&lt; add(1, 3.14) &lt;&lt; std::endl;
+std::cout &lt;&lt; add("one", 2) &lt;&lt; std::endl;
+</code></pre></div></div>
+
+<p>The program actually prints 4.14 and “e”. But if we add some compile-time asserts, both these lines would generate compiler errors.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T1, typename T2&gt;
+auto add(T1 t1, T2 t2) -&gt; decltype(t1 + t2)
+{
+   static_assert(std::is_integral&lt;T1&gt;::value, "Type T1 must be integral");
+   static_assert(std::is_integral&lt;T2&gt;::value, "Type T2 must be integral");
+
+   return t1 + t2;
+}
+
+
+
+
+error C2338: Type T2 must be integral
+see reference to function template instantiation 'T2 add&lt;int,double&gt;(T1,T2)' being compiled
+   with
+   [
+      T2=double,
+      T1=int
+   ]
+error C2338: Type T1 must be integral
+see reference to function template instantiation 'T1 add&lt;const char*,int&gt;(T1,T2)' being compiled
+   with
+   [
+      T1=const char *,
+      T2=int
+   ]
+</code></pre></div></div>
+
+<h2 id="move-semantics">Move semantics</h2>
+
+<p>This is yet another important and well covered topic from C++11, that one could write a series of articles, not just a paragraph. Therefore I will not get into too many details, but encourage you to find additional readings, if you’re not already familiar with the topic.</p>
+
+<p>C++11 has introduced the concept of rvalue references (specified with &amp;&amp;) to differentiate a reference to an lvalue or an rvalue. An lvalue is an object that has a name, while an rvalue is an object that does not have a name (a temporary object). The move semantics allow modifying rvalues (previously considered immutable and indistinguishable from const T&amp; types).</p>
+
+<p>A C++ class/struct used to have some implicit member functions: default constructor (only if another constructor is not explicitly defined) and copy constructor, a destructor and a copy assignment operator. The copy constructor and the copy assignment operator perform a bit-wise (or shallow) copy, i.e. copying the variables bitwise. That means if you have a class that contains pointers to some objects, they just copy the value of the pointers and not the objects they point to. This might be OK in some cases, but for many cases you actually want a deep-copy, meaning that you want to copy the objects pointers refer to, and not the values of the pointers. In this case you have to explicitly write copy constructor and copy assignment operator to perform a deep-copy.</p>
+
+<p>What if the object you initialize or copy from is an rvalue (a temporary). You still have to copy its value, but soon after the rvalue goes away. That means an overhead of operations, including allocations and memory copying that after all, should not be necessary.</p>
+
+<p>Enter the move constructor and move assignment operator. These two special functions take a T&amp;&amp; argument, which is an rvalue. Knowing that fact, they can modify the object, such as “stealing” the objects their pointers refer to. For instance, a container implementation (such as a vector or a queue) may have a pointer to an array of elements. When an object is instantiating from a temporary, instead of allocating another array, copying the values from the temporary, and then deleting the memory from the temporary when that is destroyed, we just copy the value of the pointer that refers to the allocated array, thus saving an allocation, copying a sequence of elements, and a later de-allocation.</p>
+
+<p>The following example shows a dummy buffer implementation. The buffer is identified by a name (just for the sake of showing a point revealed below), has a pointer (wrapper in an <code class="highlighter-rouge">std::unique_ptr</code>) to an array of elements of type T and variable that tells the size of the array.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T&gt;
+class Buffer 
+{
+   std::string          _name;
+   size_t               _size;
+   std::unique_ptr&lt;T[]&gt; _buffer;
+
+public:
+   // default constructor
+   Buffer():
+      _size(16),
+      _buffer(new T[16])
+   {}
+
+   // constructor
+   Buffer(const std::string&amp; name, size_t size):
+      _name(name),
+      _size(size),
+      _buffer(new T[size])
+   {}
+
+   // copy constructor
+   Buffer(const Buffer&amp; copy):
+      _name(copy._name),
+      _size(copy._size),
+      _buffer(new T[copy._size])
+   {
+      T* source = copy._buffer.get();
+      T* dest = _buffer.get();
+      std::copy(source, source + copy._size, dest);
+   }
+
+   // copy assignment operator
+   Buffer&amp; operator=(const Buffer&amp; copy)
+   {
+      if(this != &amp;copy)
+      {
+         _name = copy._name;
+
+         if(_size != copy._size)
+         {
+            _buffer = nullptr;
+            _size = copy._size;
+            _buffer = _size &gt; 0 &gt; new T[_size] : nullptr;
+         }
+
+         T* source = copy._buffer.get();
+         T* dest = _buffer.get();
+         std::copy(source, source + copy._size, dest);
+      }
+
+      return *this;
+   }
+
+   // move constructor
+   Buffer(Buffer&amp;&amp; temp):
+      _name(std::move(temp._name)),
+      _size(temp._size),
+      _buffer(std::move(temp._buffer))
+   {
+      temp._buffer = nullptr;
+      temp._size = 0;
+   }
+
+   // move assignment operator
+   Buffer&amp; operator=(Buffer&amp;&amp; temp)
+   {
+      assert(this != &amp;temp); // assert if this is not a temporary
+
+      _buffer = nullptr;
+      _size = temp._size;
+      _buffer = std::move(temp._buffer);
+
+      _name = std::move(temp._name);
+
+      temp._buffer = nullptr;
+      temp._size = 0;
+      
+      return *this;
+   }
+};
+
+template &lt;typename T&gt;
+Buffer&lt;T&gt; getBuffer(const std::string&amp; name) 
+{
+   Buffer&lt;T&gt; b(name, 128);
+   return b;
+}
+int main()
+{
+   Buffer&lt;int&gt; b1;
+   Buffer&lt;int&gt; b2("buf2", 64);
+   Buffer&lt;int&gt; b3 = b2;
+   Buffer&lt;int&gt; b4 = getBuffer&lt;int&gt;("buf4");
+   b1 = getBuffer&lt;int&gt;("buf5");
+   return 0;
+}
+</code></pre></div></div>
+
+<p>The default copy constructor and copy assignment operator should look familiar. What’s new to C++11 is the move constructor and move assignment operator, implemented in the spirit of the aforementioned move semantics. If you run this code you’ll see that when b4 is constructed, the move constructor is called. Also, when b1 is assigned a value, the move assignment operator is called. The reason is the value returned by<code class="highlighter-rouge">getBuffer()</code> is a temporary, i.e. an rvalue.</p>
+
+<p>You probably noticed the use of <a href="http://en.cppreference.com/w/cpp/utility/move">std::move</a> in the move constructor, when initializing the name variable and the pointer to the buffer. The name is actually a string, and <code class="highlighter-rouge">std::string</code> also implements move semantics. Same for the <code class="highlighter-rouge">std::unique_ptr</code>. However, if we just said <code class="highlighter-rouge">_name(temp._name)</code> the copy constructor would have been called. For _buffer that would not have been even possible because <code class="highlighter-rouge">std::unique_ptr</code> does not have a copy constructor. But why wasn’t the move constructor for <code class="highlighter-rouge">std::string</code> called in this case? Because even if the object the move constructor for <code class="highlighter-rouge">Buffer</code> is called with is an rvalue, inside the constructor it is actually an lvalue. Why? Because it has a name, “<code class="highlighter-rouge">temp</code>” and a named object is an lvalue. To make it again an rvalue (and be able to invoke the appropriate move constructor) one must use <code class="highlighter-rouge">std::move</code>. This function just turns an lvalue reference into an rvalue reference.</p>
+
+<p>UPDATE: Though the purpose of this example was to show how move constructor and move assignment operator should be implemented, the exact details of an implementation may vary. An alternative implementation was provided by <a href="http://www.codeproject.com/script/Membership/View.aspx?mid=7805758">Member 7805758</a> in the comments. To be easier to see it I will show it here:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>template &lt;typename T&gt;
+class Buffer
+{
+   std::string          _name;
+   size_t               _size;
+   std::unique_ptr&lt;T[]&gt; _buffer;
+ 
+public:
+   // constructor
+   Buffer(const std::string&amp; name = "", size_t size = 16):
+      _name(name),
+      _size(size),
+      _buffer(size? new T[size] : nullptr)
+   {}
+ 
+   // copy constructor
+   Buffer(const Buffer&amp; copy):
+      _name(copy._name),
+      _size(copy._size),
+      _buffer(copy._size? new T[copy._size] : nullptr)
+   {
+      T* source = copy._buffer.get();
+      T* dest = _buffer.get();
+      std::copy(source, source + copy._size, dest);
+   }
+ 
+   // copy assignment operator
+   Buffer&amp; operator=(Buffer copy)
+   {
+       swap(*this, copy);
+       return *this;
+   }
+ 
+   // move constructor
+   Buffer(Buffer&amp;&amp; temp):Buffer()
+   {
+      swap(*this, temp);
+   }
+ 
+   friend void swap(Buffer&amp; first, Buffer&amp; second) noexcept
+   {
+       using std::swap;
+       swap(first._name  , second._name);
+       swap(first._size  , second._size);
+       swap(first._buffer, second._buffer);
+   }
+};
+</code></pre></div></div>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p>There are many more things to say about C++11; this was just one of many possible beginnings. This article presented a series of core language and standard library features that every C++ developer should use. However, I recommend you additional readings, at least for some of these features.</p>
+
+<h2 id="license">License</h2>
+
+<p>This article, along with any associated source code and files, is licensed under <a href="http://www.codeproject.com/info/cpol10.aspx">The Code Project Open License (CPOL)</a></p>
+
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/computer%20science/database/2015/03/14/postgrsql-e4-b8-ad-e7-9a-84-json-e4-bb-8e-e4-bd-bf-e7-94-a8-e5-88-b0-e6-ba-90-e7-a0-81/" data-toggle="tooltip" data-placement="top" title="PostgreSQL 中的 Json —从使用到源码">
+                        Previous<br>
+                        <span>PostgreSQL 中的 Json —从使用到源码</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/life%20traces/2015/04/12/e5-b9-b3-e5-87-a1-e7-9a-84-e4-b8-96-e7-95-8c/" data-toggle="tooltip" data-placement="top" title="平凡的世界">
+                        Next<br>
+                        <span>平凡的世界</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use";
+    var disqus_url = "http://localhost:4000/c++/computer%20science/reprinted%20articles/2015/03/14/ten-c11-features-every-c-developer-should-use/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
