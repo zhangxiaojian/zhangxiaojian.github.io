@@ -180,6 +180,23 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/mysql/2018/01/24/innodb-lock-system/">
+        <h2 class="post-title">
+            Innodb 锁子系统浅析
+        </h2>
+        
+        <div class="post-content-preview">
+            锁类型
+Innodb 的锁从锁粒度上大致可以分为行锁和表锁，之前接触过的Berkeley DB(MySQL 5.1前的事务储存引擎，后被 Innodb 取代)只对存储格式为 Hash 的定长数据支持行锁，对于 Btree 格式的仅支持页锁，作为 KV 类型的存储引擎，锁的类型也相对简单。Innodb 根据官方文档的描述,除了基本的共享锁和排他锁，还有意向锁，Gap锁，Next key锁等类型...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on January 24, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/computer%20science/mysql/2017/11/25/undrop-for-innodb/">
         <h2 class="post-title">
             undrop-for-innodb
@@ -340,28 +357,6 @@ DPINM
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on January 1, 2016
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/life%20traces/reprinted%20articles/2015/12/09/499/">
-        <h2 class="post-title">
-            暗时间
-        </h2>
-        
-        <div class="post-content-preview">
-            本文转自Mind Hack
-
-Mind Hack 这个博客前两年就看到了，虽然文章数量不多，可以说是我看过最好的博客，甚至在建自己博客站点的时候用的都是相同的主题。其中除了计算机技术方面的文章，其它思维方式的文章真的会有一种 Mind 被 Hack 的感觉。最近干活效率很低，同样生活效率也低，不仅收获很少，而且并不开心。特转其中一篇重读，抓住时间。
-
-正文：
-
-如果你有一台计算机，你装了一个...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on December 9, 2015
     </p>
 </div>
 <hr>

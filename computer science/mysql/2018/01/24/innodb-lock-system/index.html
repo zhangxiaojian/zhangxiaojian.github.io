@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="life test">
+    <meta name="keywords"  content="mysql">
+    <meta name="theme-color" content="#000000">
+    
+    <title>Innodb 锁子系统浅析 - 张小贱的博客 | Zhangxiaojian Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="http://localhost:4000/computer%20science/mysql/2018/01/24/innodb-lock-system/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">张小贱</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-o.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                    </div>
+                    <h1>Innodb 锁子系统浅析</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by zhangxiaojian on January 24, 2018</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                <!-- Multi-Lingual -->
+                
+
+				<h2 id="锁类型">锁类型</h2>
+<p>Innodb 的锁从锁粒度上大致可以分为行锁和表锁，之前接触过的<a href="https://en.wikipedia.org/wiki/Berkeley_DB">Berkeley DB</a>(MySQL 5.1前的事务储存引擎，后被 Innodb 取代)只对存储格式为 Hash 的定长数据支持行锁，对于 Btree 格式的仅支持页锁，作为 KV 类型的存储引擎，<a href="https://docs.oracle.com/cd/E17076_05/html/programmer_reference/lock.html">锁的类型</a>也相对简单。Innodb 根据<a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking.html">官方文档</a>的描述,除了基本的共享锁和排他锁，还有意向锁，Gap锁，Next key锁等类型，最开始接触的时候确实有些眼花缭乱，关于各种锁类型的使用场景描述可以参考<a href="http://mysql.taobao.org/monthly/2016/01/01/">早期月报</a>前两个小节。</p>
+
+<p>在 Innodb 内部用一个 unsiged long 类型数据表示锁的类型, 如图所示，最低的 4 个 bit 表示 lock_mode, 5-8 bit 表示 lock_type, 剩下的高位 bit 表示行锁的类型。</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>record_lock type</td>
+      <td>lock_type</td>
+      <td>lock_mode</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>lock_mode 描述了锁的基本类型，在代码中的定义如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Basic lock modes */</span>
+<span class="k">enum</span> <span class="n">lock_mode</span> <span class="p">{</span>
+	<span class="n">LOCK_IS</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>	<span class="cm">/* intention shared */</span>
+	<span class="n">LOCK_IX</span><span class="p">,</span>	<span class="cm">/* intention exclusive */</span>
+	<span class="n">LOCK_S</span><span class="p">,</span>		<span class="cm">/* shared */</span>
+	<span class="n">LOCK_X</span><span class="p">,</span>		<span class="cm">/* exclusive */</span>
+	<span class="n">LOCK_AUTO_INC</span><span class="p">,</span>	<span class="cm">/* locks the auto-inc counter of a table
+			in an exclusive mode */</span>
+	<span class="n">LOCK_NONE</span><span class="p">,</span>	<span class="cm">/* this is used elsewhere to note consistent read */</span>
+	<span class="n">LOCK_NUM</span> <span class="o">=</span> <span class="n">LOCK_NONE</span><span class="p">,</span> <span class="cm">/* number of lock modes */</span>
+	<span class="n">LOCK_NONE_UNSET</span> <span class="o">=</span> <span class="mi">255</span>
+<span class="p">};</span>
+<span class="cp">#define LOCK_MODE_MASK 0xFUL </span><span class="cm">/* mask used to extact lock type from the
+						type_mode field in a lock*/</span><span class="cp">
+</span></code></pre></div></div>
+
+<p>lock_type  占用 5-8 bit 位，目前只用了 5 和 6 位，大小为 16 和 32 ，表示 LOCK_TABLE 和 LOCK_REC，使用宏定义 <code class="highlighter-rouge">#define LOCK_TYPE_MASK 0xF0UL</code> 来获取值。</p>
+
+<p>record_lock_type 对于 LOCK_TABLE 类型来说都是空的，对于 LOCK_REC 目前值有：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define LOCK_WAIT   256		</span><span class="cm">/* 表示正在等待锁 */</span><span class="cp">
+#define LOCK_ORDINARY 0 	</span><span class="cm">/* 表示 next-key lock ，锁住记录本身和记录之前的 gap*/</span><span class="cp">
+#define LOCK_GAP    512		</span><span class="cm">/* 表示锁住记录之前 gap（不锁记录本身） */</span><span class="cp">
+#define LOCK_REC_NOT_GAP 1024	</span><span class="cm">/* 表示锁住记录本身，不锁记录前面的 gap */</span><span class="cp">
+#define LOCK_INSERT_INTENTION 2048	</span><span class="cm">/* 插入意向锁 */</span><span class="cp">
+#define LOCK_CONV_BY_OTHER 4096		</span><span class="cm">/* 表示锁是由其它事务创建的(比如隐式锁转换) */</span><span class="cp">
+</span></code></pre></div></div>
+<p>使用位操作来设置和判断是否设置了对应的值。</p>
+
+<h2 id="静态数据结构">静态数据结构</h2>
+<p>对于每个锁对象，有两个存在的纬度：一个是事务纬度，每个事务都可以获得锁结构和等待某些锁。另一个是全局纬度，所有的锁都保存在 Lock_sys-&gt;hash 哈希表中。无论是表锁还是行锁，都是用结构 lock_t 来描述：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** Lock struct; protected by lock_sys-&gt;mutex */</span>
+<span class="k">struct</span> <span class="n">lock_t</span> <span class="p">{</span>
+    <span class="n">trx_t</span><span class="o">*</span>      <span class="n">trx</span><span class="p">;</span>        <span class="cm">/*!&lt; transaction owning the
+                    lock */</span>
+    <span class="n">UT_LIST_NODE_T</span><span class="p">(</span><span class="n">lock_t</span><span class="p">)</span>
+            <span class="n">trx_locks</span><span class="p">;</span>  <span class="cm">/*!&lt; list of the locks of the
+                    transaction */</span>
+    <span class="n">ulint</span>       <span class="n">type_mode</span><span class="p">;</span>  <span class="cm">/*!&lt; lock type, mode, LOCK_GAP or
+                    LOCK_REC_NOT_GAP,
+                    LOCK_INSERT_INTENTION,
+                    wait flag, ORed */</span>
+    <span class="n">hash_node_t</span> <span class="n">hash</span><span class="p">;</span>       <span class="cm">/*!&lt; hash chain node for a record
+                    lock */</span>
+    <span class="n">dict_index_t</span><span class="o">*</span>   <span class="n">index</span><span class="p">;</span>      <span class="cm">/*!&lt; index for a record lock */</span>
+    <span class="k">union</span> <span class="p">{</span>
+        <span class="n">lock_table_t</span>    <span class="n">tab_lock</span><span class="p">;</span><span class="cm">/*!&lt; table lock */</span>
+        <span class="n">lock_rec_t</span>  <span class="n">rec_lock</span><span class="p">;</span><span class="cm">/*!&lt; record lock */</span>
+    <span class="p">}</span> <span class="n">un_member</span><span class="p">;</span>            <span class="cm">/*!&lt; lock details */</span>
+<span class="p">};</span>
+</code></pre></div></div>
+<p>对于每个变量的意义注释已经说的比较清楚了，其中 type_mode 就是第一小节中 lock_type | type_mode，两个锁是否冲突就是使用它们各自的 type_mode 根据锁兼容矩阵来判断的，后面会详细说。</p>
+
+<p>变量 hash 是 Inodb 中构造 Hash 表需要，当锁插入到 Lock_sys-&gt;hash 中，Hash 值相同就形成链表，使用变量 hash 相连。</p>
+
+<p>un_member 表示 lock_t 不是表锁就是行锁，看下行锁的结构：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** Record lock for a page */</span>
+<span class="k">struct</span> <span class="n">lock_rec_t</span> <span class="p">{</span>
+    <span class="n">ulint</span>   <span class="n">space</span><span class="p">;</span>          <span class="cm">/*!&lt; space id */</span>
+    <span class="n">ulint</span>   <span class="n">page_no</span><span class="p">;</span>        <span class="cm">/*!&lt; page number */</span>
+    <span class="n">ulint</span>   <span class="n">n_bits</span><span class="p">;</span>         <span class="cm">/*!&lt; number of bits in the lock
+                    bitmap; NOTE: the lock bitmap is
+                    placed immediately after the
+                    lock struct */</span>
+<span class="p">};</span>
+</code></pre></div></div>
+<p>[space, page_no] 可以确定锁对应哪个页，参考下<a href="http://mysql.taobao.org/monthly/2017/11/01/">上个月月报</a>最后两个小节，页上每行数据紧接着存放，内部使用一个 heap_no 来表示是第几行数据。因此[space, page_no, heap_no]可以唯一确定一行。Innodb 使用位图来表示锁具体锁住了那几行，在函数 lock_rec_create 中为 lock_t 分配内存空间的时候，会在对象地址后分配一段内存空间(当前行数 + 64)用来保存位图。n_bits 表示位图大小。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Make lock bitmap bigger by a safety margin */</span>
+<span class="n">n_bits</span> <span class="o">=</span> <span class="n">page_dir_get_n_heap</span><span class="p">(</span><span class="n">page</span><span class="p">)</span> <span class="o">+</span> <span class="n">LOCK_PAGE_BITMAP_MARGIN</span><span class="p">;</span>
+<span class="n">n_bytes</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">n_bits</span> <span class="o">/</span> <span class="mi">8</span><span class="p">;</span>
+
+<span class="n">lock</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">lock_t</span><span class="o">*&gt;</span><span class="p">(</span>
+    <span class="n">mem_heap_alloc</span><span class="p">(</span><span class="n">trx</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">.</span><span class="n">lock_heap</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">lock_t</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_bytes</span><span class="p">));</span>
+</code></pre></div></div>
+<p>锁创建完成后首先会插入到全局 Hash 表中，然后放到对应的事务的锁链表中。相同(space,page_no)的锁会被 Hash 到同一个桶里，使用 lock_t-&gt;hash 串成链表。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HASH_INSERT</span><span class="p">(</span><span class="n">lock_t</span><span class="p">,</span> <span class="n">hash</span><span class="p">,</span> <span class="n">lock_sys</span><span class="o">-&gt;</span><span class="n">rec_hash</span><span class="p">,</span>
+            <span class="n">lock_rec_fold</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="n">page_no</span><span class="p">),</span> <span class="n">lock</span><span class="p">);</span>
+<span class="p">....</span>
+	
+<span class="n">UT_LIST_ADD_LAST</span><span class="p">(</span><span class="n">trx_locks</span><span class="p">,</span> <span class="n">trx</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">.</span><span class="n">trx_locks</span><span class="p">,</span> <span class="n">lock</span><span class="p">);</span>
+</code></pre></div></div>
+<p>2016/01 月月报有一张比较直观的图：</p>
+
+<p><img src="http://mysql.taobao.org/monthly/pic/2016-01-01/innodb_lock.png" alt="imag" /></p>
+
+<h2 id="加锁分析">加锁分析</h2>
+<p>对于行数据的加锁是由函数 lock_rec_lock 完成，简单点来看，主要的参数是 mode(锁类型)，block(包含该行的 buffer 数据页)，heap_no(具体哪一行)。就可以确定加什么样的锁，以及在哪一行加。对于 mode 的值，来源于查询的逻辑，索引和二级索引的定义，隔离级别等等，可以参考<a href="http://hedengcheng.com/?p=771">这篇文章</a>,其中简单介绍了基本的语句加什么类型的锁，对于更加复杂的情况，可以设断点调试来看。</p>
+
+<h3 id="lock-fast">lock fast</h3>
+<p>lock_rec_lock 首先走 lock_rec_lock_fast 逻辑，判断能否快速完成加锁。如果对应 block 上面一个锁都没有( lock_rec_get_first_on_page(block)==NULL )，那么就创建一个锁( lock_rec_create )，返回加锁成功。如果 block 上已经存在锁，满足下面代码的逻辑就返回 LOCK_REC_FAIL, 快速加锁失败。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">lock_rec_get_next_on_page</span><span class="p">(</span><span class="n">lock</span><span class="p">)</span>  <span class="cm">/* 页上是否只有一个锁 */</span>
+        <span class="o">||</span> <span class="n">lock</span><span class="o">-&gt;</span><span class="n">trx</span> <span class="o">!=</span> <span class="n">trx</span>  <span class="cm">/* 拥有锁的事务不是当前事务 */</span>
+        <span class="o">||</span> <span class="n">lock</span><span class="o">-&gt;</span><span class="n">type_mode</span> <span class="o">!=</span> <span class="p">(</span><span class="n">mode</span> <span class="o">|</span> <span class="n">LOCK_REC</span><span class="p">)</span><span class="cm">/* 已有锁和要加的锁模式是否相同 */</span>
+        <span class="o">||</span> <span class="n">lock_rec_get_n_bits</span><span class="p">(</span><span class="n">lock</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">heap_no</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* 已有锁的 n_bits 是否满足 heap_no */</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">LOCK_REC_FAIL</span><span class="p">;</span>
+<span class="p">}</span><span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">impl</span><span class="p">)</span> <span class="p">{</span>
+       <span class="cm">/* If the nth bit of the record lock is already set
+       then we do not set a new lock bit, otherwise we do
+	   set */</span>
+       <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">lock_rec_get_nth_bit</span><span class="p">(</span><span class="n">lock</span><span class="p">,</span> <span class="n">heap_no</span><span class="p">))</span> <span class="p">{</span>
+           <span class="n">lock_rec_set_nth_bit</span><span class="p">(</span><span class="n">lock</span><span class="p">,</span> <span class="n">heap_no</span><span class="p">);</span>
+     	   <span class="n">status</span> <span class="o">=</span> <span class="n">LOCK_REC_SUCCESS_CREATED</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+<p>如果上述条件都为 false，说明：</p>
+<ul>
+  <li>page 上只有一个锁</li>
+  <li>拥有该锁的事务是当前事务</li>
+  <li>锁模式相同</li>
+  <li>n_bits 也足够描述大小为 heap_no 的行</li>
+</ul>
+
+<p>那么只需要设置一下 bitmap 就可以了（impl 表示加隐式锁，其实也就是不加锁）。</p>
+
+<p>注：上述函数 lock_rec_get_first_on_page(block) 是从全局 Lock_sys-&gt;hash 中拿到第一个锁的，也就是 Hash 桶的第一个 node。</p>
+
+<h3 id="lock-slow">lock slow</h3>
+<p>lock fast 逻辑失败后就会走 lock slow 逻辑，也就是上述 lock fast 判断的四个条件中有一个或多个为 true的时候。</p>
+
+<p>lock slow 首先判断当前事务上是否已经加了同等级或者更强级别的锁，函数 lock_rec_has_expl，循环取出对应行上的所有锁，它们要满足以下几个条件，就认为行上有更强的锁。</p>
+
+<ol>
+  <li>基本锁类型更强，就比如加了 LOCK_X 就不必要加 LOCK_S 了。lock_mode 基本锁类型之间的强弱关系使用 lock_strength_matrix 判断(lock_mode_stronger_or_eq)
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  	<span class="k">static</span> <span class="k">const</span> <span class="n">byte</span> <span class="n">lock_strength_matrix</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+ 	<span class="cm">/**         IS     IX       S     X       AI */</span>
+ 	<span class="cm">/* IS */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">},</span>
+ 	<span class="cm">/* IX */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">},</span>
+ 	<span class="cm">/* S  */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">},</span>
+ 	<span class="cm">/* X  */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>   <span class="n">TRUE</span><span class="p">},</span>
+ 	<span class="cm">/* AI */</span> <span class="p">{</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">}</span>
+ <span class="p">};</span>
+</code></pre></div>    </div>
+  </li>
+  <li>不是插入意向锁。</li>
+  <li>没有等待，LOCK_WAIT 位为0</li>
+  <li>LOCK_REC_NOT_GAP 位为0。（没有这个标记默认就是 NEXT KEY LOCK，锁住行前面的gap）
+或者 要加锁的 LOCK_REC_NOT_GAP 位为 1
+或者 当前行为 PAGE_HEAD_NO_SUPREMUM, 表示上界。</li>
+  <li>LOCK_GAP 位为0
+ 或者 要加锁的 LOCK_GAP 为 1
+ 或者 当前行为 PAGE_HEAD_NO_SUPREMUM, 表示上界。</li>
+</ol>
+
+<p>如果没有更强级别的锁，就要进行锁冲突判断，如果有锁冲突就需要入队列等待，并且还要进行死锁检测。冲突判断调用函数 lock_rec_other_has_conflicting，循环的拿出对应行上的每一个锁，调用 lock_rec_has_to_wait 进行冲突判断。以下描述 “锁” 表示循环拿出的每个锁，“当前锁” 表示要加的锁。</p>
+
+<ul>
+  <li>如果锁和当前锁是相同的事务，返回 false，不需要等待。</li>
+  <li>如果锁和当前锁的基本锁类型兼容，返回 false，不需要等待。兼容性根据锁的兼容矩阵判断（感觉终于和大学课本联系起来了 T-T）。兼容矩阵：
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">static</span> <span class="k">const</span> <span class="n">byte</span> <span class="n">lock_compatibility_matrix</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+ 	<span class="cm">/**         IS     IX       S     X       AI */</span>
+ 	<span class="cm">/* IS */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">},</span>
+ 	<span class="cm">/* IX */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">},</span>
+ 	<span class="cm">/* S  */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">},</span>
+ 	<span class="cm">/* X  */</span> <span class="p">{</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">},</span>
+ 	<span class="cm">/* AI */</span> <span class="p">{</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">TRUE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span>  <span class="n">FALSE</span><span class="p">}</span>
+  <span class="p">};</span>
+</code></pre></div>    </div>
+  </li>
+  <li>如果上述两条都不满足，不是相同的事务，基本锁类型也不兼容，那么满足下面任意一条，同样返回false，不需要等待，否则返回 true，需要等待。
+    <ul>
+      <li>如果当前锁锁住的是 supremum 或者 LOCK_GAP 为 1 并且 LOCK_INSERT_INTENTION 为 0。因为不带 LOCK_INSERT_INTENTION 的 GAP 锁不需要等待任何东西，不同的用户可以在 gap 上持有冲突的锁。</li>
+      <li>如果当前锁 LOCK_INSERT_INTENTION 为 0 并且锁是 LOCK_GAP 为 1。因为行锁（LOCK_ORDINARY LOCK_REC_NOT_GAP）不需要等待一个 gap 锁。</li>
+      <li>如果当前锁 LOCK_GAP 为 1，锁 LOCK_REC_NOT_GAP 为 1。同样的，因为 gap 锁没有必要等待一个 LOCK_REC_NOT_GAP 锁。</li>
+      <li>如果锁 LOCK_INSERT_INTENTION 为 1。此处是最后一步，说明之前的条件都不满足，源码中备注描述如下：
+        <blockquote>
+          <p>No lock request needs to wait for an insertintention lock to be removed. This is ok since our rules allow conflicting locks on gaps. This eliminates a spurious deadlock caused by a next-key lock waiting for an insert intention lock; when the insert intention lock was granted, the insert deadlocked on the waiting next-key lock.
+  Also, insert intention locks do not disturb eachother.</p>
+        </blockquote>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>举个简单的例子，如果一行数据上已经加了 LOCK_S | LOCK_REC_NOT_GAP, 再尝试去加 LOCK_X | LOCK_GAP，LOCK_S 和 LOCK_X 本身是冲突的，但是满足上述第 3 个条件，返回 FALSE，不需要等待。</p>
+
+<p>如果行数据上没有更强级别的锁，也没有冲突的锁，并且加的不是隐式锁，就调用 lock_rec_add_to_queue。核心思想是复用锁对象，如果要加锁的行数据上当前没有其它锁等待，并且行所在的数据页上有相似的锁对象(lock_rec_find_similar_on_page)就可以直接设置对应行的 bitmap 位，表示加锁成功。如果有其它锁等待，就重新创建一个锁对象。</p>
+
+<h2 id="死锁检测">死锁检测</h2>
+<p>死锁检测的入口函数是 lock_deadlock_check_and_resolve，算法是深度优先搜索，如果在搜索过程中发现有环，就说明发生了死锁，为了避免死锁检测开销过大，如果搜索深度超过了 200（LOCK_MAX_DEPTH_IN_DEADLOCK_CHECK)也同样认为发生了死锁。</p>
+
+<p>稍早版本的时候，Innodb 使用的是递归方式搜索，为了减少栈空间的开销，改为使用入栈的方式（是否还记得大学时候严蔚敏的数据结构，有两种深度搜索的方法 T-T）。MySQL 5.7 之后增加了更多面向对象的代码结构，但是实际算法并没有改变。</p>
+
+<p>两个辅助数据结构：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** Deadlock check context. */</span>
+<span class="k">struct</span> <span class="n">lock_deadlock_ctx_t</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="n">trx_t</span><span class="o">*</span>    <span class="n">start</span><span class="p">;</span>      <span class="cm">/*!&lt; Joining transaction that is
+                    requesting a lock in an incompatible
+                    mode */</span>
+
+    <span class="k">const</span> <span class="n">lock_t</span><span class="o">*</span>   <span class="n">wait_lock</span><span class="p">;</span>  <span class="cm">/*!&lt; Lock that trx wants */</span>
+
+    <span class="n">ib_uint64_t</span> <span class="n">mark_start</span><span class="p">;</span> <span class="cm">/*!&lt;  Value of lock_mark_count at
+                    the start of the deadlock check. */</span>
+
+    <span class="n">ulint</span>       <span class="n">depth</span><span class="p">;</span>      <span class="cm">/*!&lt; Stack depth */</span>
+
+    <span class="n">ulint</span>       <span class="n">cost</span><span class="p">;</span>       <span class="cm">/*!&lt; Calculation steps thus far */</span>
+
+    <span class="n">ibool</span>       <span class="n">too_deep</span><span class="p">;</span>   <span class="cm">/*!&lt; TRUE if search was too deep and
+                    was aborted */</span>
+<span class="p">};</span>
+
+<span class="cm">/** DFS visited node information used during deadlock checking. */</span>
+<span class="k">struct</span> <span class="n">lock_stack_t</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="n">lock_t</span><span class="o">*</span>   <span class="n">lock</span><span class="p">;</span>           <span class="cm">/*!&lt; Current lock */</span>
+    <span class="k">const</span> <span class="n">lock_t</span><span class="o">*</span>   <span class="n">wait_lock</span><span class="p">;</span>      <span class="cm">/*!&lt; Waiting for lock */</span>
+    <span class="n">ulint</span>       <span class="n">heap_no</span><span class="p">;</span>        <span class="cm">/*!&lt; heap number if rec lock */</span>
+<span class="p">};</span>
+
+</code></pre></div></div>
+<p>lock_stack_t 就是辅助的栈结构，使用一个 lock_stack_t 类型的数组来作为数据栈，初始化在创建 Lock_sys 的时候，大小为 LOCK_STACK_SIZE, 实际上是 srv_max_n_thread，最大的线程数。</p>
+
+<p>lock_deadlock_ctx_t 中的 start 始终保持不变，是第一个请求锁的事务，如果深度搜索过程中锁对应的事务等于 start，那么就说明产生了环，发生死锁。wait_lock 表示搜索中的事务等待的锁。</p>
+
+<p>举个简单的例子：
+<img src="http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/72fff8eb62e5c8927b549268bfaafb89.png" alt="未命名文件 (1).png" /></p>
+
+<p>有三个事务 A，B，C 已经获得了三行数据 1，2，3 上的 X 锁。现在事务 A 去拿数据 2 的 X 锁，阻塞等待。同样事务 B 也去拿数据 3 的 X 锁，同样阻塞等待。当事务 C 尝试去拿 数据 1 的 X 锁时，发生死锁。看下此时的死锁检测流程：</p>
+<ol>
+  <li>ctx 中的 start 初始化为 C，wait_lock 初始化为 X1（数据1上的X锁）</li>
+  <li>根据 wait_lock=X1，调用函数 lock_get_first_lock 拿到加在数据 1 上的第一个锁 lock。在例子中就是事务 A 已经获得的 X1 锁。</li>
+  <li>然后判断 lock 对应的事务(A)是否也在等待其它锁：lock-&gt;trx-&gt;lock.que_state == TRX_QUE_LOCK_WAIT。当前事务 A 确实在等待 X2 锁。所以为 true，把当前的 lock 入栈(lock_dead_lock_push)。</li>
+  <li>ctx 中的 wait_lock 更新为 lock-&gt;trx-&gt;lock.wait_lock, 也就是 X1 锁的持有者事务 A 所等待的锁 X2。</li>
+  <li>同步骤 2 ，根据 wait_lock=X2, 拿到加在数据 2 上的第一个锁赋值给 lock，也就是事务 B 持有的 X2 锁。完成一次循环。</li>
+  <li>再次进入循环，lock 对应的事务(B)同样在等待其它锁，所以把当前的 lock 入栈。</li>
+  <li>ctx 中的 wait_lock 更新为 lock-&gt;trx-&gt;lock.wait_lock, 也就是 X2 锁持有者事务 B 所等待的锁 X3。</li>
+  <li>同步骤 2，根据 wait_lock=X3, 拿到加在数据 3 上的第一个锁赋值给 lock，也就是事务 C 持有的 X3 锁。完成一次循环。</li>
+  <li>再次进入循环，此时 lock-&gt;trx = C = ctx-&gt;start。死锁形成。</li>
+</ol>
+
+<p>上述例子较为简单，没有涉及到一行数据上有多个锁，也没有出栈操作，一次深度遍历就找到了死锁，实际情况会复杂点，其它分支可以参看源码理解。</p>
+
+<h3 id="victim-选择">victim 选择</h3>
+<p>当发生死锁后，会选择一个代价较少的事务进行回滚操作，选择函数：lock_deadlock_select_victim(ctx)。Innodb 中的 victim 选择比较粗暴，不论死锁链条有多长，只会在 ctx-&gt;start 和 ctx-&gt;wait_lock-&gt;trx 二者中选择其一。对应上述例子，就是在事务 B 和事务 C 中选择。</p>
+
+<p>具体的权重比较函数是 trx_weight_ge, 如果一个事务修改了不支持事务的表，那么认为它的权重较高，否则认为 undo log 数加持有的锁数之和较大的权重较高。</p>
+
+<h3 id="死锁信息分析">死锁信息分析</h3>
+<p>当发生死锁之后，会调用 lock_deadlock_notify 写入死锁信息，SHOW ENGINE INNODB STATUS 语句可以看到最近一次发生的死锁信息，因为死锁信息是默认写到 temp 目录的临时文件中，每次发生死锁都会覆盖写。如果打开 <a href="https://dev.mysql.com/doc/refman/5.6/en/innodb-parameters.html#sysvar_innodb_print_all_deadlocks">innodb_print_all_deadlocks</a>可以把历史所有的死锁信息打印到 errlog 中。</p>
+
+<p>关于打印出来的内容具体含义有文章已经讲的比较清楚了：<a href="http://mysqllover.com/?p=411">mysql lover</a> 和 <a href="https://www.percona.com/blog/2014/10/28/how-to-deal-with-mysql-deadlocks/">percona</a>。其中推荐 percona 的文章，其实发生死锁后想找出原因的话，只有死锁信息是不够的，因为 1.只显示最近两条事务的信息 2.只显示事务最近执行的一条语句。如文中推荐的做法，配合 general log 和 binlog 进行排查。</p>
+
+<h3 id="锁等待以及唤醒">锁等待以及唤醒</h3>
+<p>锁的等待以及唤醒实际上是线程的等待和唤醒，调用函数 lock_wait_suspend_thread 挂起当前线程，配合 OS_EVENT 机制，实现唤醒和锁超时等功能，这块暂且不展开，后续仔细研究后单独写一篇文章。</p>
+
+<h2 id="test-case-实践">Test Case 实践</h2>
+<p>在完成一个锁相关 patch 的时候发现 test case 中比较诡异的点，在执行应该产生死锁的语句时，不是每次都会产生死锁，也会发生锁超时的情况。以死锁检测中描述的例子，test case 如下：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">--disable_warnings</span>
+<span class="k">DROP</span> <span class="k">TABLE</span> <span class="n">IF</span> <span class="k">EXISTS</span> <span class="n">t1</span><span class="p">;</span>
+<span class="c1">--enable_warnings</span>
+<span class="k">create</span> <span class="k">table</span> <span class="n">t1</span><span class="p">(</span><span class="n">a</span> <span class="n">int</span> <span class="k">primary</span> <span class="k">key</span><span class="p">,</span> <span class="n">b</span> <span class="n">int</span><span class="p">)</span> <span class="n">engine</span><span class="o">=</span><span class="n">innodb</span><span class="p">;</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span> <span class="k">values</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">),(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">),(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">),(</span><span class="mi">7</span><span class="p">,</span><span class="mi">7</span><span class="p">),(</span><span class="mi">8</span><span class="p">,</span><span class="mi">8</span><span class="p">),(</span><span class="mi">9</span><span class="p">,</span><span class="mi">9</span><span class="p">);</span>
+<span class="o">#</span> <span class="o">*************</span> <span class="mi">3</span> <span class="n">Transactions</span> <span class="n">cause</span> <span class="n">deadlock</span><span class="p">.</span> <span class="o">****************</span> <span class="o">#</span>
+<span class="o">#</span> <span class="k">Hold</span> <span class="n">locks</span>
+<span class="k">connection</span> <span class="n">con1</span><span class="p">;</span>
+<span class="k">begin</span><span class="p">;</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="k">connection</span> <span class="n">con2</span><span class="p">;</span>
+<span class="k">begin</span><span class="p">;</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">2</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="k">connection</span> <span class="n">con3</span><span class="p">;</span>
+<span class="k">begin</span><span class="p">;</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">3</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+
+<span class="o">#</span> <span class="n">Request</span> <span class="n">locks</span> <span class="k">as</span> <span class="n">a</span> <span class="n">circle</span>
+<span class="k">connection</span> <span class="n">con1</span><span class="p">;</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span> <span class="k">values</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="mi">11</span><span class="p">);</span>
+<span class="n">send</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">2</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="k">connection</span> <span class="n">con2</span><span class="p">;</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span> <span class="k">values</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">12</span><span class="p">);</span>
+<span class="n">send</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">3</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="k">connection</span> <span class="n">con3</span><span class="p">;</span>
+<span class="c1">--error ER_LOCK_DEADLOCK</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+
+</code></pre></div></div>
+<p>其中插入语句是为了产生 undo log，控制那一个事务会被选为 victim。上述 test case 预期产生死锁的语句有时会报锁超时，也就是没有正确发生死锁。起初以为是 victim 选择算法的原因，后来才发现是因为 send 语句，它只保证语句发出去，并不保证执行完毕，所以在最后一条 select 语句执行的时候也许前面的语句还没执行完，无法产生死锁。</p>
+
+<p>使用 wait condition 语句等待下就没问题了：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">let</span> <span class="err">$</span><span class="n">wait_condition</span><span class="o">=</span>
+  <span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">innodb_trx</span>
+  <span class="k">WHERE</span> <span class="n">trx_operation_state</span> <span class="o">=</span> <span class="s1">'starting index read'</span> <span class="k">AND</span>
+  <span class="n">trx_state</span> <span class="o">=</span> <span class="s1">'LOCK WAIT'</span><span class="p">;</span>
+<span class="c1">--source include/wait_condition.inc</span>
+<span class="c1">--error ER_LOCK_DEADLOCK</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="总结">总结</h2>
+<p>Innodb 的锁系统实际上是封装了一层逻辑，和行本身数据一点关系也没有，了解之前以为会像文件锁一样，锁的粒度越小，维护起来越复杂，所以开头提到的 Berkeley DB 才只有页锁，了解之后很迷惑为什么不支持行锁… 区分一下 Innodb 同步机制使用的锁和本文介绍的锁是不同的，可以参考<a href="http://mysql.taobao.org/monthly/2017/01/01/">这篇月报</a>, 有一个<a href="http://hedengcheng.com/?p=844">最不可思议的死锁</a>问题，就是这两种锁之间切换导致的。锁系统作为事务中一个重要模块，需要配合其它模块，对于事务系统可以参考本期月报<a href="http://mysql.taobao.org/monthly/2017/12/01/">这篇文章</a>。</p>
+
+
+                <hr style="visibility: hidden;">
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/computer%20science/mysql/2017/11/25/undrop-for-innodb/" data-toggle="tooltip" data-placement="top" title="undrop-for-innodb">
+                        Previous<br>
+                        <span>undrop-for-innodb</span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+                <!-- disqus 评论框 start -->
+                <div class="comment">
+                    <div id="disqus_thread" class="disqus-thread"></div>
+                </div>
+                <!-- disqus 评论框 end -->
+                
+
+                
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#c++" title="c++" rel="6">
+                                    c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                    effective c++
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                    Berkeley DB
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Database" title="Database" rel="7">
+                                    Database
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                    设计原则
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                    面向对象
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                    PostgreSQL
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://zhangxiaojian.name">zhngxiaojian</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = "zhangxiaojian";
+    var disqus_identifier = "/computer%20science/mysql/2018/01/24/innodb-lock-system";
+    var disqus_url = "http://localhost:4000/computer%20science/mysql/2018/01/24/innodb-lock-system/";
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<!-- disqus 公共JS代码 end -->
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/zhangxiaojian">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 张小贱 2018
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<!-- Currently, only navbar scroll-down effect at desktop still depends on this -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script src="/js/snackbar.js "></script>
+<script src="/js/sw-registration.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!--
+     Because of the native support for backtick-style fenced code blocks
+     right within the Markdown is landed in Github Pages,
+     From V1.6, There is no need for Highlight.js,
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-112459552-1';
+    var _gaDomain = '';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+
+
+<!-- Multi-Lingual -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
