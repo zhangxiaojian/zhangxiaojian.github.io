@@ -10,7 +10,7 @@
     <meta name="keywords"  content="mysql">
     <meta name="theme-color" content="#000000">
     
-    <title>单一职责原则 - 张小贱的博客 | Zhangxiaojian Blog</title>
+    <title>张小贱的博客 | Zhangxiaojian Blog</title>
 
     <!-- Web App Manifest -->
     <link rel="manifest" href="/pwa/manifest.json">
@@ -19,7 +19,7 @@
     <link rel="shortcut icon" href="/img/favicon.ico">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="http://localhost:4000/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/">
+    <link rel="canonical" href="http://localhost:4000/page5/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -149,234 +149,220 @@
 </script>
 
 
-    <!-- Image to hack wechat -->
-<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
-<!-- <img src="/img/home-bg-o.jpg" width="0" height="0"> -->
-
-<!-- Post Header -->
-<style type="text/css">
-    header.intro-header{
-        position: relative;
-        background-image: url('/img/home-bg-o.jpg')
-    }
-
-    
-</style>
-<header class="intro-header" >
-    <div class="header-mask"></div>
+    <!-- Page Header -->
+<header class="intro-header" style="background-image: url('/img/home-bg-o.jpg')">
     <div class="container">
         <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="post-heading">
-                    <div class="tags">
-                        
-                        <a class="tag" href="/tags/#设计原则" title="设计原则">设计原则</a>
-                        
-                    </div>
-                    <h1>单一职责原则</h1>
-                    
-                    
-                    <h2 class="subheading"></h2>
-                    
-                    <span class="meta">Posted by zhangxiaojian on October 12, 2014</span>
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
+                <div class="site-heading">
+                    <h1>张小贱</h1>
+                    <!--<hr class="small">-->
+                    <span class="subheading">Make things work</span>
                 </div>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Post Content -->
-<article>
-    <div class="container">
-        <div class="row">
-
-    <!-- Post Container -->
-            <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                post-container">
-
-                <!-- Multi-Lingual -->
-                
-
-				<p><strong>Single Responsibility Principle</strong></p>
-
-<p>There should never be more than one reason for a class to change</p>
-
-<p>一个类只负责一个功能领域中的相应职责。或者说：就一个类而言，只有一个引起它变化的原因。</p>
-
-<p><strong>设计模式之禅中的例子：</strong></p>
-
-<p>假设有一个接口实现打电话的功能：</p>
-
-<p><a href="/img/uploads/2014/10/iphone.png"><img src="/img/uploads/2014/10/iphone.png" alt="iphone" /></a></p>
-
-<p>书中分析Iphone接口不是单一职责的，连接是一个职责，涉及连接协议的管理，聊天的时候又是一个职责，涉及信号的传输与解析。因此将接口拆开，实现类也拆开，然后组合在一起，变成了这样：</p>
-
-<p><a href="/img/uploads/2014/10/SR2.png"><img src="/img/uploads/2014/10/SR2.png" alt="SR2" /></a></p>
-
-<p>这样连接之后，给一个连接完成的句柄就可以随便聊了。因为Phone包含了链接和聊天两个功能，而且如果一个Phone对象被销毁之后，所建立的链接和数据传输对象当然也随之飘散，是强耦合的组合关系。为了消除这种强耦合，对实现类的“单一职责”做了妥协。</p>
-
-<p><a href="/img/uploads/2014/10/SR3.png"><img src="/img/uploads/2014/10/SR3.png" alt="SR3" /></a></p>
-
-<p>所有的实现功能都由Phone2一个类实现。书中阐述因为是“接口编程“的缘故，客户端在调用的时候都是调接口，真正的略显臃肿的实现类被隐藏了起来。</p>
-
-<p>首先单一职责原则的职责划分是一门艺术，需要实际情况多方考虑定夺。上述例子明显阐述的是<strong>接口隔离原则</strong>。虽然体现的是单一职责的精神。但是其中关于实现类高耦合和单一职责的折中选择，在实际中，还是值得学习。</p>
-
-<p>再看<strong>设计模式的艺术</strong>中一个例子：</p>
-
-<p>有一个类需要完成从数据库读取信息然后会成图形显示出来：</p>
-
-<p><a href="/img/uploads/2014/10/SR4.png"><img src="/img/uploads/2014/10/SR4.png" alt="SR4" /></a></p>
-
-<p>其中包括了连接，查找，根据查找结果分析，显示几步。单一职责原则要求每一个类只有一个引起它变化的原因。这里的变化，我想指的是修改其中内容。比如getConnection方法已经写好，但是后期需要改变连接的策略，就需要对getConnection的代码进行修改。同样的，如果业务变化要求修改找部分Customer，比如VIP用户。或者要求从原来显示柱状图变成显示饼图。都要到这个类里面去修修改改。那引起变化的原因又指的是什么呢？原因是复杂的东西，因为它涉及到业务逻辑等等方面，This is something hard to say。这个例子中重构之后变成这样：</p>
-
-<p><a href="/img/uploads/2014/10/SR5.png"><img src="/img/uploads/2014/10/SR5.png" alt="SR5" /></a></p>
-
-<p>将变化的原因分为三种：数据库连接变化，数据处理变化，数据显示变化。如果业务逻辑上哪里有变更，就去哪个类改。这很符合常理，也易于理解。</p>
-
-<p>但是想想比较极端的情况，因为柱状图和饼图的切换需要修改或者添加类中的方法，这算是引起类变化的原因，如果显示图的情况因为业务需求也要改，比如要一个屏幕显示四个图，田字型。那么这也是一个引起类变化的原因。看来有两个原因引起了同一个类的变化。是不是不符合单一职责原则了？要继续拆分和重构？of course not !</p>
-
-<p>拆分也有一个限度，只要易于我们理解和维护就好。昨天在微博上看到Fowler一句话：</p>
-
-<p><strong>Any fool can write code that a computer can understand. Good programmers write code that humans can understand. —— Martin Fowler</strong></p>
-
-<p>就是写的代码电脑都能运行，关键是人要看的舒服，维护着舒服。以此来确定职责的粒度吧。</p>
-
-
-                <hr style="visibility: hidden;">
-
-                <ul class="pager">
-                    
-                    <li class="previous">
-                        <a href="/life%20traces/2014/10/07/e5-87-bf-e4-b8-80-e5-8f-a3-e6-b7-b1-e4-ba-95/" data-toggle="tooltip" data-placement="top" title="凿一口深井">
-                        Previous<br>
-                        <span>凿一口深井</span>
-                        </a>
-                    </li>
-                    
-                    
-                    <li class="next">
-                        <a href="/c++/2014/10/31/e9-9d-a2-e5-90-91-e5-af-b9-e8-b1-a1-e4-b9-8b-e5-90-8e-e5-a2-9e-e5-8a-a0-e7-9a-84-e5-bc-80-e9-94-80/" data-toggle="tooltip" data-placement="top" title="面向对象之后增加的开销">
-                        Next<br>
-                        <span>面向对象之后增加的开销</span>
-                        </a>
-                    </li>
-                    
-                </ul>
-
-
-                
-                <!-- disqus 评论框 start -->
-                <div class="comment">
-                    <div id="disqus_thread" class="disqus-thread"></div>
-                </div>
-                <!-- disqus 评论框 end -->
-                
-
-                
-            </div>  
-
-    <!-- Side Catalog Container -->
+<!-- Main Content -->
+<div class="container">
+	<div class="row">
         
 
+<!-- USE SIDEBAR -->
+    <!-- PostList Container -->
+    		<div class="
+                col-lg-8 col-lg-offset-1
+                col-md-8 col-md-offset-1
+                col-sm-12
+                col-xs-12
+                postlist-container
+            ">
+    			
+<div class="post-preview">
+    <a href="/life%20traces/2014/01/23/20130104/">
+        <h2 class="post-title">
+            20130104
+        </h2>
+        
+        <div class="post-content-preview">
+            2013/1/4
+
+Dear Diary
+
+刚刚一个日期打了半天都没有打出来，因为以前不用打日期，office会自动生成日期，今天office2013终于在13年到来没几天过期了，一直看着还有一个月，想着过几天没事了再破解，中间也试过几次，都没有成功，但因为好看，一直在用，今天终于拜拜，装上了wps，不过破解了还是喜欢用office，起码不用打日期了。
+
+今天现在是凌晨，估计几个小时之后就会...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on January 23, 2014
+    </p>
+</div>
+<hr>
+
+
+<!-- Pager -->
+
+<ul class="pager">
+    
+    <li class="previous">
+        <a href="/page4">&larr; Newer Posts</a>
+    </li>
+    
+    
+</ul>
+
+
+    		</div>
     <!-- Sidebar Container -->
             <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                sidebar-container">
-
+                col-lg-3 col-lg-offset-0
+                col-md-3 col-md-offset-0
+                col-sm-12
+                col-xs-12
+                sidebar-container
+            ">
                 <!-- Featured Tags -->
                 
                 <section>
                     <hr class="hidden-sm hidden-xs">
                     <h5><a href="/tags/">FEATURED TAGS</a></h5>
                     <div class="tags">
-        				
+                        
                             
-                				<a href="/tags/#c++" title="c++" rel="6">
+                                <a href="/tags/#c++" title="c++" rel="6">
                                     c++
                                 </a>
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-                				<a href="/tags/#effective c++" title="effective c++" rel="2">
+                                <a href="/tags/#effective c++" title="effective c++" rel="2">
                                     effective c++
                                 </a>
                             
-        				
+                        
                             
-        				
+                        
                             
-                				<a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
+                                <a href="/tags/#Berkeley DB" title="Berkeley DB" rel="6">
                                     Berkeley DB
                                 </a>
                             
-        				
+                        
                             
-                				<a href="/tags/#Database" title="Database" rel="7">
+                                <a href="/tags/#Database" title="Database" rel="7">
                                     Database
                                 </a>
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-                				<a href="/tags/#设计原则" title="设计原则" rel="2">
+                                <a href="/tags/#设计原则" title="设计原则" rel="2">
                                     设计原则
                                 </a>
                             
-        				
+                        
                             
-                				<a href="/tags/#面向对象" title="面向对象" rel="4">
+                                <a href="/tags/#面向对象" title="面向对象" rel="4">
                                     面向对象
                                 </a>
                             
-        				
+                        
                             
-        				
+                        
                             
-                				<a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
+                                <a href="/tags/#PostgreSQL" title="PostgreSQL" rel="4">
                                     PostgreSQL
                                 </a>
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
+                        
                             
-        				
-        			</div>
+                        
+                    </div>
                 </section>
                 
 
+                <!-- Short About -->
+                <section class="visible-md visible-lg">
+                    <hr><h5><a href="/about/">ABOUT ME</a></h5>
+                    <div class="short-about">
+                        
+                            <img src="/img/touxiang2.jpg" />
+                        
+                        
+                            <p>迷途小书童</p>
+                        
+                        <!-- SNS Link -->
+                        <ul class="list-inline">
+                            
+                            
+                            
+                            <li>
+                                <a target="_blank" href="https://www.zhihu.com/people/zhang-xiao-jian-49">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa  fa-stack-1x fa-inverse">知</i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                            <li>
+                                <a target="_blank" href="http://weibo.com/zhangxiaojianjj">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                            
+                            <li>
+                                <a target="_blank" href="https://github.com/zhangxiaojian">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                        </ul>
+                    </div>
+                </section>
                 <!-- Friends Blog -->
                 
                 <hr>
@@ -409,67 +395,10 @@
                     
                 </ul>
                 
-            </div>
-        </div>
-    </div>
-</article>
-
-
-
-
-
-
-<!-- disqus 公共JS代码 start (一个网页只需插入一次) -->
-<script type="text/javascript">
-    /* * * CONFIGURATION VARIABLES * * */
-    var disqus_shortname = "zhangxiaojian";
-    var disqus_identifier = "/design%20patterns/software%20engineering/2014/10/12/%e5%8d%95%e4%b8%80%e8%81%8c%e8%b4%a3%e5%8e%9f%e5%88%99";
-    var disqus_url = "http://localhost:4000/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/";
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<!-- disqus 公共JS代码 end -->
-
-
-
-
-<!-- async load function -->
-<script>
-    function async(u, c) {
-      var d = document, t = 'script',
-          o = d.createElement(t),
-          s = d.getElementsByTagName(t)[0];
-      o.src = u;
-      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-      s.parentNode.insertBefore(o, s);
-    }
-</script>
-<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
-<script>
-    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
-        anchors.options = {
-          visible: 'always',
-          placement: 'right',
-          icon: '#'
-        };
-        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
-    })
-</script>
-<style>
-    /* place left on bigger screen */
-    @media all and (min-width: 800px) {
-        .anchorjs-link{
-            position: absolute;
-            left: -0.75em;
-            font-size: 1.1em;
-            margin-top : -0.1em;
-        }
-    }
-</style>
+    		</div>
+        
+	</div>
+</div>
 
 
     <!-- Footer -->
