@@ -181,6 +181,24 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/database/mysql/2018/04/18/innodb-Encryption/">
+        <h2 class="post-title">
+            InnoDB 表空间加密
+        </h2>
+        
+        <div class="post-content-preview">
+            背景简介
+
+InnoDB 表空间加密是在引擎内部数据页级别的加密手段，在数据页写入文件系统时加密，从文件读到内存中时解密，目前广泛使用的是 YaSSL/OpenSSL 提供的 AES 加密算法，加密前后数据页大小不变，因此也称为透明加密。表空间加密相对于文件系统加密更加灵活，用户可以控制加密重要的表，防止被拖库导致的数据丢失。MySQL 官方在 5.7.11 中发布了表空间加密功能，Aliy...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on April 18, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/computer%20science/database/2018/02/06/performance-schema-acl/">
         <h2 class="post-title">
             MySQL 权限浅析
@@ -341,26 +359,6 @@ git clone https://github.com/twindb/undrop-for-inn...
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on February 18, 2016
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/">
-        <h2 class="post-title">
-            PostgreSQL 客户端认证机制
-        </h2>
-        
-        <div class="post-content-preview">
-            最近实验室数据库需要提高安全性，因为以前只有自己人用，基本上是在裸奔，知道端口号和IP就可以连接上，不需要任何认证信息，没有安全可言。最简单的认证方式就是用户名和密码，但平常使用PG的时候都没有用到，就研究了一下PG的认证方式，取取经。
-
-配置与使用
-
-PG的认证方式有很多种，而且对于不同的database，不同的user，不同的访问IP都可以选择不同的方式认证。具体在配置文件pg_hba....
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on January 22, 2016
     </p>
 </div>
 <hr>
@@ -615,7 +613,7 @@ PG的认证方式有很多种，而且对于不同的database，不同的user，
                     <br>
                 </p>
             </div>
-        </div>
+       </div>
     </div>
 </footer>
 
@@ -716,18 +714,6 @@ PG的认证方式有很多种，而且对于不同的database，不同的user，
 <!-- Side Catalog -->
 
 
-<script>
-  (function() {
-    var cx = '009469504555171126461:k_ee4gwpeig';
-    var gcse = document.createElement('script');
-    gcse.type = 'text/javascript';
-    gcse.async = true;
-    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(gcse, s);
-  })();
-</script>
-<gcse:search></gcse:search>
 
 <!-- Multi-Lingual -->
 

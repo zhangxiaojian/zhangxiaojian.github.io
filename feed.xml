@@ -5,9 +5,302 @@
     <description>life test</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 25 Mar 2018 17:15:57 +0800</pubDate>
-    <lastBuildDate>Sun, 25 Mar 2018 17:15:57 +0800</lastBuildDate>
+    <pubDate>Thu, 10 May 2018 23:28:26 +0800</pubDate>
+    <lastBuildDate>Thu, 10 May 2018 23:28:26 +0800</lastBuildDate>
     <generator>Jekyll v3.7.0</generator>
+    
+      <item>
+        <title>InnoDB 表空间加密</title>
+        <description>&lt;h2 id=&quot;背景简介&quot;&gt;背景简介&lt;/h2&gt;
+
+&lt;p&gt;InnoDB 表空间加密是在引擎内部数据页级别的加密手段，在数据页写入文件系统时加密，从文件读到内存中时解密，目前广泛使用的是 YaSSL/OpenSSL 提供的 &lt;a href=&quot;https://en.wikipedia.org/wiki/Advanced_Encryption_Standard&quot;&gt;AES&lt;/a&gt; 加密算法，加密前后数据页大小不变，因此也称为透明加密。表空间加密相对于文件系统加密更加灵活，用户可以控制加密重要的表，防止被拖库导致的数据丢失。MySQL 官方在 &lt;a href=&quot;https://dev.mysql.com/doc/relnotes/mysql/5.7/en/news-5-7-11.html&quot;&gt;5.7.11&lt;/a&gt; 中发布了表空间加密功能，Aliyun RDS 差不多在同时支持了 RDS MySQL 版的表空间加密，通过了&lt;a href=&quot;https://www.aliyun.com/product/rds/mysql?spm=5176.8142029.388261.312.e9396d3eOfI3U5&quot;&gt;“等保三级”&lt;/a&gt; 的认证，随后 MariaDB 在 10.1 支持了功能增强版的“表空间加密”，除了表空间，还可以对 Redo log 和 Binlog 进行加密，参考&lt;a href=&quot;https://mariadb.com/resources/blog/table-and-tablespace-encryption-mariadb-101&quot;&gt;这篇&lt;/a&gt;详细介绍。本文将详细介绍官方的实现方式。&lt;/p&gt;
+
+&lt;h2 id=&quot;keyring-plugin&quot;&gt;Keyring Plugin&lt;/h2&gt;
+
+&lt;p&gt;Keyring Plugin 是用来保存敏感信息的插件，目前官方支持了四种插件: &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.7/en/keyring-file-plugin.html&quot;&gt;keyring_file&lt;/a&gt;, &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.7/en/keyring-encrypted-file-plugin.html&quot;&gt;keyring_encrypted_file&lt;/a&gt;, &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.7/en/keyring-okv-plugin.html&quot;&gt;keyring_okv&lt;/a&gt;, &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.7/en/keyring-aws-plugin.html&quot;&gt;keyring_aws&lt;/a&gt;, 社区版目前只支持 keyring_file 类型，本文基于此类型介绍。&lt;/p&gt;
+
+&lt;p&gt;如果要使用表空间加密功能，keyring_file 必须在 MySQL 实例初始化之前初始化(使用 –early-plugin-load 参数)，因为 keyring_file 里面保存了解密需要的 master_key。我们可以把这个插件理解成一个 K-V 表，可以根据 key 查找到对应的数据。在源码内部提供了以下几个接口：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cm&quot;&gt;/* 根据 key_id 查找秘钥 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* 以 key_id 生成加密类型为 key_type 长度为 key_length 的秘钥，并存储到文件中 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_generate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;INTEGER&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* 返回秘钥长度 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;INTEGER&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_length_fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* 移除秘钥 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;INTEGER&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_remove&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* 混淆并且存储秘钥 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;INTEGER&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_store&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* 返回秘钥加密类型 */&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyring_key_type_fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;STRING&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;用户可以创建 UDF(User Deifined Function) 在 SQL 语句中使用上述接口，作为独立于表空间加密的功能使用，具体使用方式可以参考：&lt;a href=&quot;https://dev.mysql.com/doc/refman/5.7/en/keyring-udfs-general-purpose.html&quot;&gt;General-Purpose Keyring Key_Management Functions&lt;/a&gt;。把 keyring_file 放到本地文件显然是不安全的，建议放到类似U盘的地方，启动实例的时候挂载到文件系统，启动之后移除，大概就像原来银行的优盾 ：）&lt;/p&gt;
+
+&lt;h2 id=&quot;流程分析&quot;&gt;流程分析&lt;/h2&gt;
+
+&lt;h3 id=&quot;整体架构&quot;&gt;整体架构&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/24d947b261fdb30a2d4555c3b2af2a99.png&quot; alt=&quot;encrypt1.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;为了支持 key rotation，官方的加密用到了两个秘钥，一个是从 kering 生成的 master_key，另一个是用来加密每个表空间的 tablespace_key，master_key 仅仅用来加密解密 tablespace_key。tablespace_key 加密后保存在每个 ibd 文件 page 0 页的尾部，对应图中 Encryption Information 部分，除了 tablespace_key, 还有用来索引 master_key 的 master_key_id 信息，以及 magicnum 和循环冗余校验的数据。关于 InnoDB ibd 文件的页面组织可以参考月报&lt;a href=&quot;http://mysql.taobao.org/monthly/2016/02/01/&quot;&gt;InnoDB 文件系统之文件物理结构&lt;/a&gt;,首个页空间利用并不满。&lt;/p&gt;
+
+&lt;p&gt;在 server 层，创建一个加密的表后，加密的信息会保存在 frm 文件中，主要作用是 show create table 时可以打印出加密部分的语句。&lt;/p&gt;
+
+&lt;p&gt;InnoDB 层除了 Encryption Information，还会在 ibdata 的字典表中的 flags2 字段标识对应的表示加密表，具体存储在 SYS_TABLES 表 MIX_LEN  列中，关于 InnoDB 字典表结构可以参考&lt;a href=&quot;https://twindb.com/innodb-dictionary/&quot;&gt;这篇文章&lt;/a&gt;。在 ibd 文件中会在 page 0 页头部 FSP 的 FLAG 标识这个 File Space 是加密表空间，具体位置在 FSP_FLAGS_POS_ENCRYPTION，如图中 Encryption 所示位置。还会在每个 Index page 的 page type 位置标识这个页是加密的，对应图中 page type 位置。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Note: 在 ibdata 中的系统表空间，比如 redo，undo 等是默认不加密的，ibd 文件 page 0 也是不加密的，Index page 只会对数据部分加密，Page Header 不会被加密。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;上述部分是整体架构和物理文件页面有哪些变化，相对于 MySQL 5.6 使用了一些预留的标记为空间，迁移的话保证对应的位置不会冲突。&lt;/p&gt;
+
+&lt;h3 id=&quot;代码分析&quot;&gt;代码分析&lt;/h3&gt;
+
+&lt;h4 id=&quot;基础类介绍&quot;&gt;基础类介绍&lt;/h4&gt;
+&lt;p&gt;MySQL 5.7 的代码相对于 5.6 版本有了较大的重构，主要是把之前面向过程的代码更多的用类结构封装。表空间加密主要交互是在和文件的 IO 交互，页写入文件之前加密，从文件读出第一时间解密。还有一个 Encryption 类，负责调用 keyring plugin 来维护 master_key, 保存 tablespace key 加密的时候用，还提供页面的加密解密函数等。代码重构后 IO 部分使用类 IORequest 类来控制具体 IO 的行为，比如是 READ 还是 WRITE，是否是对 LOG 的 IO, 是否加密，是否压缩等等。如下类图所示，Encryption 类注入到 IORequest 中。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/94a73bfd92d494e3c9d2c03ab45e753e.png&quot; alt=&quot;encrypt2.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;下面首先介绍一下 master_key 的维护，Encryption 类中有两个静态成员变量，master_key_id 是一个递增的值，每次生成新的 master_key 都会更新，uuid 是当前的 server_uuid。 前面介绍了 keyring plugin 提供的接口函数，在 create_master_key, get_master_key * 2, 三个静态函数中调用。对应 keyring plugin 的 key_id 参数，是 [ENCRYPTION_MASTER_KEY_PRIFIX+uuid+master_key_id] 的字符串组合，用变量 key_name 表示。create_master_key 获得一个新的 master_key:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;create_master_key&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;----&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_key_generate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;AES&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ENCRYPTION_KEY_LEN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;----&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_key_fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;keytype&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;master_key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;key_len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;get_master_key 是一个重载函数，因为历史原因，为了兼容 5.7.11 版本最初设计的加密格式，需要 uuid 作为一个检索的参数，图中第一个 get_master_key 函数根据传入的参数调用 my_key_fetch 查找，第二个函数的参数都是指针类型，返回之后都会被赋值，如果发现当前的 Encryption::master_key_id 为 0，说明还没有产生过 master_key ，就执行类似 create_master_key 的逻辑创建。&lt;/p&gt;
+
+&lt;p&gt;接下来看加密和解密的函数，参数类似，就是传入一个 src 页，然后加密好放到 dst 页中，数据页加密使用的加密算法是 &lt;a href=&quot;https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation&quot;&gt;my_aes_256_cbc&lt;/a&gt;,这种加密算法要求每个加密块大小是 128 bit(16 Byte)，也就是说数据页的大小必须是这个值得整数倍，InnoDB 的页默认大小是 16K，传入整个页进行加密是完全可行的。但是官方选择了最小加密原则，仅仅只对页面中用户数据部分加密，页面头保持明文存储。所以无论是加密还是解密都分成了两次调用，一次对 main_len 大小数据加密，另外一次对 remain_len 加密：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;data_len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;src_len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_DATA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;main_Len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data_len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MY_AES_BLOCK_SIZE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MY_AES_BLOCK_SIZE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;remain_len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data_len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main_len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;加密部分会修改页面的 page type 字段，从 src 页固定位置取出当前的页类型，如果是加密过的，就报错，加密结束之后根据原有的页面类型，修改为对应的加密页类型：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page_type&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_COMPRESSED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;mach_write_to_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dst&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_TYPE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;FIL_PAGE_COMPRESSED_AND_ENCRYPTED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page_type&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_RTREE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;cm&quot;&gt;/* If the page is R-tree page, we need to save original
+		type. */&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;mach_write_to_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dst&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_TYPE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_ENCRYPTED_RTREE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;mach_write_to_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dst&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_TYPE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_ENCRYPTED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;mach_write_to_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dst&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FIL_PAGE_ORIGINAL_TYPE_V1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;page_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;其中 R-tree 是 MySQL 为了支持 GIS 引入的数据类型。&lt;a href=&quot;https://dev.mysql.com/worklog/task/?id=6968&quot;&gt;WL#6968&lt;/a&gt;.解密开始会判断 page type 是否是压缩类型，需要修改src_len 的大小。&lt;/p&gt;
+
+&lt;h4 id=&quot;tablespace-key-初始化和读取&quot;&gt;Tablespace key 初始化和读取&lt;/h4&gt;
+&lt;p&gt;Tablespace key 是真正用来加密用户页面数据的，就是上节介绍的 Encryption 类的 m_key，tablespace key 会在 create 一个加密表或者 alter 一个表变为加密表时创建，以 create table 流程为例，因为只支持独立表空间，所以需要递增的产生一个 space id，然后创建一个 ibd 文件，并且初始化为默认的 page 数量大小，把 space id 和 fsp flags 写入第一个页的头部（fsp flags 对应整体架构图中 Encryption 部分，标记一个表空间为加密表空间，flags 由 dict_table_t 结构的 flag 转化而来，而 dict_table_t 的 flag 是从 server 层的 TABLE_SHARE 中获得，源头就是用户执行的 create table 语句语法）， 创建 file_space_t，初始化 file_node(虽然表空间只有一个 ibd 文件)，接着调用 fil_set_encryption 函数生成 tablespace key，并且保存在刚刚创建的 fil_space_t 中。最终会在 fsp_head_init 函数中把 tablespace key 相关信息写入页面中，对应整体架构图中 Encryption Infomation 部分。函数调用栈：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;dict_build_tablespace&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_ibd_create&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_fil_create&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_set_size&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;	    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_init_fields&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file_space_create&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_set_encryption&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;space_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AES&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+      &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_init&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_fill_encryption_info&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mlog_write_string&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;重点看一下 fil_set_encryption 是怎么生成 tablespace key 的，还有具体保存在页面中都有哪些东西。上图调用栈最后两个参数为 NULL，对应的就是需要生成的 tablespace key 和加密向量 iv，因为是表空间刚刚创建，NULL 表示需要生成。首先判断是不是系统表空间 is_system_tablespace(space_id) 对于系统表空间不进行加密处理，如果 key 和 iv 为 NULL， 就调用 Encryption::random_value 产生一个随机的值，对于 key 和 iv 都一样，Encryption::random_value 最终会调用 YaSSL/OpenSSL 的 RAND_bytes 函数产生随机值，如果 key 和 iv 不为 NULL，就不必产生，最终赋值到 fil_space_t 中变量即可返回。&lt;/p&gt;
+
+&lt;p&gt;真正把 tablespace 加密并且写入到页中的是函数 fsp_header_fill_encryption_info, 从 Encryption::get_master_key 拿到加密的 master_key，从 fil_space_t 中拿到明文的 tablespace key 和 iv，使用 my_aes_256_ecb 加密算法进行加密，ecb 加密算法相对于 cbc 具有更高的安全度，当前开销也更大，看来官方也意识到把 tablespace key 放到文件里存在一定的安全隐患。存储的格式分为两种，是高版本为了向下兼容：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;ENCRYPTION_INFO_V1: magic number + master_key_id + key + iv + checksum&lt;/li&gt;
+  &lt;li&gt;ENCRYPTION_INFO_V1: magic number + master_key_id + key + iv + server_uuid + checksum&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;上述除了 key + iv 之外都是明文存储，checksum 是 key+iv 的明文使用&lt;a href=&quot;https://en.wikipedia.org/wiki/Cyclic_redundancy_check&quot;&gt;32位循环冗余校验&lt;/a&gt;得到的。&lt;/p&gt;
+
+&lt;p&gt;接下来介绍打开一张已经加密的表，tablespace key/iv 是如何初始化的，直接来看下调用堆栈:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;n&quot;&gt;fil_ibd_open&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Datafile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;validate_to_add&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Datafile&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;validate_first_page&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;               &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_get_encryption_key&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                           &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_get_encryption_offset&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                        &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                        &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_decode_encryption_info&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_space_create&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_set_encryption&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;正常打开一张表首先会根据表名去 ibdata 的字典表里查找元数据信息，例如文件路径，dict_table_t 的 flags/flags2 等等，接下来就是调用 fil_ibd_open 打开文件， 并且做一系列的校验，Datafile 是用来维护文件信息的类，在 validate_first_page 中会根据 flag 判断是否加密表空间，如果是的话，就读出第一个页，传给 fsp_header_get_encryption_key 函数，在函数里首先计算偏移，然后交给 fsp_header_decode_encryption_info 对 key/iv 进行解密。fsp_header_decode_encryption_info 首先校验 magic number，然后读出 master_key_id 和 server_uuid，用来查找 master_key, 然后用 master_key 解密 tablespace key 得到明文，最后一步是用明文再做一次循环冗余校验，和保存的 checksum 对比，值是否相同。至此已经得到了正确的 tablespace key。接着创建 fil_space_t 然后把明文的 key/iv 放进去，以备后面 IO 使用。&lt;/p&gt;
+
+&lt;h4 id=&quot;io-路径解析&quot;&gt;IO 路径解析&lt;/h4&gt;
+&lt;p&gt;InnoDB 的 IO 分为同步 IO 和 异步 IO，同步 IO 调用操作系统的 pwrite/pread 函数，异步 IO 又分为 simulate IO 和 Linux native aio， 关于 IO 的详细介绍可以参考 &lt;a href=&quot;http://mysql.taobao.org/monthly/2016/02/02/&quot;&gt;InnoDB 文件系统之 IO 系统和内存管理&lt;/a&gt;， &lt;a href=&quot;http://mysql.taobao.org/monthly/2017/03/01/&quot;&gt;InnoDB IO 子系统&lt;/a&gt;， &lt;a href=&quot;http://mysql.taobao.org/monthly/2017/07/10/&quot;&gt;InnoDB 异步 IO 工作流程&lt;/a&gt; 三篇月报。这里介绍一些加密是在哪里 IO 路径中的，首先是同步 IO 路径, 以 write 为例，read 类似。在 fil_io 中初始化 IORequest 类中的 encryption 相关信息，根据要读写的 page id, fil_space。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;fil_io&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_io_set_encryption&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write_pfs&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                 &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                 &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write_func&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                           &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write_page&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_pwrite&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                             &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                             &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_io&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                                     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                                     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_encrypt_page&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                                                                &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_read&lt;/span&gt;                                                 &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;encrypt&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;......&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_io&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_io_complete&lt;/span&gt;
+                           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                           &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decrypt&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;异步 IO 无论是 simulate IO 还是 native aio， 都是把请求放到一个 slot 里，由后台异步线程去刷盘, 发起 IO 请求的入口函数是 os_aio_func, 对于同步读写请求（OS_AIO_SYNC），发起请求的线程直接调用os_file_read_func 或者os_file_write_func 去读写文件，然后返回。对于异步请求，用户线程从对应操作类型的任务队列（AIO::select_slot_array）中选取一个slot，将需要读写的信息存储于其中（AIO::reserve_slot）, 对于 write 操作，此时把需要写入的数据进行加密。对于Native AIO（使用linux自带的LIBAIO库），调用函数AIO::linux_dispatch，将IO请求分发给kernel层。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;fil_io&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_io_set_encryption&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os_aio&lt;/span&gt;
+       &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+       &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_aio_func&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AIO&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reserve_slot&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_encrypt_page&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;encrypt&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+               &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;linux_dispatch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;处理异步 IO 请求的入口函数是 fil_aio_wait, 对于 Native AIO，调用函数os_aio_linux_handle 获取读写请求。IO线程会反复以500ms（OS_AIO_REAP_TIMEOUT）的超时时间通过io_getevents确认是否有任务已经完成了（LinuxAIOHandler::collect()），如果有读写任务完成，找到已完成任务的slot后，释放对应的槽位,写请求已经加密过，直接写入即可，读请求需要进行解密，调用堆栈如下。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;fil_aio_wait&lt;/span&gt;
+     &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+     &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_aio_linux_handle&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LinuxAIOHandler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;collect&lt;/span&gt;
+                            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;io_complete&lt;/span&gt;
+                                    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_io_complete&lt;/span&gt;
+                                               &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                               &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decrypt&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;master-key-rotation&quot;&gt;Master key rotation&lt;/h4&gt;
+&lt;p&gt;Master_key 对于整个实例加密非常重要，官方加密方法最重要的一个特性就是可以更新 master_key, 因为 tablespace_key 的明文不会变，更新 master_key 之后只需要把 tablespace_key 重新加密写入第一个页中即可。入口是 server 层一个类 Rotate_innodb_master_key::execute 函数，这个类继承 Alter_instance 类，execute 函数会调用 innobase_encryption_key_rotation , 这个函数在引擎初始化（innobase_init）的时候注册到 innobase_hton 中。接着创建一个新的 master_key ，由于明文的 tablesapce key 保存在 fil_space_t 中，无需用原来的 master_key 进行解密。然后 fil_encryption_rotate 遍历 fil_system 中的每一个 fil_space_t ，调用 fsp_header_rotate_encrytion 加密 tablespace_key 并存储。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;Rotate_innodb_master_key&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;execute&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;innobase_encryption_key_rotation&lt;/span&gt;
+                      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                      &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;create_master_key&lt;/span&gt;
+                      &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                      &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_encryption_rotate&lt;/span&gt;
+                                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_rotate_encryption&lt;/span&gt;
+                                           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                           &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsp_header_fill_encryption_info&lt;/span&gt;
+                                           &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                           &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mlog_write_string&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;export-import&quot;&gt;Export/ Import&lt;/h4&gt;
+&lt;p&gt;为了支持 Export/Import 加密表，引入了 transfer_key，在 export 的时候随机生成一个 transfer_key， 把现有的 tablespace_key 用 transfer_key 加密，并将两者同时写入 table_name.cfp 的文件中，注意这里 transfer_key 保存的是明文。Import 会读取 transfer_key 用来解密，然后执行正常的 import 操作即可，一旦 import 完成，table_name.cfg 文件会被立刻删除。写 transfer_key 调用栈:&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;row_quiesce_write_cfp&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;row_quiesce_write_transafer_key&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Encryption&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;random_value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;transfer_key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_aes_encrypt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;my_aes_256_ecp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;import 调用栈：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;row_import_for_mysql&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;row_import_read_cfg&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;       &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;row_import_read_encryption_data&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                   &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;table_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cfp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                   &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;                   &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;my_aes_decrypt&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_tablespace_iterate&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fil_iterator&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IORequest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;encryption_key&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_read&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                  &lt;span class=&quot;o&quot;&gt;---&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os_file_write&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;崩溃恢复&quot;&gt;崩溃恢复&lt;/h4&gt;
+&lt;p&gt;在数据库进行崩溃恢复的时候 InnoDB 是无法从字典表取得数据的，也就是说正常判断一个表是不是加密表的路径（Dict_table_t::flags2 -&amp;gt; fil_space_t）是行不通的，所以需要在 ibd 文件的头部标记加密，读取 ibd 就知道表空间类型。对于官方的加密方法，因为有 tablespace_key 的相关信息持久化在页面上，受 redo 保护，所以在崩溃恢复的时候需要能够从 redo 中正确解析，需要增加处理逻辑。对于崩溃恢复的详细介绍可以参考早期月报 &lt;a href=&quot;http://mysql.taobao.org/monthly/2015/06/01/&quot;&gt;Innodb 崩溃恢复过程&lt;/a&gt;。这部分相关修改并不多，首先需要构建 recv_sys , 在 recv_sys 结构中增加了一个 encryption_list, 保存需要回复的加密表空间信息, 初始化在 recv_parse_or_apply_log_rec_body 中，如果是 page = 0 的页，并且不是系统表空间，就调用 fil_write_encryption_parse -&amp;gt; fsp_header_decode_encryption_info 进行解析，拿到 master_id, 查找 keyring plugin 得到 master_key, 然后解析 tablespace_key，如果是未加载的表空间，就放到 recv_sys-&amp;gt;encryption_list 里面。&lt;/p&gt;
+
+&lt;p&gt;在构建 recv_spaces 的时候，会调用 fil_name_parse-&amp;gt;fil_name_process-&amp;gt;fil_ibd_load ， 如果是加密表空间，并且在 recv_sys-&amp;gt;encryption_list 中，就从 recv_sys-&amp;gt;encryption_list 里找到对应的 space id 初始化加密信息，后面应用 redo 日志就可以先对页面进行加解密处理。&lt;/p&gt;
+
+&lt;h3 id=&quot;总结&quot;&gt;总结&lt;/h3&gt;
+&lt;p&gt;官方的这种加密方式优点和缺点都相当明显，优点是 master_key 可以经常更新，能够满足一定的用户需求，并且每个表都可以拥有不同的秘钥 tablespace_key ，即使一张表被破解，其它表也不会立刻丢失数据。缺点也在 tablesapce_key 的存放上，所有的人都知道加密的秘钥保存在哪里，甚至知道明文的 checksum 是什么，对于高安全的用户来说，秘钥不落地是非常重要的，显然官方的这种加密方式无法满足。另外一个很危险的就是 export/import ， 虽然重新生成了一个 transfer_key，但是竟然是明文保存在文件里，即使用完就会删除，但是这个时间间隙被利用就相当危险了。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;注&lt;/strong&gt; 文章首次发表在团队博客&lt;a href=&quot;http://mysql.taobao.org/monthly/2018/04/01/&quot;&gt;数据内核月报201804期&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+</description>
+        <pubDate>Wed, 18 Apr 2018 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/computer%20science/database/mysql/2018/04/18/innodb-Encryption/</link>
+        <guid isPermaLink="true">http://localhost:4000/computer%20science/database/mysql/2018/04/18/innodb-Encryption/</guid>
+        
+        
+        <category>computer science</category>
+        
+        <category>database</category>
+        
+        <category>MySQL</category>
+        
+      </item>
     
       <item>
         <title>MySQL 权限浅析</title>
@@ -1855,290 +2148,6 @@ Signal handling thread got signal 10
         <category>Berkeley DB</category>
         
         <category>computer science</category>
-        
-      </item>
-    
-      <item>
-        <title>PostgreSQL 客户端认证机制</title>
-        <description>&lt;p&gt;最近实验室数据库需要提高安全性，因为以前只有自己人用，基本上是在裸奔，知道端口号和IP就可以连接上，不需要任何认证信息，没有安全可言。最简单的认证方式就是用户名和密码，但平常使用PG的时候都没有用到，就研究了一下PG的认证方式，取取经。&lt;/p&gt;
-
-&lt;h3 id=&quot;配置与使用&quot;&gt;配置与使用&lt;/h3&gt;
-
-&lt;p&gt;PG的认证方式有很多种，而且对于不同的database，不同的user，不同的访问IP都可以选择不同的方式认证。具体在配置文件pg_hba.conf中说明。&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;local&lt;/td&gt;
-      &lt;td&gt;DATABASE &lt;/td&gt;
-      &lt;td&gt;USER &lt;/td&gt;
-      &lt;td&gt;METHOD &lt;/td&gt;
-      &lt;td&gt;[OPTIONS]&lt;/td&gt;
-      &lt;td&gt; &lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;host&lt;/td&gt;
-      &lt;td&gt;DATABASE &lt;/td&gt;
-      &lt;td&gt;USER &lt;/td&gt;
-      &lt;td&gt;ADDRESS &lt;/td&gt;
-      &lt;td&gt;METHOD &lt;/td&gt;
-      &lt;td&gt;[OPTIONS]&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;hostssl&lt;/td&gt;
-      &lt;td&gt;DATABASE &lt;/td&gt;
-      &lt;td&gt;USER &lt;/td&gt;
-      &lt;td&gt;ADDRESS &lt;/td&gt;
-      &lt;td&gt;METHOD &lt;/td&gt;
-      &lt;td&gt;[OPTIONS]&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;hostnossl&lt;/td&gt;
-      &lt;td&gt;DATABASE &lt;/td&gt;
-      &lt;td&gt;USER &lt;/td&gt;
-      &lt;td&gt;ADDRESS &lt;/td&gt;
-      &lt;td&gt;METHOD &lt;/td&gt;
-      &lt;td&gt;[OPTIONS]&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;配置的时候大写字母要被对应的内容所取代。&lt;/p&gt;
-
-&lt;p&gt;其中local匹配本地Unix域套接字访问。host 对应TCP/IP的链接认证，即可以匹配SSL链接请求，也可以匹配非SSL链接请求。hostssl 匹配使用TCP/IP的SSL链接请求，如果需要PG支持SSL，需要在客户端和服务器端安装openSSL，并且在编译阶段使用 –with-openssl，具体配置参考&lt;strong&gt;&lt;a href=&quot;http://www.postgresql.org/docs/9.5/interactive/install-procedure.html&quot;&gt;这里&lt;/a&gt;&lt;/strong&gt;。Hostnossl匹配普通的TCP/IP 链接。&lt;/p&gt;
-
-&lt;p&gt;后面内容与字面描述一致，ADDRESS使用CIDR-address（IP/掩码）格式，声明匹配的客户端IP地址范围。METHOD是具体的认证方式，OPTION是具体认证方式可以配置的选项，以name-value的形式出现。例如：&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;local&lt;/td&gt;
-      &lt;td&gt;all&lt;/td&gt;
-      &lt;td&gt;all&lt;/td&gt;
-      &lt;td&gt;127.0.0.1/32&lt;/td&gt;
-      &lt;td&gt;md5&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;host&lt;/td&gt;
-      &lt;td&gt;postgres&lt;/td&gt;
-      &lt;td&gt;all&lt;/td&gt;
-      &lt;td&gt;192.168.12.10/32&lt;/td&gt;
-      &lt;td&gt;md5&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;host&lt;/td&gt;
-      &lt;td&gt;all&lt;/td&gt;
-      &lt;td&gt;all&lt;/td&gt;
-      &lt;td&gt;192.168.0.0/16&lt;/td&gt;
-      &lt;td&gt;ident map=omicron&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;第一个表示本地使用Unix域套接字访问，任何用户访问任何数据库的认证方式都是md5。安装PG后对本地的访问默认是trust, 更改为md5后使用psql登录：&lt;/p&gt;
-
-&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;postgres@ubuntu:~&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;psql
-Password:
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;默认登陆的是postgres数据库，初始是没有密码的，输入任何密码都会被拒绝，需要在后台设置密码：&lt;/p&gt;
-
-&lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    alter role postgres password &lt;span class=&quot;s1&quot;&gt;'your password'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;密码会使用md5加密保存，并且会在系统内部随机生成一个四位大小的随机数，和明文密码一起经过md5加密，为了提高破解的难度，也称作“加盐”。&lt;/p&gt;
-
-&lt;p&gt;ident 认证方式是比较登录PG的用户和登录客户端的用户名是否相同，假设使用用户名messi登录了linux，在此账户下访问PG，如果访问的数据库用户不是messi，就不允许登陆。但是大多数情况下，两个用户名并不相同，所以PG提供了另一个映射文件：pg_ident.conf ，其中内容格式如下：&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;map-name&lt;/td&gt;
-      &lt;td&gt;system-username&lt;/td&gt;
-      &lt;td&gt;database-username&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;omicron&lt;/td&gt;
-      &lt;td&gt;iniesta&lt;/td&gt;
-      &lt;td&gt;messi&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;omicron 是map的名字，在上述第三个例子中定义ident，此时登录OS的用户是iniesta，但可以访问PG中用户为messi的数据库。如果system-username字段以一个反斜杠(/)开始， 那么该字段的剩余部分被作为一个规则表达式对待。可以参看&lt;strong&gt;&lt;a href=&quot;http://www.postgresql.org/docs/9.5/interactive/functions-matching.html#FUNCTIONS-POSIX-REGEXP&quot;&gt;PG的正则表达式语法&lt;/a&gt;&lt;/strong&gt;。除了md5，ident认证方式，还有其它多种认证方式，请参看&lt;strong&gt;&lt;a href=&quot;http://www.postgresql.org/docs/9.5/interactive/client-authentication.html&quot;&gt;官方文档&lt;/a&gt;&lt;/strong&gt;。&lt;/p&gt;
-
-&lt;h3 id=&quot;源码解析&quot;&gt; 源码解析&lt;/h3&gt;
-
-&lt;p&gt;当postmaster启动的时候，会读取并解析上述两个配置文件，分别调用load_hba() load_ident() 两个函数，这两个函数会逐行的解析里面的内容，每一行的内容都有一个对应的数据结构来描述，分别是：&lt;/p&gt;
-
-&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IdentLine&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;linenumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;        &lt;span class=&quot;cm&quot;&gt;/*记录行号*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;usermap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;        &lt;span class=&quot;cm&quot;&gt;/*map名*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ident_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;     &lt;span class=&quot;cm&quot;&gt;/*认证的用户，也就是需要映射的OS登录用户名*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pg_role&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;        &lt;span class=&quot;cm&quot;&gt;/*pg 角色名*/&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;regex_t&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;re&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;         &lt;span class=&quot;cm&quot;&gt;/*正则表达式*/&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IdentLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HbaLine&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;linenumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;    &lt;span class=&quot;cm&quot;&gt;/*记录行号*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rawline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;           &lt;span class=&quot;cm&quot;&gt;/*原本的内容*/&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;ConnType&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;conntype&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;      &lt;span class=&quot;cm&quot;&gt;/*链接类型*/&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;databases&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;         
-    &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;roles&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;      
-    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sockaddr_storage&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;cm&quot;&gt;/*IP地址范围*/&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sockaddr_storage&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;cm&quot;&gt;/*子网掩码*/&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;IPCompareMethod&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ip_cmp_method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hostname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;UserAuth&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;auth_method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;cm&quot;&gt;/*认证方式 md5 ident等*/&lt;/span&gt;
-
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;usermap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;          &lt;span class=&quot;cm&quot;&gt;/*ident map名*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pamservice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;       &lt;span class=&quot;cm&quot;&gt;/*PAM服务*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;ldaptls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;      &lt;span class=&quot;cm&quot;&gt;/*ldap中是否使用TLS*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapserver&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;       
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;ldapport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapbinddn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapbindpasswd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapsearchattribute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapbasedn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;ldapscope&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapprefix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ldapsuffix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;clientcert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;     &lt;span class=&quot;cm&quot;&gt;/*ssl客户端证书认证*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;krb_server_hostname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;cm&quot;&gt;/*krb 服务器名*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;krb_realm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;include_realm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;radiusserver&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;      &lt;span class=&quot;cm&quot;&gt;/*radi服务名*/&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;radiussecret&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;radiusidentifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;radiusport&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HbaLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;逐行解析并放入这两个数据结构中，存放内容的空间会在特定的内存上下文中。解析完毕后会用PG中的List结构把每一行组成一个链表，分别会有静态全局变量指向链表头，以备后续认证访问。当postmaster正在运行，如果想改变认证方式，修改配置文件后需要发送SIGHUP信号，或者执行pg_ctl -D ./DATADIR reload命令，会重新读取配置文件。&lt;/p&gt;
-
-&lt;p&gt;具体的认证行为在postgres进程中，因为PG的多进程架构，当新的链接请求到达pastmaster之后，会fork一个postgres进程进行处理，上述解析的内容也会从postmaster继承过来，但是postmaster重新读配置文件解析后，却不会影响已经执行的postgres，大多数情况postgres正在运行说明已经通过了验证，也不用理会认证方式的改变。一个新链接包含的内容保存在 Port 这个数据结构中，也有一个全局的指针指向它，在认证过程中与客户端的通信都是基于Port中的文件描述符。postgres也许并不需要关心此链接是一个本地的Unix域套接字，还是网络Socket。也把Port这个结构贴出来，源码里面的注释已经挺明白的：&lt;/p&gt;
-
-&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Port&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;pgsocket&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;sock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;			&lt;span class=&quot;cm&quot;&gt;/* File descriptor */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;noblock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;cm&quot;&gt;/* is the socket in non-blocking mode? */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;ProtocolVersion&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;proto&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;cm&quot;&gt;/* FE/BE protocol version */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;SockAddr&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;laddr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;			&lt;span class=&quot;cm&quot;&gt;/* local addr (postmaster) */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;SockAddr&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;raddr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;			&lt;span class=&quot;cm&quot;&gt;/* remote addr (client) */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remote_host&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	&lt;span class=&quot;cm&quot;&gt;/* name (or ip addr) of remote host */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remote_hostname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;span class=&quot;cm&quot;&gt;/* name (not ip addr) of remote host, if
-                                 * available */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;remote_hostname_resolv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;cm&quot;&gt;/* see above */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remote_port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	&lt;span class=&quot;cm&quot;&gt;/* text rep of remote port */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;CAC_state&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;canAcceptConnections&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	&lt;span class=&quot;cm&quot;&gt;/* postmaster connection status */&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * Information that needs to be saved from the startup packet and passed
-     * into backend execution.  &quot;char *&quot; fields are NULL if not set.
-     * guc_options points to a List of alternating option names and values.
-     */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;database_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cmdline_options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guc_options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * Information that needs to be held during the authentication cycle.
-     */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;HbaLine&lt;/span&gt;    &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hba&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;		&lt;span class=&quot;n&quot;&gt;md5Salt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt;		&lt;span class=&quot;cm&quot;&gt;/* Password salt */&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * Information that really has no business at all being in struct Port,
-     * but since it gets used by elog.c in the same way as database_name and
-     * other members of this struct, we may as well keep it here.
-     */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;TimestampTz&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SessionStartTime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;cm&quot;&gt;/* backend start time */&lt;/span&gt;
-
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * TCP keepalive settings.
-     *
-     * default values are 0 if AF_UNIX or not yet known; current values are 0
-     * if AF_UNIX or using the default. Also, -1 in a default value means we
-     * were unable to find out the default (getsockopt failed).
-     */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;default_keepalives_idle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;default_keepalives_interval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;default_keepalives_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;keepalives_idle&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;keepalives_interval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;keepalives_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-
-&lt;span class=&quot;cp&quot;&gt;#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-&lt;/span&gt;
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * If GSSAPI is supported, store GSSAPI information. Otherwise, store a
-     * NULL pointer to make sure offsets in the struct remain the same.
-     */&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;pg_gssinfo&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;cp&quot;&gt;#else
-&lt;/span&gt;    &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;cp&quot;&gt;#endif
-&lt;/span&gt;
-    &lt;span class=&quot;cm&quot;&gt;/*
-     * SSL structures (keep these last so that USE_SSL doesn't affect
-     * locations of other fields)
-     */&lt;/span&gt;
-&lt;span class=&quot;cp&quot;&gt;#ifdef USE_SSL
-&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;SSL&lt;/span&gt;		   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ssl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;X509&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;peer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;	   &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;peer_cn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;long&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;cp&quot;&gt;#endif
-&lt;/span&gt;
-    &lt;span class=&quot;cm&quot;&gt;/* This field will be in a saner place in 9.4 and up */&lt;/span&gt;
-    &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;			&lt;span class=&quot;n&quot;&gt;remote_hostname_errcode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;		&lt;span class=&quot;cm&quot;&gt;/* see above */&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;可以看到，和客户端认证相关的除了基本的信息，比如要访问的数据库，客户端的地址，用户名等，里面包含了一个HbaLine 指针和 md5Salt。认证的入口是InitProcess函数，最终会调用ClientAuthentication，首先根据访问信息去匹配满足要求的HbaLine，如果匹配不到就会报错并退出数据库。接着验证客户端证书（如果有），然后就根据认证方式进入不同的认证方式分支。认证过程会进行多次通信。最终得到认证结果选择是否中断链接。&lt;/p&gt;
-
-&lt;p&gt;以md5认证方式为例，第一步需要组装信息发送给客户端，要求客户端输入密码。具体发送消息的格式如下：&lt;/p&gt;
-&lt;table&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-
-&lt;td width=&quot;184&quot;&gt;Type（‘R’char）
-&lt;/td&gt;
-
-&lt;td width=&quot;184&quot;&gt;Type（MD5 int）
-&lt;/td&gt;
-
-&lt;td width=&quot;184&quot;&gt;Salt（char[4]）
-&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;一个值为‘R’的char，表示需要客户端回应，接着是认证的类型，客户端根据类型做不同信息相应，最后是MD5特有的“盐”值，需要从数据库中取出来，发送给客户端，让客户端完成加密工作。第二步就是等待客户端发送过来的密码，与数据库的密码进行比对，完成验证。这里最重要的就是客户端需要统一信息发送接收和解析的格式。&lt;/p&gt;
-
-&lt;h3 id=&quot;总结&quot;&gt;总结&lt;/h3&gt;
-
-&lt;p&gt;PG的多进程架构让认证流程变得很清晰，项目中采用多线程+epoll处理多个链接，逻辑就会稍微复杂一点。如果SSL加密可靠，似乎可以在网络上传送密码的明文，所有加密工作可以放到数据库端来做，这样客户端就少了一道加密的工作。关于ident认证方式，某种程度上借用了OS登录认证的保护，值得借鉴。&lt;/p&gt;
-
-&lt;h3 id=&quot;参考&quot;&gt;参考&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://product.dangdang.com/22552056.html&quot;&gt;&lt;strong&gt;PostgreSQL 数据库内核分析&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;http://www.jb51.net/article/40300.htm&lt;/strong&gt;&lt;/p&gt;
-</description>
-        <pubDate>Fri, 22 Jan 2016 20:48:30 +0800</pubDate>
-        <link>http://localhost:4000/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/</link>
-        <guid isPermaLink="true">http://localhost:4000/computer%20science/database/2016/01/22/postgresql-e5-ae-a2-e6-88-b7-e7-ab-af-e8-ae-a4-e8-af-81-e6-9c-ba-e5-88-b6/</guid>
-        
-        <category>PostgreSQL</category>
-        
-        
-        <category>computer science</category>
-        
-        <category>database</category>
         
       </item>
     

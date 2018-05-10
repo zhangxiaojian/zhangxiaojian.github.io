@@ -181,6 +181,28 @@
             ">
     			
 <div class="post-preview">
+    <a href="/c++/2014/08/11/e6-97-a0-e6-b3-95-e8-a7-a6-e5-8f-8a-e7-9a-84-e6-9e-84-e9-80-a0-e5-87-bd-e6-95-b0-ef-bc-9f/">
+        <h2 class="post-title">
+            无法触及的构造函数？
+        </h2>
+        
+        <div class="post-content-preview">
+            Pre：
+
+在More Effective C++条款8中，介绍new operator的时候，说new operator是由两部分组成的，一部分是operator new，用来根据对象大小申请空间；另一部分是对象的构造函数，用来初始化对象。代码描述如下：
+
+//申请空间，用来存放string对象
+void *memory = operator new(sizeof(string));
+ca...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on August 11, 2014
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/berkeley%20db/database/2014/08/08/berkeley-db-e7-9a-84-e6-a1-b6-e6-93-8d-e4-bd-9c/">
         <h2 class="post-title">
             Berkeley DB 的桶操作
@@ -376,24 +398,6 @@ int main()
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on February 24, 2014
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/life%20traces/2014/01/23/e5-85-ad-e4-ba-ba-e8-a1-8c/">
-        <h2 class="post-title">
-            六人行
-        </h2>
-        
-        <div class="post-content-preview">
-            刚刚看完了最后一集的老友记，也有人翻译成六人行。一共有十季，每季大概二十多集。算算也有两百多集了。从大一开始看的，当时还纠结在四级能不能过。所以就想找点美剧连连听力。看来当时看六人行还真的挺有功利性的、
-
-说实话吧，开始的前三集看着怪怪的，总是有观众笑，不太适应。但是三集之后，总是和观众一起笑，也就不觉得什么了。后来几乎是每天看一集，为了练听力，计划着看。看着看着，变得一天看两集，三集，再后...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on January 23, 2014
     </p>
 </div>
 <hr>
@@ -652,7 +656,7 @@ int main()
                     <br>
                 </p>
             </div>
-        </div>
+       </div>
     </div>
 </footer>
 
@@ -753,18 +757,6 @@ int main()
 <!-- Side Catalog -->
 
 
-<script>
-  (function() {
-    var cx = '009469504555171126461:k_ee4gwpeig';
-    var gcse = document.createElement('script');
-    gcse.type = 'text/javascript';
-    gcse.async = true;
-    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(gcse, s);
-  })();
-</script>
-<gcse:search></gcse:search>
 
 <!-- Multi-Lingual -->
 
