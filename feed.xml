@@ -5,9 +5,103 @@
     <description>life test</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Thu, 10 May 2018 23:28:26 +0800</pubDate>
-    <lastBuildDate>Thu, 10 May 2018 23:28:26 +0800</lastBuildDate>
+    <pubDate>Tue, 29 May 2018 19:10:51 +0800</pubDate>
+    <lastBuildDate>Tue, 29 May 2018 19:10:51 +0800</lastBuildDate>
     <generator>Jekyll v3.7.0</generator>
+    
+      <item>
+        <title>Online DDL 工具 gh-ost 支持阿里云 RDS</title>
+        <description>&lt;h2 id=&quot;背景&quot;&gt;背景&lt;/h2&gt;
+&lt;p&gt;Online DDL 一直都是 DBA 运维时比较头疼的事，一般都会选择在业务低峰期谨慎的操作，比较常用的几个工具比如 &lt;a href=&quot;https://www.percona.com/doc/percona-toolkit/2.2/pt-online-schema-change.html&quot;&gt;percona pt-online-schema-change&lt;/a&gt; , &lt;a href=&quot;https://www.facebook.com/notes/mysql-at-facebook/online-schema-change-for-mysql/430801045932/&quot;&gt;Facebook OSC&lt;/a&gt;, 本质上它们都是基于触发器的，简单来讲就是通过数据库的触发器把作用在源表的操作在一个事务内同步到修改后的表中，这在业务高峰期时会极大的加重主库的负载。gh-ost 是由 Github 开发的 Online DDL 工具，使用 binlog 代替触发器来做增量数据同步，这样可以降低主库的负载，异步的执行。为了表彰 Github 在 gh-ost 上的贡献，MySQL 社区把 &lt;a href=&quot;http://mysqlawards.org/mysql-community-awards-2017-the-winners/&quot;&gt;2017 年的社区贡献奖&lt;/a&gt;颁发给了 Github（值得一提的是 &lt;a href=&quot;http://mysqlawards.org/mysql-community-awards-2018-the-winners/&quot;&gt;2018 年的 MySQl 社区贡献奖&lt;/a&gt;颁发给了阿里云数据库团队）。前段时间有用户反映无法在阿里云 RDS 上使用 gh-ost，经过排查和沟通解决方案，最终官方接受了我们提交的代码，增加 &lt;code class=&quot;highlighter-rouge&quot;&gt;--aliyun-rds&lt;/code&gt; 参数，用户下载最新的主干代码就可以使用。&lt;/p&gt;
+
+&lt;h2 id=&quot;gh-ost&quot;&gt;gh-ost&lt;/h2&gt;
+
+&lt;h3 id=&quot;基于触发器的-online-ddl-工具&quot;&gt;基于触发器的 Online DDL 工具&lt;/h3&gt;
+&lt;p&gt;介绍 gh-ost 之前，先来简单了解一下在这之前基于触发器的工具原理。考虑一下 Online DDL 实际上可以粗糙的分成几步：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;根据原来的表结构执行 alter 语句，新建一个更新表结构之后的表，通常称为幽灵表。对用户不可见。&lt;/li&gt;
+  &lt;li&gt;把原来表的已有数据 copy 到幽灵表。&lt;/li&gt;
+  &lt;li&gt;在 copy 的过程中，会有新的数据过来，这些数据要同步到幽灵表，也就是 “Online” 的精髓。&lt;/li&gt;
+  &lt;li&gt;copy 和同步完成后，锁住源表，交换表名，幽灵表替换源表。&lt;/li&gt;
+  &lt;li&gt;删除源表（可选），完成 online DDL。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这其中比较重要的第三步，如何同步增量的数据。最开始办法就是使用触发器，在源表上增加几个触发器，例如当源表执行 INSERT，UPDATE，DELETE 语句，就把这些操作通过触发器同步到幽灵表上，这样在幽灵表上执行的语句和源表的语句就属于同一个事务，显然这样会影响主库的性能。&lt;/p&gt;
+
+&lt;p&gt;后面出现了异步的模式，使用触发器把对源表的操作保存到一个 Changelog 表中，不真正的去执行，专门有一个后台的线程从 Changelog 表读取数据应用到幽灵表上。这种方式一定程度上缓解了主库的压力，但是保存到 Changelog 表也同样是属于同一个事务中，对性能也有不小的影响。&lt;/p&gt;
+
+&lt;p&gt;在 &lt;a href=&quot;https://github.com/github/gh-ost/blob/master/doc/why-triggerless.md&quot;&gt;gh-ost 的文档&lt;/a&gt; 中细数了触发器的不足之处，大致有以下几点:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Triggers, overhead: 触发器是用存储过程的实现的，就无法避免存储过程本身需要的开销。&lt;/li&gt;
+  &lt;li&gt;Triggers, locks: 增大了同一个事务的执行步骤，更多的锁争抢。&lt;/li&gt;
+  &lt;li&gt;Trigger based migration, no pause: 整个过程无法暂停，假如发现影响主库性能，停止 Online DDL，那么下次就需要从头来过。&lt;/li&gt;
+  &lt;li&gt;Triggers, multiple migrations: 他们认为多个并行的操作是不安全的。&lt;/li&gt;
+  &lt;li&gt;Trigger based migration, no reliable production test: 无法在生产环境做测试。&lt;/li&gt;
+  &lt;li&gt;Trigger based migration, bound to server: 触发器和源操作还是在同一个事务空间。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;triggerless&quot;&gt;Triggerless&lt;/h3&gt;
+&lt;p&gt;从上面的描述可以看出，触发器的作用是源表和幽灵表之间的增量数据同步，gh-ost 放弃了触发器，使用 binlog 来同步。gh-ost 作为一个伪装的备库，可以从主库/备库上拉取 binlog，过滤之后重新应用到主库上去，相当于主库上的增量操作通过 binlog 又应用回主库本身，不过是应用在幽灵表上。引用一下&lt;a href=&quot;https://github.com/github/gh-ost&quot;&gt;官网&lt;/a&gt;的图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/4161fbb2207c55d8d5c735b2951155e7.png&quot; alt=&quot;gh-ost-general-flow.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;gh-ost 首先连接到主库上，根据 alter 语句创建幽灵表，然后作为一个”备库“连接到其中一个真正的备库上，一边在主库上拷贝已有的数据到幽灵表，一边从备库上拉取增量数据的 binlog，然后不断的把 binlog 应用回主库。图中 cut-over 是最后一步，锁住主库的源表，等待 binlog 应用完毕，然后替换 gh-ost 表为源表。gh-ost 在执行中，会在原本的 binlog event 里面增加以下 hint 和心跳包，用来控制整个流程的进度，检测状态等。这种架构带来诸多好处，例如：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;整个流程异步执行，对于源表的增量数据操作没有额外的开销，高峰期变更业务对性能影响小。&lt;/li&gt;
+  &lt;li&gt;降低写压力，触发器操作都在一个事务内，gh-ost 应用 binlog 是另外一个连接在做。&lt;/li&gt;
+  &lt;li&gt;可停止，binlog 有位点记录，如果变更过程发现主库性能受影响，可以立刻停止拉binlog，停止应用 binlog，稳定之后继续应用。&lt;/li&gt;
+  &lt;li&gt;可测试，gh-ost 提供了测试功能，可以连接到一个备库上直接做 Online DDL，在备库上观察变更结果是否正确，再对主库操作，心里更有底。&lt;/li&gt;
+  &lt;li&gt;并行操作，对于 gh-ost 来说就是多个对主库的连接。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;需求和限制&quot;&gt;需求和限制&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/github/gh-ost/blob/master/doc/requirements-and-limitations.md&quot;&gt;官方文档&lt;/a&gt; 对于需求和限制解释的比较全面了，这里主要根据云数据库场景简单介绍下。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;用户没有 Super 权限，因此使用过程中要加上 –assume-rbr, gh-ost 会认为 binlog 本身就是 row 模式，不会再去修改。阿里云 RDS 上的 binlog 默认也是 row 模式，所以不存在问题。&lt;/li&gt;
+  &lt;li&gt;其它权限，主要是 REPLICATION SLAVE，REPLICATION CLIENT 可以拉取 binlog
+，也可以获得。&lt;/li&gt;
+  &lt;li&gt;无法连接到备库拉取 binlog。备库通常对用户来说是透明的，所以 gh-ost 需要直接连接到主库上去，这可能会增大对主库的负载。使用的时候需要增加 –allow-on-master， –assume-master-host。官方推荐的方式也是连接到其中一个备库，因为会有一些压力较大的 SELECT 操作，放在备库是最好的。几种连接模式如下图所示：&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://ata2-img.cn-hangzhou.img-pub.aliyun-inc.com/c50ebf2be1ca0b8ff5a064e0354249ed.png&quot; alt=&quot;gh-ost-operation-modes.png&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;aliyun-rds-参数&quot;&gt;aliyun-rds 参数&lt;/h2&gt;
+&lt;p&gt;当有用户反馈无法在阿里云 RDS 上使用 gh-ost 的时候，我们着手进行了排查，发现在 Github 上已经有热心的用户 &lt;a href=&quot;https://github.com/dikang123&quot;&gt;dikang123&lt;/a&gt;, &lt;a href=&quot;https://github.com/exherb&quot;&gt;exherb&lt;/a&gt; 在 &lt;a href=&quot;https://github.com/github/gh-ost/issues/470&quot;&gt;issue #470&lt;/a&gt; 中进行了讨论，原因是在校验阶段隐藏了两个参数，@@port 和 @@hostname，导致 gh-ost 获得了非法的字符。隐藏的原因是系统架构和安全的考虑，避免用户的端口和主机被恶意攻击。返回非法字符也是出于用户体验，例如 port 本应该是整型，如果返回 0，那么可能会有用户认为自己的数据库端口是 0，但是返回 ‘NULL’，用户就可以接收到明确的隐藏信号。&lt;/p&gt;
+
+&lt;p&gt;我们随后向官方提交了 Pull Request 从工具本身解决，经过多次交流和代码 review，决定增加一个参数 –aliyun-rds，这样就可以绕开非法字符的校验。具体的过程可以看下 &lt;a href=&quot;https://github.com/github/gh-ost/pull/541&quot;&gt;Pull Request 541&lt;/a&gt; 。&lt;/p&gt;
+
+&lt;p&gt;目前用户使用的话，记得加上以下几个参数：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;–allow-on-master&lt;/li&gt;
+  &lt;li&gt;–assume-rbr&lt;/li&gt;
+  &lt;li&gt;–assume-master-host&lt;/li&gt;
+  &lt;li&gt;–aliyun-rds&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;总结&quot;&gt;总结&lt;/h2&gt;
+&lt;p&gt;gh-ost 在 Online DDL 上确实做出了很大的创新，是一款优秀的工具，并且在很多地方的都有巧妙的设计，例如最后一步 &lt;a href=&quot;https://github.com/github/gh-ost/blob/master/doc/cut-over.md&quot;&gt;cut-over&lt;/a&gt;, &lt;a href=&quot;https://github.com/github/gh-ost/issues/82&quot;&gt;cut-over-example&lt;/a&gt;，本文并未详细描述。对于在云数据库上的使用，还有一些额外的限制，未来根据用户的需求，可以和数据库层面做更多的融合。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;注：文章首次发表在团队博客：&lt;a href=&quot;http://mysql.taobao.org/monthly/2018/05/02/&quot;&gt;数据库内核月报-18/05&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Sun, 20 May 2018 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/computer%20science/database/mysql/2018/05/20/online-DDL/</link>
+        <guid isPermaLink="true">http://localhost:4000/computer%20science/database/mysql/2018/05/20/online-DDL/</guid>
+        
+        
+        <category>computer science</category>
+        
+        <category>database</category>
+        
+        <category>MySQL</category>
+        
+      </item>
     
       <item>
         <title>InnoDB 表空间加密</title>
@@ -2039,115 +2133,6 @@ Signal handling thread got signal 10
         <category>computer science</category>
         
         <category>database</category>
-        
-      </item>
-    
-      <item>
-        <title>Berkeley DB 事务支持的应用架构</title>
-        <description>&lt;p&gt;本文翻译自Berkeley DB 官方文档 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_app.html&quot;&gt;&lt;strong&gt;Architecting Transactional Data Store applications&lt;/strong&gt;&lt;/a&gt; 一节，主要讲述使用BDB作为存储引擎时提供事务支持的几种进程访问模式。每个BDB环境都对应一个文件系统目录，其中包涵存储的数据和运行时提供的锁资源，互斥变量资源，共享缓冲池等。每个目录可以被多个BDB进程打开访问，但使用复杂度有较大区别。需要说明的是，每一个目录在打开它的BDB进程中被称作一个数据库环境，一个目录可以对应多个环境，一个环境只能对应打开一个目录。几种架构模式分别为：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;一个进程&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;多个相关的进程&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;多个不相关的进程&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;正文&quot;&gt;正文：&lt;/h3&gt;
-
-&lt;p&gt;当构建支持事务的应用程序，在架构方面就需要考虑应用程序的启动（是否需要执行recover动作），还要考虑如何处理系统或应用程序的错误。关于如何执行recover，请参看 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;Recovery procedures&lt;/strong&gt;&lt;/a&gt; 一节。&lt;/p&gt;
-
-&lt;p&gt;数据库环境恢复（&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;Recovery&lt;/strong&gt;&lt;/a&gt;）是一个单控制线程的处理过程，也就是说，一个线程必须在其它任何线程访问数据库环境之前完成恢复动作。（注：几个线程打开的是相同的目录）&lt;/p&gt;
-
-&lt;p&gt;执行恢复首先会标记已存在的数据库环境为“失败”，然后删除它，这会导致任何正在访问这个环境的的控制线程失败，并返回到应用程序处理（注：任何调用BDB函数访问数据库的操作都会失败，如果应用程序没有处理失败的代码，整个进程都会退出）。这个特点使应用程序进行恢复时不用考虑还可能有其它的线程在访问已经被删除的环境。重新创建数据库环境的顺序是序列化的，因此多线程/进程试图创建数据库环境将会序列化的跟在一个创建线程之后。&lt;/p&gt;
-
-&lt;p&gt;另一个方面，当删除（当做是恢复的其中一步）一个数据库环境时，需要考虑其它正在访问环境的线程使用的mutex变量类型。假如当数据库环境失败的时候，正在使用test-and-set mutexs 类型互斥变量，其它正在等待互斥变量的控制线程就会在环境被标记为“失败”的时候立刻检测到，然后在 BDB API 调用中返回一个错。如果环境失败的时候使用 blocking mutexs 互斥变量，并且底层系统实现互斥变量并不会因为占有互斥变量的控制线程死亡而解锁 mutex waiter，那么当环境恢复的时候等待mutex的线程将会永远阻塞。如果应用程序阻塞在其它事件上（比如等待一个socket 网络连接或者一个 GUI 事件），可能一段时间内都无法检测环境的恢复（注：因为此时并没有调用任何BDB的API）。这种mutex实现的操作系统并不多，但是存在的；构建在这种操作系统的应用程序在架构的时候，需要执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 的线程能够显示的中断正在使用相同环境的的进程，或者配置BDB使用 test-and-set mutexs，或者实现一些超时控制，看门狗进程用来唤醒或杀死一直在阻塞的线程。&lt;/p&gt;
-
-&lt;p&gt;即便如此，对于多个控制线程试图同时恢复一个数据库环境还是没有多大意义，因为最后一个执行的还是会删除所有之前控制线程创建的环境。然而，对于一些应用程序，首先在启动多个进程， 使用一个控制线程来执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;，然后其它进程打开环境继续执行，这样做是有意义的。&lt;/p&gt;
-
-&lt;p&gt;有三种常规的方式去构建一个BDB事务支持的应用程序。选择哪种主要基于应用程序是由单个进程组成或由多个相关的进程组成（例如，当系统启动时打开一个server），还是由多个不相关的进程组成（例如，由网络连接或用户打开的进程，记录到系统当中）。&lt;/p&gt;
-
-&lt;h3 id=&quot;1-单进程&quot;&gt;1 单进程&lt;/h3&gt;
-
-&lt;p&gt;第一种构建事务支持的应用程序方式是单进程模式。（进程可以是多线程的，也可以是单线程的）。&lt;/p&gt;
-
-&lt;p&gt;当进程启动的时候，对环境执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;然后打开数据库环境。应用程序可以选择性地接着创建多个线程。这些线程可以共享已经打开的&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;** DB_ENV** &lt;/a&gt;和 &lt;strong&gt;&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/db.html&quot;&gt;DB&lt;/a&gt;&lt;/strong&gt; 句柄，也可以创建它们自己的（注：一般情况下一个进程只会打开一个&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;&lt;strong&gt;DB_ENV&lt;/strong&gt;&lt;/a&gt;句柄）。在这种架构下，当有多个线程运行的时候，数据库很少被打开或关闭，数据库在只有一个线程运行的时候打开，在只剩一个线程的时候退出。最后一个线程负责关闭数据库以及数据库环境。&lt;/p&gt;
-
-&lt;p&gt;这种架构是实现起来最简单的一种，因为线程的序列化开启很容易，错误检测也不需要监控多个进程。&lt;/p&gt;
-
-&lt;p&gt;如果应用程序的线程模型允许进程在线程失败后继续执行，函数 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt; 可以用来判断数据库环境在线程失败后是否可用。如果应用程序不执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt; ，或者 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  返回 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/program_errorret.html#program_errorret.DB_RUNRECOVERY&quot;&gt;&lt;strong&gt;DB_RUNRECOVERY&lt;/strong&gt;&lt;/a&gt; ，那么程序必须当做系统失败来处理，执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 并且重建数据库环境。一旦这些操作完成，其它线程就可以继续执行（只要所有存在的BDB 句柄都已经丢弃）。（注：句柄重新创建即可）&lt;/p&gt;
-
-&lt;h3 id=&quot;2-多个相关进程&quot;&gt; 2 多个相关进程&lt;/h3&gt;
-
-&lt;p&gt;第二种构建事务支持的应用程序方式是使用一组相关进程。（这些进程可以是单线程的，也可以是多线程的）&lt;/p&gt;
-
-&lt;p&gt;这种架构需要根据控制线程被创建的顺序，来保证顺序的执行数据库环境恢复工作。&lt;/p&gt;
-
-&lt;p&gt;除此之外，这种架构需要监控控制线程的行为。如果任何一个线程退出时有未关闭的 BDB 句柄，应用程序就需要调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  去检测是否有丢失的 mutexes 和 locks 资源，以此决定应用程序是否能够继续执行。如果应用程序不调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  或者 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  返回结果表示数据库不可以继续使用，应用程序就当做发生系统错误来处理，执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 并创建一个新的数据库环境。一旦这些操作完成，其它控制线程就可以继续执行（只要恢复之前的BDB句柄被丢弃了）（注：重新创建了新的环境，其它句柄就要根据这个环境重新创建，之前的要丢弃，因为执行恢复的时候会删除）。&lt;/p&gt;
-
-&lt;p&gt;构建一组相关进程最简单的方式是首先创建一个 “监控” 进程（通常是一个脚本），监控进程在整个系统启动的时候最先启动，执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; ，然后创建其它真正负责工作的进程。监控进程接下来只需要等待其它控制线程启动，确保它们不会意外退出。如果其中一个控制线程意外退出，监控进程可以选择性的调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  。如果应用程序不调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  或者 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  返回结果表示数据库不可以继续使用，监控进程负责使用此环境的所有控制线程，执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;，并且开启新的控制线程来执行工作。（注：控制线程可以是一个进程，也可以是进程中的一个线程，表示使用BDB句柄访问数据库的一个执行流）。&lt;/p&gt;
-
-&lt;h3 id=&quot;3-多个无关进程&quot;&gt; 3 多个无关进程&lt;/h3&gt;
-
-&lt;p&gt;第三种方式就是使用多个无关的进程来架构（进程可以是多线程的也可以是单线程的）。这是实现起来最困难的一种架构方式，难度主要在于在一些系统上不容易寻找或监控不相关的进程。有许多技术去实现这种架构。&lt;/p&gt;
-
-&lt;p&gt;其中一个解决方式是当打开BDB 句柄的时候记录控制线程的ID。举个例子，监控进程负责执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; ，执行完毕后立刻创建一个哨兵文件（注：这很类似PG的锁文件postmaster.pid）。其它任何想要使用这个数据库环境的工作进程都需要检测哨兵文件。如果哨兵文件不存在，工作进程可以选择等待或者退出。一旦检测到哨兵文件存在，就将自己的进程ID注册到哨兵文件里面（通过共享内存，IPC或者其他注册机制），然后工作进程尽可以打开它的 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;&lt;strong&gt;DB_ENV&lt;/strong&gt; &lt;/a&gt; 句柄并执行。当工作进程使用完毕数据库环境，它需要注销自己（在哨兵文件中删除自己的进程ID）。监控进程需要不断的检查以确保在使用数据库环境的过程中没有失败。如果工作进程在使用数据库环境过程中失败，监控进程就删除哨兵文件，同时杀死所有正在使用这个环境的工作进程，执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; ，然后重新创建哨兵文件。&lt;/p&gt;
-
-&lt;p&gt;这种实现方式也有缺点，在某些系统上，很难判断不相关的进程是否仍然在运行。比如，POSIX 系统通常不允许给给不相关的进程发送信号。可以使用一些小手段，如使用一些在进程退出时状态会改变的系统资源，来实现对不相关进程的监控。在 POSIX 系统上，flock 或者 fcntl-style lock 都可以实现，就像Windows systems 上的LockFile 。其它系统可能会使用如文件引用计数，改变次数等进程相关的资源。在最糟糕的情况下，控制线程可能需要每隔一段时间就重新注册：如果监控进程在特定的时间间隔内没有收到工作进程的重新注册消息，就需要采取行动，恢复环境。&lt;/p&gt;
-
-&lt;p&gt;BDB库含有一种内建的实现方式，在调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;open()&lt;/strong&gt;&lt;/a&gt; 的时候使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记：&lt;/p&gt;
-
-&lt;p&gt;如果使用了 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记，每一个试图打开数据库环境的进程首先会检查是否需要执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;。如果因为任何原因需要执行（包括第一次创建初始化环境），并且使用了 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_RECOVER&quot;&gt;&lt;strong&gt;DB_RECOVER&lt;/strong&gt;&lt;/a&gt; 标记，那么将会执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作，接着正常开打数据库环境。如果如需要执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;。但是没有指定 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_RECOVER&quot;&gt;&lt;strong&gt;DB_RECOVER&lt;/strong&gt;&lt;/a&gt; 标记，将会返回&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/program_errorret.html#program_errorret.DB_RUNRECOVERY&quot;&gt;&lt;strong&gt;DB_RUNRECOVERY&lt;/strong&gt;&lt;/a&gt; 错误。如果不需要执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_RECOVER&quot;&gt;&lt;strong&gt;DB_RECOVER&lt;/strong&gt;&lt;/a&gt; 标记将会被忽略。&lt;/p&gt;
-
-&lt;p&gt;在真正的 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作执行之前，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envevent_notify.html#event_notify_DB_EVENT_REG_PANIC&quot;&gt;&lt;strong&gt;DB_EVENT_REG_PANIC&lt;/strong&gt;&lt;/a&gt; 事件将会设置在数据库环境中。在进程中使用了 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envevent_notify.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;set_event_notify()&lt;/strong&gt;&lt;/a&gt; 方法的应用程序将会在下一次访问数据库环境的操作之前被更新（注：执行方法中设置的回调函数）。接收到这个事件的进程应该退出数据库环境。同样的，如果有其它进程加入到当前环境中，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envevent_notify.html#event_notify_DB_EVENT_REG_ALIVE&quot;&gt;&lt;strong&gt;DB_EVENT_REG_ALIVE&lt;/strong&gt;&lt;/a&gt; 事件将会被触发。只有正在执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作的进程才会收到事件通知。这些进程会代表其它正在访问当前环境的进程接收一次此事件。 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envevent_notify.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;set_event_notify()&lt;/strong&gt;&lt;/a&gt; 方法的回调函数参数中包含了正在访问当前环境的所有进程描述符。这样，执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作的进程可以给访问环境的其它进程发送信号，或者在 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作之前执行一些其它的操作（比如，杀死其它进程）。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envset_timeout.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;set_timeout()&lt;/strong&gt; &lt;/a&gt;方法的&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envset_timeout.html#set_timeout_DB_SET_REG_TIMEOUT&quot;&gt;&lt;strong&gt;DB_SET_REG_TIMEOUT&lt;/strong&gt;&lt;/a&gt; 标记设置后，将会在执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作之前等待一段时间。这就为其它进程接收到 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envevent_notify.html#event_notify_DB_EVENT_REG_PANIC&quot;&gt;&lt;strong&gt;DB_EVENT_REG_PANIC&lt;/strong&gt;&lt;/a&gt; 事件并退出环境提供了一个时间窗口。&lt;/p&gt;
-
-&lt;p&gt;接下来包含使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 架构的三种额外需求：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;首先，所有使用同一个环境的应用程序都需要在打开数据库环境的时候使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记，然而，如果应用程序仅仅选择使用一个进程来执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作，就不需要对其它进程使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记，因为第一个打开数据库的进程将会执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;然后，每一个进程都只能拥有一个 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;&lt;strong&gt;DB_ENV&lt;/strong&gt; &lt;/a&gt; 句柄，因为 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 锁是进程私有的，而不是线程私有的，一个环境下的多个 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;&lt;strong&gt;DB_ENV&lt;/strong&gt; &lt;/a&gt; 句柄将会彼此竞争，存在数据损坏的潜在因素。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;第三点，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 在实现中并不会显示的终结正在恢复过程中的进程。而是需要靠进程自己注意到数据库环境已经默默的被丢弃了。根据这个原因，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记应该在 mutex 变量不会在操作系统层面阻塞的环境中使用，否则就会存在一个控制线程等待一个永远无法获得的 mutex 变量而永远阻塞的风险。使用任何 test-and-set mutex 变量实现将确保这种情况不会发生，基于这个原因，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记通常与 test-and-set mutext 实现一起使用。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;(注：项目中使用 &lt;strong&gt;&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;DB_REGISTER&lt;/a&gt; &lt;/strong&gt; 的方式，除了上面说的缺点，还有可能发生另一种隐含的错误。使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 标记会在数据库环境目录下创建文件__db.register，里面记录每一个打开环境的控制线程标记，也就线程号或者进程号，退出的时候会在其中注销掉自己的ID，这样表示安全使用环境并正常的关闭，不需要执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作，如果异常退出没有注销，BDB会按照 ID 去判断对应的进程/线程是否存在，如果不存在则说明异常退出，需要执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作。如果遇到这种情况：进程首先打开数据库环境并注册自己，接着因为应用程序需要，整个进程变成守护进程去后台执行，守护进程需要继承父进程的BDB资源，不能够退出并释放。但此时进程的ID已经变了，注册的是父进程的ID，父进程已经退出。正在运行的是子进程。此时BDB根据__db.register 文件判断进程异常退出了，执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作，导致守护进程获得 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/program_errorret.html#program_errorret.DB_RUNRECOVERY&quot;&gt;&lt;strong&gt;DB_RUNRECOVERY&lt;/strong&gt;&lt;/a&gt; 错误并退出。这种情况下需要控制应用程序的行为。)&lt;/p&gt;
-
-&lt;p&gt;对于多个无关进程的第二种解决方式也是基于“观察进程”的。这种实现方式适用于对共享环境的进程监控要求不是那么苛刻的情况下，但是仍然需要监控是否有一个拥有 BDB 句柄的控制线程执行失败。可以这样实现：使用一个“观察”进程每隔一段时间调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt; 。如果 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  返回表示环境不能继续被使用，“观察”进程就需要采取行动，恢复环境。&lt;/p&gt;
-
-&lt;p&gt;这种方式的缺点就是所有的控制线程必须使用方法 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envset_thread_id.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;set_thread_id()&lt;/strong&gt;&lt;/a&gt; 来指定一个获得ID的方法和判断仍然在运行的方法（换句话说，BDB 库必须对每一个控制线程指定唯一的 ID ，除此之外还要能够判断控制线程是否仍然在运行。对于使用不同语言实现的，或运行在不同平台上的应用程序，想要提供这些消息还是有难度的）。&lt;/p&gt;
-
-&lt;p&gt;对于多个无关进程的第三种解决方式是上面两种方式的结合。使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;open()&lt;/strong&gt;&lt;/a&gt; 方法同时指定 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 和&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_FAILCHK&quot;&gt;&lt;strong&gt;DB_FAILCHK&lt;/strong&gt;&lt;/a&gt; 标记。当同时指定这两种标记的时候，每一个打开数据库环境的进程首先检查是否需要执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 。如果因为任何原因需要执行，首先判断是否有控制线程在退出时拥有数据库读锁，如果有，就释放它们。接着将会 abort 任何没有完成的事务。如果这几个步骤都成功的完成了，进程打开数据库环境的操作将会继续执行，不需要额外的恢复操作。如果这几步失败了，并且指定了&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_RECOVER&quot;&gt;&lt;strong&gt;DB_RECOVER&lt;/strong&gt;&lt;/a&gt; 标记，额外的 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 操作就会被执行，如果没有指定 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_RECOVER&quot;&gt;&lt;strong&gt;DB_RECOVER&lt;/strong&gt;&lt;/a&gt; 标记，&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/program_errorret.html#program_errorret.DB_RUNRECOVERY&quot;&gt;&lt;strong&gt;DB_RUNRECOVERY&lt;/strong&gt;&lt;/a&gt; 错误就会被返回。&lt;/p&gt;
-
-&lt;p&gt;因为这种方式是前面两种方式的结合，前面两种方式所有的需求都必须实现（将会需要获得 ID 的方法，判断是否正在运行的方法，每个数据库唯一一个 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/env.html&quot;&gt;&lt;strong&gt;DB_ENV&lt;/strong&gt; &lt;/a&gt; 句柄等等）。&lt;/p&gt;
-
-&lt;p&gt;上面描述的三种方法是不同的，而且不应该被结合起来使用。应用程序应该使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 方式，或者 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt; 方式，或者两种方式结合的实现方法，但是不应该在一个应用程序中使用超过其中一种。比如，一个 POSIX 的应用程序，在实现中使用了大量多种多样的接口和不同的 API，可能会使用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html#envopen_DB_REGISTER&quot;&gt;&lt;strong&gt;DB_REGISTER&lt;/strong&gt;&lt;/a&gt; 的实现方式，有以下几个原因：1 不需要间歇性的调用函数 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  ；2 当使用多种语言实现的时候，每个控制线程获得唯一的 ID 会更加困难；3 判断一个控制线程是否仍然在运行更加困难，任何特殊的控制线程（注：指执行&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt;操作的控制线程）可能没有足够的权利向其它进程发送信号。作为另一种选择，拥有专门的“监控”进程的应用程序，同时拥有适当的权力，为了支持更高的吞吐量和更好的可靠性，可能选择 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  方式，因为这种方式允许应用程序 abort 没有决定的事务并且不一定需要 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/transapp_recovery.html&quot;&gt;&lt;strong&gt;recovery&lt;/strong&gt;&lt;/a&gt; 就可以继续运行。第三种方式适用于使用“监控”进程并不是特别实用，但是在调用 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envopen.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;open()&lt;/strong&gt;&lt;/a&gt; 之前执行 &lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/api_reference/C/envfailchk.html&quot;&gt;&lt;strong&gt;DB_ENV-&amp;gt;failchk()&lt;/strong&gt;&lt;/a&gt;  非常重要的情况之下。&lt;/p&gt;
-
-&lt;p&gt;显而易见，当使用一个独立的进程去监控其它控制线程，这个进程的需要尽可能的简单并且可调试，应为如果这个进程失败，整个应用程序都会挂起。&lt;/p&gt;
-</description>
-        <pubDate>Thu, 18 Feb 2016 17:26:08 +0800</pubDate>
-        <link>http://localhost:4000/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/</link>
-        <guid isPermaLink="true">http://localhost:4000/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/</guid>
-        
-        <category>Berkeley DB</category>
-        
-        <category>Database</category>
-        
-        
-        <category>Berkeley DB</category>
-        
-        <category>computer science</category>
         
       </item>
     

@@ -181,6 +181,23 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/database/mysql/2018/05/20/online-DDL/">
+        <h2 class="post-title">
+            Online DDL 工具 gh-ost 支持阿里云 RDS
+        </h2>
+        
+        <div class="post-content-preview">
+            背景
+Online DDL 一直都是 DBA 运维时比较头疼的事，一般都会选择在业务低峰期谨慎的操作，比较常用的几个工具比如 percona pt-online-schema-change , Facebook OSC, 本质上它们都是基于触发器的，简单来讲就是通过数据库的触发器把作用在源表的操作在一个事务内同步到修改后的表中，这在业务高峰期时会极大的加重主库的负载。gh-ost 是由 Gi...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on May 20, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/computer%20science/database/mysql/2018/04/18/innodb-Encryption/">
         <h2 class="post-title">
             InnoDB 表空间加密
@@ -343,22 +360,6 @@ git clone https://github.com/twindb/undrop-for-inn...
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on March 31, 2016
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/">
-        <h2 class="post-title">
-            Berkeley DB 事务支持的应用架构
-        </h2>
-        
-        <div class="post-content-preview">
-            本文翻译自Berkeley DB 官方文档 Architecting Transactional Data Store applications 一节，主要讲述使用BDB作为存储引擎时提供事务支持的几种进程访问模式。每个BDB环境都对应一个文件系统目录，其中包涵存储的数据和运行时提供的锁资源，互斥变量资源，共享缓冲池等。每个目录可以被多个BDB进程打开访问，但使用复杂度有较大区别。需要说明的...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on February 18, 2016
     </p>
 </div>
 <hr>
