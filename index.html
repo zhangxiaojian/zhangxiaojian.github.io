@@ -181,6 +181,30 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/database/mysql/2018/09/02/binlog/">
+        <h2 class="post-title">
+            MySQL · 引擎特性 · 主库 binlog 概览
+        </h2>
+        
+        <div class="post-content-preview">
+            前言
+
+接触过 MySQL 的同学对于 binlog 必然不会陌生，为了有一种统一格式的日志来记录 MySQL 中不同存储引擎的数据，在数据库之间实时同步或备份，binlog 便诞生了。本文根据源码梳理一下主库从启动，事务组提交，到 binlog 发送等流程，最后介绍一下在 POLARDB 共享存储的情况下，支持 Binlog 功能需要做哪些事情。
+
+启动
+
+重要参数
+
+打开 binlog ...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on September 2, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/computer%20science/database/mysql/2018/05/20/online-DDL/">
         <h2 class="post-title">
             Online DDL 工具 gh-ost 支持阿里云 RDS
@@ -344,22 +368,6 @@ git clone https://github.com/twindb/undrop-for-inn...
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on September 13, 2016
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
-        <h2 class="post-title">
-            Berkeley DB 锁子系统的配置
-        </h2>
-        
-        <div class="post-content-preview">
-            最近小伙伴在分布式数据库（DPINM）环境下做实验，数据集比较大，分到集群中每台机器上，会报lock不够用的错。Berkeley DB在初始化的时候，就会初始化锁子系统，为锁结构分配内存空间，一旦启动，是不可以动态分配的，如果不够用，就会报错。后来调节了参数，加大了Locks,  Lockers, Locked Object 的最大数量，重启之后被惊呆了，锁子系统映射到文件系统的共享内存空间...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on March 31, 2016
     </p>
 </div>
 <hr>

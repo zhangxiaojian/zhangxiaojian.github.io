@@ -181,6 +181,22 @@
             ">
     			
 <div class="post-preview">
+    <a href="/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/">
+        <h2 class="post-title">
+            Berkeley DB 锁子系统的配置
+        </h2>
+        
+        <div class="post-content-preview">
+            最近小伙伴在分布式数据库（DPINM）环境下做实验，数据集比较大，分到集群中每台机器上，会报lock不够用的错。Berkeley DB在初始化的时候，就会初始化锁子系统，为锁结构分配内存空间，一旦启动，是不可以动态分配的，如果不够用，就会报错。后来调节了参数，加大了Locks,  Lockers, Locked Object 的最大数量，重启之后被惊呆了，锁子系统映射到文件系统的共享内存空间...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on March 31, 2016
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/berkeley%20db/computer%20science/2016/02/18/berkeley-db-e4-ba-8b-e5-8a-a1-e6-94-af-e6-8c-81-e7-9a-84-e5-ba-94-e7-94-a8-e6-9e-b6-e6-9e-84/">
         <h2 class="post-title">
             Berkeley DB 事务支持的应用架构
@@ -355,26 +371,6 @@ PostgreSQL 从7.1开...
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on July 28, 2015
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
-        <h2 class="post-title">
-            基于Berkeley DB的数据库备份系统
-        </h2>
-        
-        <div class="post-content-preview">
-            趁着五一，劳动一下，把这篇酝酿已久的博客写了。这是去年做的东西，完成了一段时间，经过测试使用还可以，基本可以保证数据库的Durability，无论是突然断电还是磁盘坏了等等。文章的大部分内容都是之前完成的（为了交高级数据库这门课的课程报告….）。适合需要使用Berkeley DB或者其它存储引擎建立自己的备份系统的人阅读和参考。或者是想看看设计思路的~
-
-摘要
-
-本文所述内容基于实验室的IN...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on May 2, 2015
     </p>
 </div>
 <hr>

@@ -5,9 +5,323 @@
     <description>life test</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Tue, 29 May 2018 19:10:51 +0800</pubDate>
-    <lastBuildDate>Tue, 29 May 2018 19:10:51 +0800</lastBuildDate>
+    <pubDate>Sun, 02 Sep 2018 11:53:04 +0800</pubDate>
+    <lastBuildDate>Sun, 02 Sep 2018 11:53:04 +0800</lastBuildDate>
     <generator>Jekyll v3.7.0</generator>
+    
+      <item>
+        <title>MySQL · 引擎特性 · 主库 binlog 概览</title>
+        <description>&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;接触过 MySQL 的同学对于 binlog 必然不会陌生，为了有一种统一格式的日志来记录 MySQL 中不同存储引擎的数据，在数据库之间实时同步或备份，binlog 便诞生了。本文根据源码梳理一下主库从启动，事务组提交，到 binlog 发送等流程，最后介绍一下在 POLARDB 共享存储的情况下，支持 Binlog 功能需要做哪些事情。&lt;/p&gt;
+
+&lt;h2 id=&quot;启动&quot;&gt;启动&lt;/h2&gt;
+
+&lt;h3 id=&quot;重要参数&quot;&gt;重要参数&lt;/h3&gt;
+
+&lt;p&gt;打开 binlog 的参数是 &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.6/en/replication-options-binary-log.html#option_mysqld_log-bin&quot;&gt;log-bin&lt;/a&gt; ，log-bin 后面跟的是保存 binlog 的路径，如果不指定就会生成默认值，参数生效需要重启实例。这个启动参数实际上对应了两个全局变量，布尔类型的 log_bin 表示 binlog 是否打开 ，log_bin_basename 表示路径。首先在 my_long_options 定义了 log-bin, value 关联到全局变量 opt_bin_logname 中。&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;log-bin&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OPT_BIN_LOG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+   &lt;span class=&quot;s&quot;&gt;&quot;Log update queries in binary format. Optional (but strongly recommended &quot;&lt;/span&gt;
+   &lt;span class=&quot;s&quot;&gt;&quot;to avoid replication problems if server's hostname changes) argument &quot;&lt;/span&gt;
+   &lt;span class=&quot;s&quot;&gt;&quot;should be the chosen location for the binary log files.&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;opt_bin_logname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;opt_bin_logname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;GET_STR_ALLOC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;OPT_ARG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;其中第二个参数 OPT_BIN_LOG 在函数 mysqld_get_one_option 中处理，关联变量 log_bin:&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+ 
+ &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OPT_BIN_LOG&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;opt_bin_log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MY_TEST&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argument&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;disabled_my_option&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;启动参数中另外一个重要的参数是 &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.6/en/replication-options-binary-log.html#option_mysqld_log-bin-index&quot;&gt;log-bin-index&lt;/a&gt; ，表示 binlog index 文件的路径， index 文件是 binlog 文件的索引，关于如何保证 crash-safe，请参考 &lt;a href=&quot;https://www.cnblogs.com/xpchild/p/3811944.html&quot;&gt;MySQL purge log简单吗？&lt;/a&gt; 和月报 &lt;a href=&quot;http://mysql.taobao.org/monthly/2018/07/05/&quot;&gt;MySQL · 源码分析 · binlog crash recovery&lt;/a&gt; 。&lt;/p&gt;
+
+&lt;h3 id=&quot;初始化&quot;&gt;初始化&lt;/h3&gt;
+
+&lt;p&gt;初始化工作大部分在函数 init_server_components 中完成，首先是打开 index 文件，对应函数 MYSQL_BIN_LOG::open_index_file，包括下面几步：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;set_crash_safe_index_file 是 binlog index 文件 crash safe 的辅助文件&lt;/li&gt;
+  &lt;li&gt;判断 index 文件是否可以访问，如果不可以，就把 crash_safe_index 文件重命名为 index 文件。&lt;/li&gt;
+  &lt;li&gt;打开 index 文件，sync 文件，初始化 IO_CACHE。 IO_CACHE 是内部的文件流缓冲，后面会详细介绍。&lt;/li&gt;
+  &lt;li&gt;根据 purge_index_file，删除 index 文件中不存在的 binlog 文件。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;MySQL 是多存储引擎的架构，假如一个事务跨多个存储引擎，那么就需要内部两阶段提交来保证事务的 ACID，如果 binlog 打开，那么它将作为协调者和各个引擎交互。在启动阶段要负责处理引擎内状态为 prepare 的事务，决定它们是提交还是回滚。关于 MySQL 的整体崩溃恢复可以参考 &lt;a href=&quot;http://mysql.taobao.org/monthly/2015/06/01/&quot;&gt;MySQL · 引擎特性 · InnoDB 崩溃恢复过程&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;初始化的时候把 tc_log 设为 mysql_bin_log, binlog 崩溃恢复部分的处理在函数 MYSQL_BIN_LOG::open_binlog(opt_name) 中进行。主要分为几步：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;以只读模式打开 index 文件中最后一个 binlog 文件，因为在 binlog rotate 的时候会确保事务都已经提交，prepare 事务必然在最后一个 binlog 文件中。&lt;/li&gt;
+  &lt;li&gt;读取文件中的 FORMAT_DESCRIPTION_EVENT ，根据 LOG_EVENT_BINLOG_IN_USE_F 判断 binlog 是否安全关闭，如果没有安全关闭，则进入崩溃恢复逻辑。&lt;/li&gt;
+  &lt;li&gt;在函数 MYSQL_BIN_LOG::recover 中，循环读取每一个 EVENT，碰到 XID EVENT 就把 xid 插入 hash 表中。把 hash 表传给函数 ha_recover。&lt;/li&gt;
+  &lt;li&gt;在 ha_recover 中循环对每个存储引擎调用 xarecover_handlerton 函数，其中会调 handlerton-&amp;gt;recover 获取存储引擎中的 prepare 事务集合，再取出每个prepare事务的 xid，去 hash 表中查找，如果找到说明 binlog 中对应的事务已经提交，那么就提交该事务，否则就回滚。&lt;/li&gt;
+  &lt;li&gt;剪裁不合法的 event。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;除了上面正常的崩溃恢复逻辑，还有一种“启发式”的崩溃恢复，假如数据库奔溃之后 binlog 文件损坏无法担任协调者的角色，对于 prepare 的事务可以人为的选择是提交还是回滚. 参数是 &lt;a href=&quot;https://dev.mysql.com/doc/refman/5.6/en/server-options.html#option_mysqld_tc-heuristic-recover&quot;&gt;–tc-heuristic-recover&lt;/a&gt;。这个参数认为如果超过一个支持事务的引擎，回滚是不安全的，会拒绝回滚，而只有一个事务引擎则会强制回滚，无论参数设置的是什么。&lt;/p&gt;
+
+&lt;p&gt;接下来就是打开 binlog 文件，在数据库启动阶段会重新 rotate 一个新的 binlog 文件，调用函数 MYSQL_BIN_LOG::open_binlog&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;调用 init_and_set_log_file_name 顺序获得一个新的文件路径。&lt;/li&gt;
+  &lt;li&gt;打开 purge_index 文件，把新的文件名先保存下来，落盘。&lt;/li&gt;
+  &lt;li&gt;打开文件&lt;/li&gt;
+  &lt;li&gt;写入一些初始化信息，比如 Format_description_log_event。&lt;/li&gt;
+  &lt;li&gt;这一步比较有意思，写入 Previous_gtid_set:
+    &lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;current_thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+     &lt;span class=&quot;n&quot;&gt;prev_gtid_set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;log_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+    &lt;p&gt;数据库启动的时候 current_thd 还没有初始化，所以此时不会写入 Previous_gtid_set，因为 open_binlog 在 rotate 的时候也会调用，此时会维护 Previous_gtid_set 的信息在内存中，发起 rotate 的线程负责创建新的文件并且初始化。启动时候的初始化放在了 main 函数中.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;更新 index 文件。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;打开文件后会清理过期的 binlog 文件，具体在 MYSQL_BIN_LOG::purge_logs_before_date 中。完成之后会跳出 init_server_components。&lt;/p&gt;
+
+&lt;p&gt;最后一步是初始化 Previous_gtid_set, 在 MYSQL_BIN_LOG::init_gtid_sets 中从后往前遍历 binlog 文件，读出的第一个 Previou_gtid_set 初始化为 gtid_purged，从前往后遍历 binlog 文件，读出的第一个 Previous_gtid_set 加上当前文件的 gtid 集合，初始化为 gtid_executed。&lt;/p&gt;
+
+&lt;h2 id=&quot;group-commit&quot;&gt;Group Commit&lt;/h2&gt;
+
+&lt;p&gt;当 binlog 作为协调者，如果其中记录的事务顺序和存储引擎层记录的顺序不一样的话，备份工具（Innodb Hot Backup）拿到备份集的位点可能会存在空洞。因为备份工具会拷贝 redo 日志，在 redo 的头部会记录最后一个提交的事务对应的 binlog 位点，备份集建立之后就会根据这个位点继续从主库 dump binlog。如下图所示，假如有三个事务 T1，T2，T3 已经 fsync 到 binlog 文件中，三个事务的在文件中的位点分别是 100，200，300，但是在引擎层的只有 T1 和 T3 完成了 commit 并记录到 redo 中，最后一个 commit 的事务 T3 位点是 300。此时通过备份工具拿到的数据就是这样的状态，备份集启动的时候会走崩溃恢复的流程，prepare 事务被回滚（备份集没有 binlog 文件，对应上个小节 xid 集合为空），从位点 300 继续从主库同步数据，那么 T2 在备库就丢失了。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://mysql.taobao.org/monthly/pic/201808/binlog.png&quot; alt=&quot;img&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;为了解决这个问题，最开始引入了 prepare_commit_mutex ，在两阶段提交引擎层 prepare 的时候加锁，在引擎层 commit 之后释放锁，&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;innobase_xa_prepare()
+write() and fsync() binary log
+innobase_commit()
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这样确实可以保证 binlog 和 innodb 的事务顺序一致，但是这把锁会导致所有的事务顺序执行，每次执行都会至少调用 3 次 fsync 操作，非常低效。&lt;/p&gt;
+
+&lt;p&gt;后面 MariaDB 提出了一个解决方案，也是现在代码中的实现方式，把写 binlog 和引擎 commit 分为三个阶段，每个阶段有不同的 mutex 保护，Flush 阶段只负责调用文件系统的写接口，不保证落盘，Sync 阶段调用 fsync 操作写磁盘，Commit 阶段调用存储引擎接口提交事务。fsync 是比较耗时的操作，希望能够有尽可能多的事务一起执行一次 fsync，所以多个线程到达 Flush 阶段，第一个到达的线程就作为 Leader 线程，后续到达的线程作为 Follower，形成链表，每隔一段时间允许 Leader 线程进入 Sync 阶段，Follower 阻塞等待 Leader 线程唤醒。这样就可以积累多个事务执行一次 fsync。Commit 阶段也是按照链表顺序提交，可以保证 binlog 和引擎层提交顺序一致。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.kindahl.net/images/stages.svg&quot; alt=&quot;img&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这部分内容非常丰富，介绍的比较粗略，有兴趣可以参考更加详细的文章&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;http://mysqlmusings.blogspot.com/2012/06/binary-log-group-commit-in-mysql-56.html&quot;&gt;Binary Log Group Commit in MySQL 5.6&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Fixing MySQL group commit &lt;a href=&quot;http://kristiannielsen.livejournal.com/12254.html&quot;&gt;part1&lt;/a&gt; | &lt;a href=&quot;http://kristiannielsen.livejournal.com/12408.html&quot;&gt;part2&lt;/a&gt; | &lt;a href=&quot;http://kristiannielsen.livejournal.com/12553.html&quot;&gt;part3&lt;/a&gt; | &lt;a href=&quot;http://kristiannielsen.livejournal.com/12810.html&quot;&gt;part4&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://hedengcheng.com/?p=112&quot;&gt;MariaDB &amp;amp; Percona XtraDB Group Commit实现简要分析&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;MySQL/InnoDB和Group Commit &lt;a href=&quot;http://www.orczhou.com/index.php/2010/08/time-to-group-commit-1/&quot;&gt;part1&lt;/a&gt; | &lt;a href=&quot;http://www.orczhou.com/index.php/2011/12/time-to-group-commit-2/&quot;&gt;part2&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;代码分析&quot;&gt;代码分析&lt;/h3&gt;
+
+&lt;p&gt;了解思路之后看看代码，更加复杂有趣一点，主要逻辑在 MYSQL_BIN_LOG::ordered_commit 中，此时引擎层事务已经 prepare，并发情况下线程将不断涌入这个函数中。进入一个阶段的基本函数是:&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;MYSQL_BIN_LOG&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;change_stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;THD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+                            &lt;span class=&quot;n&quot;&gt;Stage_manager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StageID&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;THD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                            &lt;span class=&quot;n&quot;&gt;mysql_mutex_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;leave_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                            &lt;span class=&quot;n&quot;&gt;mysql_mutex_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enter_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;cm&quot;&gt;/*
+    enroll_for will release the leave_mutex once the sessions are
+    queued.
+  */&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_manager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enroll_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;leave_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;DBUG_RETURN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;mysql_mutex_lock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enter_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;DBUG_RETURN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;ul&gt;
+  &lt;li&gt;thd: 当前线程&lt;/li&gt;
+  &lt;li&gt;stage: 要进入的阶段&lt;/li&gt;
+  &lt;li&gt;queue: 需要入队的线程集合，一般为上一个阶段处理完的集合，递送到下一个阶段继续处理。&lt;/li&gt;
+  &lt;li&gt;leave_mutex: 进入这个阶段会释放的锁&lt;/li&gt;
+  &lt;li&gt;enter_mutex: 进入这个阶段要持有的锁&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;一般使用方式&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;change_stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;leave_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;enter_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;DBUG_RETURN&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;finish_commit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这个函数只有 Leader 线程才会返回 false，Follower 线程会等待直到被 Leader 线程唤醒，然后返回 true, 调用 finish_commit 退出函数 MYSQL_BIN_LOG::ordered_commit，表示提交完成。具体入队操作在函数 enroll_for 中&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Stage_manager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enroll_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StageID&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;THD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mysql_mutex_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UNDEF_COND_SLOT&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;leader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m_queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;mysql_mutex_unlock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_mutex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;leader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_leader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;leader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;cm&quot;&gt;/* Follower 线程在这里等待被唤醒 */&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;mutex_enter_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_transaction&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;m_flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pending&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;enter_cond_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;mutex_exit_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/* 这个阶段的 Follower 可能是其他阶段的 Leader，要唤醒自己的 Follower */&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_leader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;mutex_enter_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_cond_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;cond_signal_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_cond_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;mutex_exit_slot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage_cond_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;leader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;m_queue 对于每个阶段都维护一个链表，首先就是入队，如果这个阶段链表为空，那么传入队列的 Leader 线程就变成当前阶段的 Leader 线程，如果不为空就说明当前的传入的队列在这个阶段变为 Follower。append 函数会为每个 Leader 线程分配一个 slot 位置，指向一个 cond，保存在 thd-&amp;gt;stage_cond_id 中，所有的 Follower 在 append 函数中获得的 slot 都是 leader 线程的 slot。cond 在初始化的时候会分配一个大小为 128 的数组, 新的 Leader 不断递增 index，循环使用其中的 cond，所以最大的活跃的队列个数不能超过 128。&lt;/p&gt;
+
+&lt;p&gt;接下来看下每个阶段具体都做了什么，change_stage 到 Flush 阶段，其中一个线程抢占称为 Leader 线程，此时后面到来的线程都会不断追加到链表尾部称为 Follower，Leader 线程获得 LOCK_log 锁，完成 change_stage, 然后执行代码：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;THD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wait_queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;flush_error&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;process_flush_stage_queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;total_bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;do_rotate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wait_queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;my_off_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flush_end_pos&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flush_error&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;total_bytes&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;flush_error&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flush_cache_to_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flush_end_pos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;process_flush_stage_queue 中首先要获得 Leader 线程的指针，&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;stage_manager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fetch_queue_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stage_manager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FLUSH_STAGE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                                    &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+                                    &lt;span class=&quot;o&quot;&gt;------&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;m_queue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fetch_and_empty&lt;/span&gt;
+                                    
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;这一步很重要，取出 Leader 线程的同时，把对应 stage 的链表也清空了，这样后面的线程又可以重新竞争成为 Flush 阶段的 Leader，但是新的 Leader 会阻塞在获得 LOCK_log 这一步。接着在 process_flush_stage_queue 中遍历每个 thd 的 binlog cache 写到全局的 cache 中，flush_cache_to_file 对全局的 cache 调用文件系统写操作。&lt;/p&gt;
+
+&lt;p&gt;change_stage 到 Sync 阶段，释放 LOCK_log, 等待 LOCK_log 的线程可以进入 Flush 阶段，同样有一个 Leader 线程从 change_stage 中返回继续执行，&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;cm&quot;&gt;/* wait some time or a certain count to aggregate more threads into sync queue.*/&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;stage_manager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wait_count_or_timeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+  &lt;span class=&quot;n&quot;&gt;THD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;final_queue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stage_manager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fetch_queue_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Stage_manager&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SYNC_STAGE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;flush_error&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;total_bytes&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pair&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sync_binlog_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;为了积累更多的数据执行一次 fsync，会等待一定数量或者时间，此时等待的话，Sync 阶段有一个 Leader 线程持有 LOCK_sync 锁，Flush 阶段的 Leader 线程都加入到 Sync 阶段的 Follower 队列中。直到 sync 阶段调用 stage_manager.fetch_queue_for(Stage_manager::SYNC_STAGE) ，才会产生新的 Sync 阶段 Leader 线程。 后面的操作比较简单，调用一次 fsync 操作即可。&lt;/p&gt;
+
+&lt;p&gt;Commit 阶段是否执行由参数 binlog_order_commits 决定，如果为 true，那么同样的 change_stage 到 Commit 阶段，释放 LOCK_sync 锁，Leader 线程拿到 LOCK_commit 锁，调用 process_commit_stage_queue 遍历链表，调用存储引擎的 ha_commit_low 提交。&lt;/p&gt;
+
+&lt;p&gt;三个阶段都完成后有一个最终的 Leader 线程调用 stage_manager.signal_done，自下而上的唤醒 Follower 线程，Follower 线程调用 finish_commit，如果发现事务在引擎中没有提交，会调用 ha_commit_low, 此时就不能保证 commit 的顺序了。&lt;/p&gt;
+
+&lt;h2 id=&quot;dump-线程&quot;&gt;Dump 线程&lt;/h2&gt;
+
+&lt;p&gt;每一个用户连接过来在 MySQL 中都有一个线程处理其请求，把结果返回，Dump 线程是处理备库连接的线程，根据备库发送过来的位点读取本地的 binlog 文件，发送 Event 到备库去。备库 change master 就是记录备库要从哪个位点去读，具体可以看&lt;a href=&quot;http://mysql.taobao.org/monthly/2018/05/09/&quot;&gt;这篇月报&lt;/a&gt;，而 start slave 之后会和主库有多次交互，具体如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;SELECT UNIX_TIMESTAMP()&lt;/li&gt;
+  &lt;li&gt;SHOW VARIABLES LIKE ‘SERVER_ID’&lt;/li&gt;
+  &lt;li&gt;SET @master_heartbeat_period= 1799999979520&lt;/li&gt;
+  &lt;li&gt;SET @master_binlog_checksum= @@global.binlog_checksum&lt;/li&gt;
+  &lt;li&gt;SELECT @master_binlog_checksum&lt;/li&gt;
+  &lt;li&gt;SELECT @@GLOBAL.GTID_MODE&lt;/li&gt;
+  &lt;li&gt;SHOW VARIABLES LIKE ‘SERVER_UUID’&lt;/li&gt;
+  &lt;li&gt;SET @slave_uuid= ‘’&lt;/li&gt;
+  &lt;li&gt;command=COM_REGISTER_SLAVE&lt;/li&gt;
+  &lt;li&gt;command=COM_BINLOG_DUMP&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;最后一步就是启动 Dump 线程，不论是否看起 Gtid 模式，最终处理的函数都是 mysql_binlog_send，看下大概逻辑：&lt;/p&gt;
+
+&lt;div class=&quot;language-cpp highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pos&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BIN_LOG_HEADER_SIZE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;read&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Format_description_log_event&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;at&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;beginning&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;binlog&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+	
+&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;net&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;error&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;net&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vio&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;killed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;error&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Log_event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_log_event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(,,,,&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;is_active_binlog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slave&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;is_active_binlog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;goto_next_binlog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;goto_next_binlog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;switch&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;error&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Log_event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_log_event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;..&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+				&lt;span class=&quot;n&quot;&gt;read_packet&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+				&lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LOG_READ_BINLOG_LAST_VALID_POS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+				&lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+				&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+					&lt;span class=&quot;n&quot;&gt;mysql_bin_log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wait_for_update_bin_log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hearbeat_ts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+				&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signal_cnt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mysql_bin_log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signal_cnt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;thd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;killed&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;			
+			&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;read_packet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+				&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;slave&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;	
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;goto_next_binlog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;find&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;next&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logfile&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;current&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;open&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;next&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;		
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;第一个循环会不断的从备库发送的位点去读 event，然后发送 event，直到 error 不为 0，正常情况是读到了文件末尾，而 is_active_binlog 可以判断当前读到的是不是正在写入的活跃 binlog 文件，如果不是活跃的，那么就到下一个 binlog 文件继续读。如果是活跃的就可能读到了写入端的末尾，需要等待文件有新的数据。进入 if (!goto_next_binlog) 后尝试读一个 Event，如果返回 0，说明从在 while(true) 读到文件末尾到再次读文件这个区间又产生的新的 Event，发送之后继续进入 while(true) 循环读，如果发现读到了末尾(LOG_READ_BINLOG_LAST_VALID_POS)，进入循环 wait_for_update_bin_log 去等待。在主库的写入线程调用 MYSQL_BIN_LOG::ordered_commit 中，flush 或者 sync 阶段写入 Event 后会调用 update_binlog_end_pos() 通过 update_cond 唤醒所有 dump 线程。&lt;/p&gt;
+
+&lt;h2 id=&quot;binlog-for-polardb&quot;&gt;binlog for POLARDB&lt;/h2&gt;
+
+&lt;p&gt;POLARDB 实例之间是通过 redo 物理复制同步的，相比于 binlog 逻辑复制更加高效，而且考虑到打开 binlog 之后对性能影响比较大，起初并不支持 binlog 复制。随着用户不断增长，使用 binlog 同步数据到 RDS 的诉求越来越多，POLARDB 也即将支持原生的 binlog 复制。&lt;/p&gt;
+
+&lt;p&gt;在共享存储的架构下，假如主节点宕机，Replica 提升为主库需要走崩溃恢复的逻辑，前面提到 binlog 开启之后将作为事务的协调者，决定 prepare 事务提交还是回滚，因此需要在 Replica 角色切换的时候读取binlog 文件进行崩溃恢复，初始化 gtid等，处理逻辑类似于启动阶段。&lt;/p&gt;
+
+&lt;p&gt;对于 binlog 相关的请求，都要求必须发送到主库，即使是类似 show binary logs 这样的查询语句，因为主备实际上还是两个进程，没有共享的 mutex，假如主库在 purge，那么读操作也是不安全的。&lt;/p&gt;
+
+&lt;p&gt;在可用性方面也做了一些改进，开放 binlog 的 purge 操作，用户可以手动去删除不需要的文件，也可以配置 expire_logs_hours, 以小时级别的粒度自动处理过期的 binlog 文件。&lt;/p&gt;
+
+&lt;p&gt;欢迎使用 POLARDB&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;注: 本文首次发表在团队博客 &lt;a href=&quot;http://mysql.taobao.org/monthly/2018/08/01/&quot;&gt;数据库内核月报-18/08&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Sun, 02 Sep 2018 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/computer%20science/database/mysql/2018/09/02/binlog/</link>
+        <guid isPermaLink="true">http://localhost:4000/computer%20science/database/mysql/2018/09/02/binlog/</guid>
+        
+        
+        <category>computer science</category>
+        
+        <category>database</category>
+        
+        <category>MySQL</category>
+        
+      </item>
     
       <item>
         <title>Online DDL 工具 gh-ost 支持阿里云 RDS</title>
@@ -2043,96 +2357,6 @@ Signal handling thread got signal 10
         
         
         <category>life traces</category>
-        
-      </item>
-    
-      <item>
-        <title>Berkeley DB 锁子系统的配置</title>
-        <description>&lt;p&gt;最近小伙伴在分布式数据库（DPINM）环境下做实验，数据集比较大，分到集群中每台机器上，会报lock不够用的错。Berkeley DB在初始化的时候，就会初始化锁子系统，为锁结构分配内存空间，一旦启动，是不可以动态分配的，如果不够用，就会报错。后来调节了参数，加大了Locks,  Lockers, Locked Object 的最大数量，重启之后被惊呆了，锁子系统映射到文件系统的共享内存空间竟然有60多G，磁盘立马就不够用了（挂载目录只有100G….）。以前看到过配置锁子系统的参数该如何算，总结起来就是能大就大，毕竟不够用重启很麻烦，但万万没想到占这么大的空间，所以还是仔细看看怎么配置比较合理的好。&lt;/p&gt;
-
-&lt;h2 id=&quot;概念介绍&quot;&gt; 概念介绍&lt;/h2&gt;
-
-&lt;p&gt;首先要知道BDB中的Locker, Lock, Lock Object 是什么含义：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;Locker： 持有锁的对象。如果在支持事务的情况下，就表示事务句柄（DbTxn），如果在不支持事务的情况下，就表示游标或者DB 句柄。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Lock：表示锁的数据结构，在数据库中，锁就代表了被锁的对象。因为一般获取一个互斥对象之前要获取锁，如果不能获得，就表示对象被锁住了。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Locked Object：真正想要锁住的对象，一般指的是数据库页，在数据库配置成Queue 类型的时候表示一条记录（k-v）。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;估算方法&quot;&gt;估算方法&lt;/h2&gt;
-
-&lt;p&gt;不支持事务的配置相对简单，这里介绍支持事务的 Berkeley DB Transactional Data Store。最推荐的算法是实践，让系统在负载比较极端的情况下运行，然后使用db_stat 命令去查看锁子系统的统计信息，来决定配置的数量，然后把这些数量double，基本上就够用了。但是极端这个情况不好说，所以也提供了自己估算的方法：&lt;/p&gt;
-
-&lt;h4 id=&quot;1-估算locker&quot;&gt;1 估算Locker&lt;/h4&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;如果使用了事务特性，Locker 的数量可以估算为系统最大同时打开的非事务游标数，打开的数据库句柄数，还有此时活动的事务数和子事务数之和。对于子事务数的估算应该到子事务的提交，而不是父事务的提交。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;如果没有使用事务特性，可以估算为系统最大同时打开的非事务游标数，打开的数据库句柄中非游标操作的数量（数据库句柄可以直接存取数据，也可以使用游标存取，如果不打开游标就计算数据库句柄数，否则计算游标数）。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;2-估算lock-object&quot;&gt;2 估算Lock Object&lt;/h4&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;每次访问 non-Queue 数据库的时候，每一个数据页（默认8k）需要一个Lock Object&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;对于Queue 数据库，每一条记录（k-v）都需要一个Lock Object。在删除记录的时候不断使用 DB_NEXT 或者 DB_PREV 获得下一条，上一条记录时，不需要额外进行计算。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;对于 Btree 或 Recno 类型的数据库，在更新操作导致树分裂，需要分裂阶段额外的Lock Object。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;对于Hash 和 Queue 数据库，每一次访问都需要在 metadata page（元数据页）上加锁，但不会一直持续到事务结束。&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;如果事务执行了更新操作，导致需要alloc 一个新页，那么需要在 metadata page 上加锁，直到事务结束。&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;需要注意的是，在事务的生命周期内，总是不断的积累申请到的Lock，但是需要的Lock Object 数量就是这个事务周期内所有操作所需要的数量，也就是说如果对一个数据页（或者Queue的记录），即使多次访问，也只需要一个Lock Object。举个例子：一个事务总共需要访问10调记录，那么就需要10个Lock Object，如果有同时有10个并发的访问线程，就需要配置系统拥有100个Lock Object（因为每个线程都有一个事务）。关于Lock Object 数量多配置一点没关系，因为它的结构占用空间比较小。&lt;/p&gt;
-
-&lt;h4 id=&quot;3-估算-lock&quot;&gt;3 估算 Lock&lt;/h4&gt;
-
-&lt;p&gt;Lock的数量不太容易估算，可以使用公式：&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Lock = 2 * (Locker) * (Lock Object) * 2&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;最后乘的2表示对每个object的读写两种加锁模式。这是比较坏的情况下估算出来的值。一般用不到这么多。&lt;/p&gt;
-
-&lt;h3 id=&quot;4-锁表分区&quot;&gt; 4 锁表分区&lt;/h3&gt;
-
-&lt;p&gt;对锁表进行分区可以充分利用多核CPU，调用函数 DB_ENV-&amp;gt;set_lk_partitions() 完成。每一个分区都可以独立的被一个线程访问，更多的分区意味着更高的并发。默认是在环境启动的时候配置成 cpu 数量的十倍。对于单cpu系统，单个分区反而会比多个分区更有效率。分区之后，最好将Object 和 Lock 分配到各个分区中，便于并发获取。如果其中一个分区用完了Lock 或 Lock Object 资源，会从其它分区中请求，但是频繁的请求会降低效率。&lt;/p&gt;
-
-&lt;p&gt;参考：&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/lock_max.html&quot;&gt;http://docs.oracle.com/cd/E17076_04/html/programmer_reference/lock_max.html&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Thu, 31 Mar 2016 22:18:11 +0800</pubDate>
-        <link>http://localhost:4000/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/</link>
-        <guid isPermaLink="true">http://localhost:4000/berkeley%20db/computer%20science/database/2016/03/31/berkeley-db-e9-94-81-e5-ad-90-e7-b3-bb-e7-bb-9f-e7-9a-84-e9-85-8d-e7-bd-ae/</guid>
-        
-        <category>Berkeley DB</category>
-        
-        <category>Database</category>
-        
-        
-        <category>Berkeley DB</category>
-        
-        <category>computer science</category>
-        
-        <category>database</category>
         
       </item>
     
