@@ -181,6 +181,27 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/mpi/2015/07/28/mpi-e4-b8-ad-e7-9a-84-e7-82-b9-e5-af-b9-e7-82-b9-e9-80-9a-e4-bf-a1/">
+        <h2 class="post-title">
+            MPI 中的点对点通信
+        </h2>
+        
+        <div class="post-content-preview">
+            使用MPI作为集群通信的工具已经有一段时间，一开始只是粗略的了解了一下它提供的消息传递接口，虽然可以解决大部分问题，但是使用不便，效率较低。这几天仔细看了看官方的文档，在MPI中提供了很多有用的函数接口，使用者完全可以在其上建立灵活的通信层。本文主要介绍集群点对点的通信。
+
+首先看一个简单的例子，从一个节点发送一条message到另一个节点：
+
+#include &lt;mpi.h&gt;
+...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on July 28, 2015
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/berkeley%20db/computer%20science/database/2015/05/02/e5-9f-ba-e4-ba-8eberkeley-db-e7-9a-84-e6-95-b0-e6-8d-ae-e5-ba-93-e5-a4-87-e4-bb-bd-e7-b3-bb-e7-bb-9f/">
         <h2 class="post-title">
             基于Berkeley DB的数据库备份系统
@@ -358,34 +379,6 @@ PostgreSQL 是一种非常先进的对象-关系型数据库管理系统（ORDBM
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on October 31, 2014
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/design%20patterns/software%20engineering/2014/10/12/e5-8d-95-e4-b8-80-e8-81-8c-e8-b4-a3-e5-8e-9f-e5-88-99/">
-        <h2 class="post-title">
-            单一职责原则
-        </h2>
-        
-        <div class="post-content-preview">
-            Single Responsibility Principle
-
-There should never be more than one reason for a class to change
-
-一个类只负责一个功能领域中的相应职责。或者说：就一个类而言，只有一个引起它变化的原因。
-
-设计模式之禅中的例子：
-
-假设有一个接口实现打电话的功能：
-
-
-
-书中分析Iphone接口不是单一职责的，...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on October 12, 2014
     </p>
 </div>
 <hr>

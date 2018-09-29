@@ -181,6 +181,23 @@
             ">
     			
 <div class="post-preview">
+    <a href="/computer%20science/database/mysql/2018/09/20/binlog/">
+        <h2 class="post-title">
+            MySQL · 引擎特性 · IO_CACHE 源码解析
+        </h2>
+        
+        <div class="post-content-preview">
+            概述
+在数据库中 IO 的重要性不言而喻，为了更好的管理 IO 操作，大多数数据库都自己管理页数据和刷脏机制（例如 InnoDB 中的 Buffer pool），而不是交给文件系统甚至是操作系统调度。但是对于顺序写入的日志数据，使用文件系统接口方便的多，文件系统 也是以页的形式管理，呈现给应用层的是一片连续可写的空间，管理的单位称为 Sector 大小是 4KB，所以对于 4KB 对齐的地址...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by zhangxiaojian on September 20, 2018
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/computer%20science/database/mysql/2018/09/02/binlog/">
         <h2 class="post-title">
             MySQL · 引擎特性 · 主库 binlog 概览
@@ -350,24 +367,6 @@ git clone https://github.com/twindb/undrop-for-inn...
     </a>
     <p class="post-meta">
         Posted by zhangxiaojian on November 9, 2016
-    </p>
-</div>
-<hr>
-
-<div class="post-preview">
-    <a href="/life%20traces/2016/09/13/my_25_years/">
-        <h2 class="post-title">
-            我的25年
-        </h2>
-        
-        <div class="post-content-preview">
-            前段时间看了大神P叔的博客，除了技术之外，看得出对自己人生清晰的规划，结合P叔现在的成就，可以说当年吹的牛逼都实现了，并且有过之而无不及。其中有一篇 我的20年 ，四岁就知道自己想上国防科大，真是让四岁还不知道要上哪所小学的我羡慕不已。今天刚刚好走过25年的人生，也来总结一下~
-
-1991/09/20 （农历八月十三）下午3：15 张小贱闪亮登场，刚出生貌似五斤二两，注定从一开始就是个瘦子。...
-        </div>
-    </a>
-    <p class="post-meta">
-        Posted by zhangxiaojian on September 13, 2016
     </p>
 </div>
 <hr>
